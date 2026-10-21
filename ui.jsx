@@ -17,9 +17,12 @@ export function formatPrice(n) {
   return `${priceFormat.format(n)} HTG`;
 }
 
-// Pi ba pri pwodwi a, pou "Dès …" sou kat yo
-export function minPrice(product) {
-  const prices = (product.groups || []).flatMap((g) => g.items.map((i) => i.price));
+// Pi ba pri pwodwi a, pou "Dès …" sou kat yo (pri baz done a si li la)
+export function minPrice(product, live = {}) {
+  const prices = (product.groups || [])
+    .flatMap((g) => g.items)
+    .filter((i) => live[i.id]?.available ?? true)
+    .map((i) => live[i.id]?.price ?? i.price);
   return prices.length ? Math.min(...prices) : null;
 }
 
@@ -130,8 +133,8 @@ export function ProductArt({ product: p, className = "" }) {
   );
 }
 
-export function ProductCard({ product: p, onOpen }) {
-  const from = minPrice(p);
+export function ProductCard({ product: p, prices, onOpen }) {
+  const from = minPrice(p, prices);
   return (
     <button
       type="button"
@@ -164,4 +167,57 @@ export function StepCard({ step, title, children }) {
       {children}
     </section>
   );
+}
+
+/* ============ DAT AK ESTATI ============ */
+const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+const dateTimeFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+export function formatDate(value) {
+  return dateFormat.format(new Date(value));
+}
+
+export function formatDateTime(value) {
+  return dateTimeFormat.format(new Date(value));
+}
+
+export function timeAgo(value) {
+  const minutes = Math.round((Date.now() - new Date(value).getTime()) / 60000);
+  if (minutes < 1) return "Kounye a";
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} è`;
+  const days = Math.round(hours / 24);
+  if (days === 1) return "Ayè";
+  if (days < 7) return `${days} jou`;
+  return formatDate(value);
+}
+
+export const ORDER_STATUS = {
+  pending: { label: "En attente", className: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" },
+  processing: { label: "En cours", className: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300" },
+  delivered: { label: "Livré", className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300" },
+  refused: { label: "Refusé · Remboursé", className: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300" },
+};
+
+export const DEPOSIT_STATUS = {
+  pending: { label: "En attente", className: ORDER_STATUS.pending.className },
+  completed: { label: "Complété", className: ORDER_STATUS.delivered.className },
+  refused: { label: "Refusé", className: ORDER_STATUS.refused.className },
+};
+
+export function StatusChip({ status }) {
+  return <span className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${status.className}`}>{status.label}</span>;
+}
+
+// Kopye yon tèks; si navigatè a refize, nou mande kliyan an kopye l alamen
+export function copyText(text, onToast) {
+  const done = () => onToast?.("Kopye.");
+  if (!navigator.clipboard) return onToast?.("Kenbe tèks la pou w kopye l.");
+  navigator.clipboard.writeText(text).then(done, () => onToast?.("Kenbe tèks la pou w kopye l."));
+}
+
+export function ErrorNote({ children }) {
+  if (!children) return null;
+  return <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-500/10 dark:text-red-300" role="alert">{children}</p>;
 }

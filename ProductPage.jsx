@@ -1,7 +1,11 @@
 import React, { useState } from "react";
-import { ArrowLeft, Info, CheckCircle2, Flame, ShoppingCart, User, CreditCard, Package, Hash, MessageCircle, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft, Info, CheckCircle2, Flame, ShoppingCart, User, CreditCard, Package, Hash, MessageCircle,
+  ShieldCheck, Wallet, Plus, Loader2, AlertTriangle, LogIn,
+} from "lucide-react";
 import { PAYMENT_METHODS } from "./data.js";
-import { Sheet, StepCard, ProductArt, GemIcon, WhatsAppIcon, formatPrice, packageName, waLink } from "./ui.jsx";
+import { supabase, errorText } from "./supabase.js";
+import { Sheet, StepCard, ProductArt, GemIcon, WhatsAppIcon, ErrorNote, formatPrice, packageName, waLink } from "./ui.jsx";
 import { loadPlayerId, savePlayerId, newOrderId, orderMessage } from "./orders.js";
 
 const ID_PATTERN = /^\d{6,15}$/;
@@ -80,30 +84,53 @@ function SummaryRow({ icon: Icon, label, children }) {
   );
 }
 
-export default function ProductPage({ product, onBack, onOrder }) {
-  const groups = product.groups || [];
+// Pri ak disponiblite ki nan baz done a ranplase sa ki nan data.js
+function withLivePrices(groups, prices) {
+  return groups
+    .map((g) => ({
+      ...g,
+      items: g.items
+        .map((it) => ({ ...it, price: prices[it.id]?.price ?? it.price, available: prices[it.id]?.available ?? true }))
+        .filter((it) => it.available),
+    }))
+    .filter((g) => g.items.length > 0);
+}
+
+export default function ProductPage({ product, account, onBack, onOrder, onLogin, onDeposit, onViewOrders }) {
+  const backend = account.enabled;
+  const groups = withLivePrices(product.groups || [], account.prices);
   const [playerId, setPlayerId] = useState(() => (product.playerId ? loadPlayerId() : ""));
   const [showIdHelp, setShowIdHelp] = useState(false);
-  const [selected, setSelected] = useState(null); // { g, i }
+  const [selectedId, setSelectedId] = useState(null);
   const [paymentId, setPaymentId] = useState(() => (PAYMENT_METHODS.find((m) => m.recommended) || PAYMENT_METHODS[0]).id);
-  const [orderId, setOrderId] = useState(null); // mete lè fenèt konfimasyon an louvri
+  const [confirming, setConfirming] = useState(false);
+  const [orderId, setOrderId] = useState(null); // nimewo kòmand mòd WhatsApp la
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [placed, setPlaced] = useState(null);
 
-  const group = selected ? groups[selected.g] : null;
-  const item = selected ? group.items[selected.i] : null;
+  const group = groups.find((g) => g.items.some((it) => it.id === selectedId)) || null;
+  const item = group?.items.find((it) => it.id === selectedId) || null;
   const payment = PAYMENT_METHODS.find((m) => m.id === paymentId);
   const id = playerId.trim();
   const idValid = ID_PATTERN.test(id);
   const idError = id !== "" && !idValid;
   const idMissing = Boolean(item?.needsId) && id === "";
-  const ready = Boolean(item) && !idError && !idMissing;
   const someNeedId = groups.some((g) => g.items.some((i) => i.needsId));
+  const loggedIn = Boolean(account.user);
+  const balance = Number(account.profile?.balance ?? 0);
+  const missing = item ? Math.max(0, item.price - balance) : 0;
 
-  let buttonText = "Acheter";
-  if (!item) buttonText = "Chwazi yon pake";
-  else if (idMissing) buttonText = "Mete Player ID ou";
-  else if (idError) buttonText = "Korije Player ID a";
+  // Bouton anba a: li di kliyan an egzakteman sa k manke
+  let action = { text: "Acheter", run: () => { setError(""); setOrderId(newOrderId()); setConfirming(true); } };
+  if (!item) action = { text: "Chwazi yon pake", run: null };
+  else if (idMissing) action = { text: "Mete Player ID ou", run: null };
+  else if (idError) action = { text: "Korije Player ID a", run: null };
+  else if (backend && !loggedIn) action = { text: "Konekte pou achte", icon: LogIn, run: () => onLogin("login") };
+  else if (backend && missing > 0) action = { text: "Ajouter de l'argent", icon: Plus, run: onDeposit };
 
-  const order = item && orderId && {
+  // Mòd WhatsApp (pa gen baz done)
+  const waOrder = !backend && item && orderId && {
     id: orderId,
     productId: product.id,
     product: product.name,
@@ -115,11 +142,54 @@ export default function ProductPage({ product, onBack, onOrder }) {
     date: Date.now(),
   };
 
-  const confirmOrder = () => {
+  const confirmWhatsApp = () => {
     if (id) savePlayerId(id);
-    onOrder(order);
-    setOrderId(null);
+    onOrder(waOrder);
+    setConfirming(false);
   };
+
+  // Mòd Wallet: sèvè a tcheke pri a ak solde a, epi li retire kòb la
+  const placeOrder = async () => {
+    setBusy(true);
+    setError("");
+    const { data, error: err } = await supabase.rpc("place_order", { p_package_id: item.id, p_player_id: id || null });
+    setBusy(false);
+    if (err) return setError(errorText(err));
+    if (id) savePlayerId(id);
+    setPlaced(data);
+    account.reload();
+  };
+
+  const closeConfirm = () => {
+    setConfirming(false);
+    setPlaced(null);
+    setError("");
+  };
+
+  const confirmFooter = backend ? (
+    placed ? null : (
+      <button
+        type="button"
+        onClick={placeOrder}
+        disabled={busy}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 disabled:opacity-60"
+      >
+        {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />} Confirmer l'achat
+      </button>
+    )
+  ) : (
+    waOrder && (
+      <a
+        href={waLink(orderMessage(waOrder))}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={confirmWhatsApp}
+        className="flex items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-600"
+      >
+        <ShoppingCart className="h-5 w-5" /> Confirmer l'achat
+      </a>
+    )
+  );
 
   return (
     <div className="space-y-4">
@@ -217,14 +287,13 @@ export default function ProductPage({ product, onBack, onOrder }) {
 
           <StepCard step={product.playerId ? 2 : 1} title="Choisir votre produit">
             <div className="space-y-6" role="radiogroup" aria-label="Pake">
-              {groups.map((g, gi) => (
+              {groups.map((g) => (
                 <div key={g.title}>
                   <GroupTitle group={g} />
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {g.items.map((it, ii) => {
-                      const active = selected?.g === gi && selected?.i === ii;
+                    {g.items.map((it) => {
                       const Option = g.style === "deal" ? DealOption : GemOption;
-                      return <Option key={it.label} item={it} active={active} onSelect={() => setSelected({ g: gi, i: ii })} />;
+                      return <Option key={it.id} item={it} active={it.id === selectedId} onSelect={() => setSelectedId(it.id)} />;
                     })}
                   </div>
                 </div>
@@ -232,38 +301,71 @@ export default function ProductPage({ product, onBack, onOrder }) {
             </div>
           </StepCard>
 
-          <StepCard step={product.playerId ? 3 : 2} title="Mode de paiement">
-            <div className="space-y-2.5" role="radiogroup" aria-label="Mode de paiement">
-              {PAYMENT_METHODS.map((m) => {
-                const active = m.id === paymentId;
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => setPaymentId(m.id)}
-                    className={`flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition ${
-                      active ? "border-sky-500 bg-sky-50 dark:bg-sky-500/10" : "border-slate-200 hover:border-sky-200 dark:border-slate-700"
-                    }`}
-                  >
-                    <img src={m.logo} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+          <StepCard step={product.playerId ? 3 : 2} title={backend ? "Paiement" : "Mode de paiement"}>
+            {backend ? (
+              loggedIn ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 rounded-2xl border-2 border-sky-500 bg-sky-50 p-3 dark:bg-sky-500/10">
+                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-500 to-violet-500 text-white">
+                      <Wallet className="h-6 w-6" />
+                    </span>
                     <span className="min-w-0 flex-1">
-                      <span className="flex flex-wrap items-center gap-2 font-bold text-slate-900 dark:text-white">
-                        {m.name}
-                        {m.recommended && (
-                          <span className="rounded-full bg-emerald-400 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-emerald-950">RECOMMANDÉ</span>
-                        )}
+                      <span className="block font-bold text-slate-900 dark:text-white">Solde du compte</span>
+                      <span className="block text-sm tabular-nums text-slate-500 dark:text-slate-400">{formatPrice(balance)} disponib</span>
+                    </span>
+                    <button type="button" onClick={onDeposit} className="flex shrink-0 items-center gap-1 rounded-xl bg-white px-3 py-2 text-sm font-bold text-sky-600 ring-1 ring-sky-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-sky-500/30">
+                      <Plus className="h-4 w-4" /> Ajouter
+                    </button>
+                  </div>
+                  {item && missing > 0 && (
+                    <p className="flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+                      <AlertTriangle className="h-5 w-5 shrink-0" />
+                      Ou bezwen {formatPrice(missing)} ankò pou pake sa a. Ajoute kòb ak MonCash oswa NatCash.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-slate-50 p-4 text-center ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
+                  <p className="text-slate-600 dark:text-slate-300">Konekte pou w peye ak Solde Wallet ou.</p>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => onLogin("login")} className="rounded-xl bg-sky-500 py-2.5 font-bold text-white">Konekte</button>
+                    <button type="button" onClick={() => onLogin("signup")} className="rounded-xl bg-white py-2.5 font-bold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700">Kreye kont</button>
+                  </div>
+                </div>
+              )
+            ) : (
+              <div className="space-y-2.5" role="radiogroup" aria-label="Mode de paiement">
+                {PAYMENT_METHODS.map((m) => {
+                  const active = m.id === paymentId;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setPaymentId(m.id)}
+                      className={`flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition ${
+                        active ? "border-sky-500 bg-sky-50 dark:bg-sky-500/10" : "border-slate-200 hover:border-sky-200 dark:border-slate-700"
+                      }`}
+                    >
+                      <img src={m.logo} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+                      <span className="min-w-0 flex-1">
+                        <span className="flex flex-wrap items-center gap-2 font-bold text-slate-900 dark:text-white">
+                          {m.name}
+                          {m.recommended && (
+                            <span className="rounded-full bg-emerald-400 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-emerald-950">RECOMMANDÉ</span>
+                          )}
+                        </span>
+                        <span className="block text-sm text-slate-500 dark:text-slate-400">{m.note}</span>
                       </span>
-                      <span className="block text-sm text-slate-500 dark:text-slate-400">{m.note}</span>
-                    </span>
-                    <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${active ? "border-sky-500" : "border-slate-300 dark:border-slate-600"}`}>
-                      {active && <span className="h-3 w-3 rounded-full bg-sky-500" />}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                      <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${active ? "border-sky-500" : "border-slate-300 dark:border-slate-600"}`}>
+                        {active && <span className="h-3 w-3 rounded-full bg-sky-500" />}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </StepCard>
 
           <div
@@ -277,34 +379,31 @@ export default function ProductPage({ product, onBack, onOrder }) {
               </div>
               <button
                 type="button"
-                disabled={!ready}
-                onClick={() => setOrderId(newOrderId())}
+                disabled={!action.run}
+                onClick={action.run || undefined}
                 className="flex shrink-0 items-center gap-2 rounded-2xl bg-sky-500 px-5 py-3.5 font-bold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-800 dark:disabled:text-slate-400"
               >
-                <ShoppingCart className="h-5 w-5" /> {buttonText}
+                {React.createElement(action.icon || ShoppingCart, { className: "h-5 w-5" })} {action.text}
               </button>
             </div>
           </div>
 
-          <Sheet
-            open={Boolean(order)}
-            onClose={() => setOrderId(null)}
-            title="Confirmer l'achat"
-            footer={
-              order && (
-                <a
-                  href={waLink(orderMessage(order))}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={confirmOrder}
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-600"
-                >
-                  <ShoppingCart className="h-5 w-5" /> Confirmer l'achat
-                </a>
-              )
-            }
-          >
-            {order && (
+          <Sheet open={confirming && Boolean(item)} onClose={closeConfirm} title={placed ? "Kòmand pase" : "Confirmer l'achat"} footer={confirmFooter}>
+            {item && placed ? (
+              <div className="py-4 text-center">
+                <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15">
+                  <CheckCircle2 className="h-9 w-9 text-emerald-500" />
+                </span>
+                <h4 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">Kòmand {placed.code} pase!</h4>
+                <p className="mx-auto mt-2 max-w-sm text-slate-500 dark:text-slate-400">
+                  {formatPrice(Number(placed.price))} soti nan Wallet ou. W ap resevwa yon notifikasyon depi kòmand lan livre.
+                </p>
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <button type="button" onClick={closeConfirm} className="rounded-2xl bg-slate-100 py-3.5 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">Kontinye achte</button>
+                  <button type="button" onClick={onViewOrders} className="rounded-2xl bg-sky-500 py-3.5 font-bold text-white hover:bg-sky-600">Wè kòmand mwen</button>
+                </div>
+              </div>
+            ) : item ? (
               <>
                 <div className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
                   {group.style === "deal" ? (
@@ -316,27 +415,42 @@ export default function ProductPage({ product, onBack, onOrder }) {
                   )}
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-900 dark:text-white">{packageName(item)}</p>
-                    <p className="text-2xl font-extrabold tabular-nums text-sky-500">{order.priceText}</p>
+                    <p className="text-2xl font-extrabold tabular-nums text-sky-500">{formatPrice(item.price)}</p>
                   </div>
                 </div>
                 <dl className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
                   <SummaryRow icon={Package} label="Produit">{product.name}</SummaryRow>
-                  <SummaryRow icon={CreditCard} label="Paiement">
-                    <span className="inline-flex items-center gap-2">
-                      <img src={payment.logo} alt="" className="h-6 w-6 rounded-md object-cover" /> {payment.name}
-                    </span>
-                  </SummaryRow>
-                  {order.playerId && <SummaryRow icon={User} label="Player ID"><span className="tabular-nums">{order.playerId}</span></SummaryRow>}
-                  <SummaryRow icon={Hash} label="Kòmand"><span className="tabular-nums">{order.id}</span></SummaryRow>
+                  {id && <SummaryRow icon={User} label="Player ID"><span className="tabular-nums">{id}</span></SummaryRow>}
+                  {backend ? (
+                    <>
+                      <SummaryRow icon={CreditCard} label="Paiement">Solde</SummaryRow>
+                      <SummaryRow icon={Wallet} label="Solde apre acha">
+                        <span className="tabular-nums">{formatPrice(balance - item.price)}</span>
+                      </SummaryRow>
+                    </>
+                  ) : (
+                    <>
+                      <SummaryRow icon={CreditCard} label="Paiement">
+                        <span className="inline-flex items-center gap-2">
+                          <img src={payment.logo} alt="" className="h-6 w-6 rounded-md object-cover" /> {payment.name}
+                        </span>
+                      </SummaryRow>
+                      <SummaryRow icon={Hash} label="Kòmand"><span className="tabular-nums">{orderId}</span></SummaryRow>
+                    </>
+                  )}
                 </dl>
-                <p className="mt-2 flex gap-3 rounded-2xl bg-sky-50 p-3.5 text-sm text-sky-900 dark:bg-sky-500/10 dark:text-sky-100">
-                  <MessageCircle className="h-5 w-5 shrink-0 text-sky-500" />
-                  <span>
-                    Lè w peze "Confirmer l'achat", WhatsApp ap louvri ak kòmand ou deja ekri. Voye mesaj la, epi ekip la ap ba w enstriksyon pou peye ak {payment.name}.
-                  </span>
-                </p>
+                {backend ? (
+                  <ErrorNote>{error}</ErrorNote>
+                ) : (
+                  <p className="mt-2 flex gap-3 rounded-2xl bg-sky-50 p-3.5 text-sm text-sky-900 dark:bg-sky-500/10 dark:text-sky-100">
+                    <MessageCircle className="h-5 w-5 shrink-0 text-sky-500" />
+                    <span>
+                      Lè w peze "Confirmer l'achat", WhatsApp ap louvri ak kòmand ou deja ekri. Voye mesaj la, epi ekip la ap ba w enstriksyon pou peye ak {payment.name}.
+                    </span>
+                  </p>
+                )}
               </>
-            )}
+            ) : null}
           </Sheet>
         </>
       )}

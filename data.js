@@ -17,6 +17,21 @@ export const WHATSAPP_NUMBER = "";
 // Lyen videyo tutoriel la (YouTube, TikTok…). Kite l vid si l poko pare.
 export const VIDEO_TUTORIAL_URL = "";
 
+// Baz done Supabase (Project Settings → API). Si yo vid, sit la mache an mòd
+// WhatsApp sèlman: pa gen kont, pa gen Wallet.
+export const SUPABASE_URL = "";
+export const SUPABASE_ANON_KEY = "";
+// Mete true lè w fin aktive Google nan Supabase (Authentication → Providers → Google)
+export const GOOGLE_LOGIN = false;
+
+// Rang kliyan yo selon kantite kòb yo depanse (an goud)
+export const RANKS = [
+  { name: "Bronze", min: 5000, emoji: "🥉" },
+  { name: "Argent", min: 20000, emoji: "🥈" },
+  { name: "Or", min: 50000, emoji: "🥇" },
+  { name: "Diamant", min: 100000, emoji: "💎" },
+];
+
 /* ============ PEMAN ============ */
 // `number` se nimewo kote kliyan yo voye kòb la. Si l vid, sit la di kliyan an
 // mande nimewo a sou WhatsApp.
@@ -34,6 +49,8 @@ export const PAYMENT_METHODS = [
 //   - style "deal": kat abònman / pas, ak yon ikòn
 // `playerId: true` mande kliyan an Player ID (UID) li; `needsId: true` sou yon pake
 // fè ID a obligatwa pou pake sa a.
+// `id` yon pake dwe menm ak `id` li nan tab `packages` Supabase la (supabase/schema.sql):
+// lè baz done a konekte, se pri ki nan baz done a ki konte.
 export const CATEGORIES = ["Tout", "Jwèt", "Abònman", "Gift Card"];
 
 const FREE_FIRE_ID_HELP = "Louvri Free Fire epi peze foto pwofil ou anwo agoch. UID ou se nimewo ki anba non ou a.";
@@ -42,11 +59,11 @@ const FREE_FIRE_DIAMANTS = {
   title: "Diamants",
   style: "gem",
   items: [
-    { label: "100", bonus: 10, price: 155 },
-    { label: "310", bonus: 31, price: 460 },
-    { label: "1060", bonus: 106, price: 1550 },
-    { label: "2180", bonus: 218, price: 3100 },
-    { label: "5600", bonus: 560, price: 7500 },
+    { id: "ff-100", label: "100", bonus: 10, price: 155 },
+    { id: "ff-310", label: "310", bonus: 31, price: 460 },
+    { id: "ff-1060", label: "1060", bonus: 106, price: 1550 },
+    { id: "ff-2180", label: "2180", bonus: 218, price: 3100 },
+    { id: "ff-5600", label: "5600", bonus: 560, price: 7500 },
   ],
 };
 
@@ -54,10 +71,10 @@ const FREE_FIRE_ABONNEMENT = {
   title: "Abonnement",
   style: "deal",
   items: [
-    { label: "SEMAINE", price: 350, needsId: true, Icon: CalendarDays },
-    { label: "MOIS", price: 1800, needsId: true, Icon: CalendarRange },
-    { label: "BOOYAH PASS PAR ID", price: 600, needsId: true, Icon: Ticket },
-    { label: "LEVEL UP PASS 1355💎", price: 900, needsId: true, Icon: TrendingUp },
+    { id: "ff-semaine", label: "SEMAINE", price: 350, needsId: true, Icon: CalendarDays },
+    { id: "ff-mois", label: "MOIS", price: 1800, needsId: true, Icon: CalendarRange },
+    { id: "ff-booyah", label: "BOOYAH PASS PAR ID", price: 600, needsId: true, Icon: Ticket },
+    { id: "ff-levelup", label: "LEVEL UP PASS 1355💎", price: 900, needsId: true, Icon: TrendingUp },
   ],
 };
 

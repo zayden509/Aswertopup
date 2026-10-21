@@ -1,11 +1,18 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Moon, Sun, Bell, Settings, Search, Home, ShoppingCart, Tag, History, Wallet } from "lucide-react";
 import { PRODUCTS, CATEGORIES, SLIDES, NOTIFICATIONS, VIDEO_TUTORIAL_URL } from "./data.js";
-import { waLink, openExternal, Logo, WhatsAppIcon, IconButton, Sheet, ProductCard } from "./ui.jsx";
+import { waLink, openExternal, Logo, WhatsAppIcon, IconButton, ProductCard } from "./ui.jsx";
 import { loadOrders, saveOrder } from "./orders.js";
+import { useAccount } from "./account.js";
 import ProductPage from "./ProductPage.jsx";
 import PaymentPage from "./PaymentPage.jsx";
-import HistoryPage from "./HistoryPage.jsx";
+import HistoryPage, { OrderSheet } from "./HistoryPage.jsx";
+import WalletPage from "./WalletPage.jsx";
+import SettingsPage from "./SettingsPage.jsx";
+import AdminPage from "./AdminPage.jsx";
+import AuthSheet, { NewPasswordSheet } from "./AuthSheet.jsx";
+import { DepositSheet, TransferSheet } from "./WalletSheets.jsx";
+import { NotificationsSheet, LiveToast } from "./Notifications.jsx";
 
 /* ============ UTIL ============ */
 function useTheme() {
@@ -91,13 +98,13 @@ function Carousel({ onAction }) {
   );
 }
 
-function ProductGrid({ products, onOpen }) {
+function ProductGrid({ products, prices, onOpen }) {
   if (products.length === 0) {
     return <p className="rounded-2xl bg-white p-6 text-center text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800">Pa gen pwodwi ki koresponn ak rechèch ou a.</p>;
   }
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-      {products.map((p) => <ProductCard key={p.id} product={p} onOpen={onOpen} />)}
+      {products.map((p) => <ProductCard key={p.id} product={p} prices={prices} onOpen={onOpen} />)}
     </div>
   );
 }
@@ -168,6 +175,7 @@ function BottomNav({ tab, onChange }) {
   );
 }
 
+
 /* ============ APP ============ */
 export default function App() {
   const [dark, toggleTheme] = useTheme();
@@ -176,18 +184,19 @@ export default function App() {
   const [category, setCategory] = useState("Tout");
   // Paj pwodwi a anrejistre nan istorik navigatè a pou bouton "retounen" telefòn nan mache
   const [product, setProduct] = useState(() => PRODUCTS.find((p) => p.id === window.history.state?.product) || null);
-  const [orders, setOrders] = useState(loadOrders);
-  const [panel, setPanel] = useState(null); // "notifications" | "settings"
-  const [unread, setUnread] = useState(NOTIFICATIONS.length);
+  const [localOrders, setLocalOrders] = useState(loadOrders);
+  const [panel, setPanel] = useState(null); // "notifications" | "deposit" | "transfer"
+  const [auth, setAuth] = useState(null); // "login" | "signup"
+  const [openOrderId, setOpenOrderId] = useState(null);
+  const [staticUnread, setStaticUnread] = useState(NOTIFICATIONS.length);
   const [toast, setToast] = useState("");
+  const [live, setLive] = useState(null); // notifikasyon k ap monte a
+  const [installPrompt, setInstallPrompt] = useState(null);
 
-  useEffect(() => {
-    const onPop = (e) => setProduct(PRODUCTS.find((p) => p.id === e.state?.product) || null);
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
-
-  useEffect(() => { window.scrollTo({ top: 0 }); }, [product]);
+  const account = useAccount(useCallback((n) => setLive(n), []));
+  const closeLive = useCallback(() => setLive(null), []);
+  const signedIn = account.enabled && Boolean(account.user);
+  const openOrder = account.orders.find((o) => o.id === openOrderId) || null;
 
   useEffect(() => {
     if (!toast) return;
@@ -195,7 +204,25 @@ export default function App() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  useEffect(() => { window.scrollTo({ top: 0 }); }, [tab]);
+  useEffect(() => {
+    const onPop = (e) => setProduct(PRODUCTS.find((p) => p.id === e.state?.product) || null);
+    window.addEventListener("popstate", onPop);
+    // Android Chrome: nou kenbe envitasyon "Installer l'application" an pou bouton nan Paramètres
+    const onInstall = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", onInstall);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      window.removeEventListener("beforeinstallprompt", onInstall);
+    };
+  }, []);
+
+  useEffect(() => { window.scrollTo({ top: 0 }); }, [tab, product]);
+
+  // Lè kliyan an konekte, nou fèmen fenèt koneksyon an
+  useEffect(() => { if (signedIn) setAuth(null); }, [signedIn]);
 
   const q = query.trim().toLowerCase();
   const filtered = PRODUCTS.filter((p) =>
@@ -214,9 +241,24 @@ export default function App() {
     if (product) closeProduct();
     setTab(id);
   };
-  const handleOrder = (order) => {
-    setOrders(saveOrder(order));
+  const handleLocalOrder = (order) => {
+    setLocalOrders(saveOrder(order));
     setToast(`Kòmand ${order.id} anrejistre nan Historique.`);
+  };
+  const needLogin = (mode = "login") => setAuth(mode);
+  const startDeposit = () => (signedIn ? setPanel("deposit") : needLogin("login"));
+
+  // Ouvri sa yon notifikasyon pale de li: kòmand lan, oswa Wallet la
+  const openNotification = (n) => {
+    setLive(null);
+    setPanel(null);
+    if (n.kind === "order") {
+      const order = account.orders.find((o) => o.code === n.ref);
+      goToTab("history");
+      if (order) setOpenOrderId(order.id);
+    } else if (n.kind === "deposit" || n.kind === "transfer") {
+      goToTab("wallet");
+    }
   };
 
   const handleSlideAction = (action) => {
@@ -233,7 +275,11 @@ export default function App() {
     }
   };
 
-  const openNotifications = () => { setPanel("notifications"); setUnread(0); };
+  const unread = signedIn ? account.unread : staticUnread;
+  const openNotifications = () => {
+    setPanel("notifications");
+    if (!signedIn) setStaticUnread(0);
+  };
   const currentTab = TABS.find((t) => t.id === tab);
 
   return (
@@ -259,7 +305,7 @@ export default function App() {
                 </span>
               )}
             </IconButton>
-            <IconButton label="Paramèt" onClick={() => setPanel("settings")}>
+            <IconButton label="Paramèt" onClick={() => goToTab("settings")}>
               <Settings className="h-6 w-6" />
             </IconButton>
           </div>
@@ -267,14 +313,25 @@ export default function App() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 pb-36 pt-2">
-        {product && <ProductPage key={product.id} product={product} onBack={closeProduct} onOrder={handleOrder} />}
+        {product && (
+          <ProductPage
+            key={product.id}
+            product={product}
+            account={account}
+            onBack={closeProduct}
+            onOrder={handleLocalOrder}
+            onLogin={needLogin}
+            onDeposit={startDeposit}
+            onViewOrders={() => goToTab("history")}
+          />
+        )}
 
         {!product && tab === "home" && (
           <>
             <SearchBar value={query} onChange={setQuery} placeholder="Rechercher un jeu..." />
             {!q && <div className="mt-5"><Carousel onAction={handleSlideAction} /></div>}
             <h2 className="mb-4 mt-7 text-2xl font-extrabold tracking-tight">Produits Disponibles</h2>
-            <ProductGrid products={filtered} onOpen={openProduct} />
+            <ProductGrid products={filtered} prices={account.prices} onOpen={openProduct} />
           </>
         )}
 
@@ -299,13 +356,40 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <ProductGrid products={filtered} onOpen={openProduct} />
+            <ProductGrid products={filtered} prices={account.prices} onOpen={openProduct} />
           </>
         )}
 
-        {!product && tab === "history" && <HistoryPage orders={orders} onShop={() => setTab("shop")} />}
-        {!product && tab === "wallet" && <PaymentPage onToast={setToast} />}
+        {!product && tab === "history" && (
+          <HistoryPage account={account} localOrders={localOrders} onShop={() => setTab("shop")} onLogin={needLogin} onOpenOrder={(o) => setOpenOrderId(o.id)} />
+        )}
+        {!product && tab === "wallet" && (
+          account.enabled ? (
+            <WalletPage
+              account={account}
+              onLogin={needLogin}
+              onDeposit={startDeposit}
+              onTransfer={() => setPanel("transfer")}
+              onOpenOrder={(o) => setOpenOrderId(o.id)}
+              onToast={setToast}
+            />
+          ) : (
+            <PaymentPage onToast={setToast} />
+          )
+        )}
         {!product && tab === "promos" && <ComingSoon tab={currentTab} onHome={() => setTab("home")} />}
+        {!product && tab === "settings" && (
+          <SettingsPage
+            account={account}
+            dark={dark}
+            onToggleTheme={toggleTheme}
+            onLogin={needLogin}
+            onAdmin={() => setTab("admin")}
+            onToast={setToast}
+            installPrompt={installPrompt}
+          />
+        )}
+        {!product && tab === "admin" && account.profile?.is_admin && <AdminPage onBack={() => setTab("settings")} onToast={setToast} />}
       </main>
 
       {!product && (
@@ -325,35 +409,16 @@ export default function App() {
         </>
       )}
 
-      <Sheet open={panel === "notifications"} onClose={() => setPanel(null)} title="Notifikasyon">
-        <ul className="space-y-2">
-          {NOTIFICATIONS.map((n, i) => (
-            <li key={i} className="flex gap-3 rounded-2xl bg-slate-50 p-3 dark:bg-slate-800/60">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-lg ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">{n.emoji}</span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="font-semibold text-slate-900 dark:text-white">{n.title}</p>
-                  <span className="shrink-0 text-xs text-slate-400">{n.time}</span>
-                </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{n.text}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </Sheet>
+      {panel === "notifications" && (
+        <NotificationsSheet account={account} onClose={() => setPanel(null)} onLogin={(m) => { setPanel(null); needLogin(m); }} onOpen={openNotification} />
+      )}
+      {panel === "deposit" && signedIn && <DepositSheet onClose={() => setPanel(null)} onToast={setToast} />}
+      {panel === "transfer" && signedIn && <TransferSheet profile={account.profile} onClose={() => setPanel(null)} />}
+      {openOrder && <OrderSheet order={openOrder} onClose={() => setOpenOrderId(null)} onToast={setToast} />}
+      {auth && account.enabled && !signedIn && <AuthSheet initialMode={auth} onClose={() => setAuth(null)} />}
+      {account.recovery && <NewPasswordSheet onClose={account.endRecovery} />}
 
-      <Sheet open={panel === "settings"} onClose={() => setPanel(null)} title="Paramèt">
-        <div className="space-y-2">
-          <button type="button" onClick={toggleTheme} className="flex w-full items-center justify-between rounded-2xl bg-slate-50 p-4 font-medium dark:bg-slate-800/60">
-            <span className="flex items-center gap-3">{dark ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />} Tèm</span>
-            <span className="text-sm text-slate-500 dark:text-slate-400">{dark ? "Fonse" : "Klè"}</span>
-          </button>
-          <a href={waLink("Bonjou Aswer Top Up, mwen bezwen èd.")} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 font-medium dark:bg-slate-800/60">
-            <WhatsAppIcon className="h-5 w-5 text-[#25D366]" /> Kontakte sipò a
-          </a>
-        </div>
-      </Sheet>
-
+      {live && <LiveToast notification={live} onOpen={() => openNotification(live)} onClose={closeLive} />}
       {toast && (
         <div className="fixed inset-x-4 top-20 z-[60] mx-auto max-w-sm rounded-2xl bg-slate-900 px-4 py-3 text-center text-sm font-medium text-white shadow-xl dark:bg-white dark:text-slate-900" role="status">
           {toast}
