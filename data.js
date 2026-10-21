@@ -1,8 +1,15 @@
 import {
-  Flame, Satellite, Crosshair, Target, Swords, Shield, Tv, Music, Blocks, Play, Gift, Coins,
-  PlayCircle, CreditCard, MessageCircle,
+  Flame, Satellite, Target, Shield, Music, Play, Coins,
+  PlayCircle, CreditCard, MessageCircle, CalendarDays, CalendarRange, Ticket, TrendingUp,
 } from "lucide-react";
-import freeFireImg from "./free-fire.jpg";
+import freeFireImg from "./img/free-fire.jpg";
+import pubgImg from "./img/pubg.jpg";
+import robloxImg from "./img/roblox.jpg";
+import bloodStrikeImg from "./img/blood-strike.jpg";
+import netflixImg from "./img/netflix.jpg";
+import appStoreImg from "./img/app-store.jpg";
+import moncashImg from "./img/moncash.jpg";
+import natcashImg from "./img/natcash.jpg";
 
 /* ============ KONFIGIRASYON ============ */
 // Mete nimewo WhatsApp la ak kòd peyi a, san "+" ni espas (egzanp: "50937000000").
@@ -10,19 +17,49 @@ export const WHATSAPP_NUMBER = "";
 // Lyen videyo tutoriel la (YouTube, TikTok…). Kite l vid si l poko pare.
 export const VIDEO_TUTORIAL_URL = "";
 
+/* ============ PEMAN ============ */
+// `number` se nimewo kote kliyan yo voye kòb la. Si l vid, sit la di kliyan an
+// mande nimewo a sou WhatsApp.
+export const PAYMENT_METHODS = [
+  { id: "moncash", name: "MonCash", logo: moncashImg, number: "", recommended: true, note: "Peye ak kont MonCash ou" },
+  { id: "natcash", name: "NatCash", logo: natcashImg, number: "", note: "Peye ak kont NatCash ou" },
+];
+
 /* ============ PWODWI ============ */
-// Pou mete yon foto sou yon pwodwi: mete foto a nan menm dosye a, enpòte l anlè fichye sa a
-// (egzanp `import pubgImg from "./pubg.jpg";`) epi ajoute `image: pubgImg` sou pwodwi a.
-// `packages` se lis pake yo ak pri yo an goud; kliyan an chwazi youn anvan l kòmande.
-// Ajoute `group` sou yon pake pou separe l an seksyon (egzanp "Diamants", "Abonnement").
+// Pou mete yon foto sou yon pwodwi: mete foto a nan dosye img/, enpòte l anlè fichye sa a
+// epi ajoute `image: nonImaj` sou pwodwi a.
+//
+// `groups` se seksyon pake yo (pri an goud):
+//   - style "gem": kat dyaman (label = kantite, bonus = dyaman an plis)
+//   - style "deal": kat abònman / pas, ak yon ikòn
+// `playerId: true` mande kliyan an Player ID (UID) li; `needsId: true` sou yon pake
+// fè ID a obligatwa pou pake sa a.
 export const CATEGORIES = ["Tout", "Jwèt", "Abònman", "Gift Card"];
 
-const FREE_FIRE_ABONNEMENT = [
-  { label: "SEMAINE", price: 350 },
-  { label: "MOIS", price: 1800 },
-  { label: "BOOYAH PASS PAR ID", price: 600 },
-  { label: "LEVEL UP PASS 1355💎", price: 900 },
-];
+const FREE_FIRE_ID_HELP = "Louvri Free Fire epi peze foto pwofil ou anwo agoch. UID ou se nimewo ki anba non ou a.";
+
+const FREE_FIRE_DIAMANTS = {
+  title: "Diamants",
+  style: "gem",
+  items: [
+    { label: "100", bonus: 10, price: 155 },
+    { label: "310", bonus: 31, price: 460 },
+    { label: "1060", bonus: 106, price: 1550 },
+    { label: "2180", bonus: 218, price: 3100 },
+    { label: "5600", bonus: 560, price: 7500 },
+  ],
+};
+
+const FREE_FIRE_ABONNEMENT = {
+  title: "Abonnement",
+  style: "deal",
+  items: [
+    { label: "SEMAINE", price: 350, needsId: true, Icon: CalendarDays },
+    { label: "MOIS", price: 1800, needsId: true, Icon: CalendarRange },
+    { label: "BOOYAH PASS PAR ID", price: 600, needsId: true, Icon: Ticket },
+    { label: "LEVEL UP PASS 1355💎", price: 900, needsId: true, Icon: TrendingUp },
+  ],
+};
 
 export const PRODUCTS = [
   {
@@ -31,14 +68,9 @@ export const PRODUCTS = [
     category: "Jwèt",
     isNew: true,
     image: freeFireImg,
-    packages: [
-      { group: "Diamants", label: "100 + BONUS 10", price: 155 },
-      { group: "Diamants", label: "310 + BONUS 31", price: 460 },
-      { group: "Diamants", label: "1060 + BONUS 106", price: 1550 },
-      { group: "Diamants", label: "2180 + BONUS 218", price: 3100 },
-      { group: "Diamants", label: "5600 + BONUS 560", price: 7500 },
-      ...FREE_FIRE_ABONNEMENT.map((p) => ({ ...p, group: "Abonnement" })),
-    ],
+    playerId: true,
+    playerIdHelp: FREE_FIRE_ID_HELP,
+    groups: [FREE_FIRE_DIAMANTS, FREE_FIRE_ABONNEMENT],
   },
   {
     id: "free-fire-abonnement",
@@ -46,23 +78,25 @@ export const PRODUCTS = [
     category: "Abònman",
     isNew: true,
     image: freeFireImg,
-    packages: FREE_FIRE_ABONNEMENT,
+    playerId: true,
+    playerIdHelp: FREE_FIRE_ID_HELP,
+    groups: [FREE_FIRE_ABONNEMENT],
   },
   { id: "starlink", name: "STARLINK", category: "Abònman", isNew: true, Icon: Satellite, gradient: "from-slate-800 via-indigo-950 to-black" },
-  { id: "pubg", name: "PUBG Mobile", category: "Jwèt", Icon: Crosshair, gradient: "from-yellow-500 via-amber-600 to-stone-800" },
+  { id: "pubg", name: "PUBG Mobile", category: "Jwèt", image: pubgImg },
   { id: "codm", name: "Call of Duty Mobile", category: "Jwèt", Icon: Target, gradient: "from-zinc-600 via-zinc-800 to-black" },
-  { id: "blood-strike", name: "Blood Strike", category: "Jwèt", Icon: Swords, gradient: "from-rose-600 via-red-700 to-slate-900" },
+  { id: "blood-strike", name: "Blood Strike", category: "Jwèt", image: bloodStrikeImg },
   { id: "mlbb", name: "Mobile Legends", category: "Jwèt", Icon: Shield, gradient: "from-sky-500 via-indigo-600 to-violet-800" },
-  { id: "roblox", name: "Roblox", category: "Jwèt", Icon: Blocks, gradient: "from-slate-500 via-slate-700 to-slate-900" },
-  { id: "netflix", name: "Netflix", category: "Abònman", Icon: Tv, gradient: "from-red-600 via-red-800 to-black" },
+  { id: "roblox", name: "Roblox", category: "Jwèt", image: robloxImg },
+  { id: "netflix", name: "Netflix", category: "Abònman", image: netflixImg },
   { id: "spotify", name: "Spotify", category: "Abònman", Icon: Music, gradient: "from-green-400 via-emerald-600 to-slate-900" },
   { id: "google-play", name: "Google Play", category: "Gift Card", Icon: Play, gradient: "from-emerald-400 via-sky-500 to-indigo-600" },
-  { id: "app-store", name: "App Store & iTunes", category: "Gift Card", Icon: Gift, gradient: "from-pink-500 via-fuchsia-600 to-indigo-700" },
+  { id: "app-store", name: "App Store & iTunes", category: "Gift Card", image: appStoreImg },
   { id: "tiktok", name: "TikTok Coins", category: "Gift Card", Icon: Coins, gradient: "from-cyan-400 via-slate-900 to-pink-500" },
 ];
 
 /* ============ BANYE (KAROUSÈL) ============ */
-// action: "video" | "whatsapp" | "product:<id>"
+// action: "video" | "whatsapp" | "payment" | "product:<id>"
 export const SLIDES = [
   {
     emoji: "🔔",
@@ -85,7 +119,7 @@ export const SLIDES = [
     title: "Peye an goud",
     text: "Peye ak MonCash oswa NatCash, san kat bank, 24h/24.",
     button: "Kijan pou m peye?",
-    action: "whatsapp",
+    action: "payment",
     Art: CreditCard,
   },
   {

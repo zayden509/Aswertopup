@@ -1,8 +1,6 @@
 # Aswer Top Up
 
 Sit rechaj jwèt, abònman ak gift cards (React + Vite + Tailwind).
-Tout fichye yo nan menm dosye a, konsa ou ka voye yo sou GitHub an yon sèl fwa,
-menm depi yon telefòn (Add file → Upload files → chwazi tout fichye yo).
 
 ## Kòmanse
 ```
@@ -12,12 +10,19 @@ npm run build    # kreye dosye dist/ pou mete an liy
 ```
 Sou Vercel: enpòte depo a, Vercel detekte Vite poukont li (`vercel.json` deja la).
 
+## Fichye yo
+- `data.js`: tout kontni an (pwodwi, pri, peman, banye, notifikasyon, nimewo WhatsApp).
+- `App.jsx`: paj akèy la, Boutique, navigasyon anba a.
+- `ProductPage.jsx`: paj acha a (Player ID, pake, mode peman, konfimasyon).
+- `PaymentPage.jsx`: paj Wallet la (MonCash, NatCash, tutoriel).
+- `HistoryPage.jsx`: istorik kòmand yo (sove sou telefòn kliyan an).
+- `ui.jsx`, `orders.js`: pyès ak fonksyon tout paj yo pataje.
+- `img/`: foto pwodwi yo ak logo peman yo.
+
 ## Kote pou chanje bagay yo
-Tout kontni paj akèy la nan `data.js`:
-- `WHATSAPP_NUMBER`: nimewo WhatsApp sipò a (egzanp `50937000000`).
+Nan `data.js`:
+- `WHATSAPP_NUMBER`: nimewo WhatsApp sipò a (egzanp `50937000000`). Tout kòmand yo rive la.
+- `PAYMENT_METHODS`: mete nimewo MonCash ak NatCash yo nan `number`.
 - `VIDEO_TUTORIAL_URL`: lyen videyo tutoriel la.
-- `PRODUCTS`: lis pwodwi yo. Mete `isNew: true` pou badj **NOUVEAU** a,
-  `image` pou yon foto (mete foto a nan menm dosye a epi enpòte l anlè `data.js`),
-  ak `packages` pou lis pake yo ak pri yo an goud.
-- `SLIDES`: banye karousèl la.
-- `NOTIFICATIONS`: notifikasyon klòch la.
+- `PRODUCTS`: lis pwodwi yo. `groups` se pake yo ak pri yo an goud;
+  `isNew: true` mete badj **NOUVEAU** a; `image` se foto a (mete l nan `img/` epi enpòte l anlè `data.js`).
