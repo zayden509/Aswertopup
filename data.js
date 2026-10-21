@@ -14,7 +14,15 @@ export const VIDEO_TUTORIAL_URL = "";
 // Pou mete yon foto sou yon pwodwi: mete foto a nan menm dosye a, enpòte l anlè fichye sa a
 // (egzanp `import pubgImg from "./pubg.jpg";`) epi ajoute `image: pubgImg` sou pwodwi a.
 // `packages` se lis pake yo ak pri yo an goud; kliyan an chwazi youn anvan l kòmande.
+// Ajoute `group` sou yon pake pou separe l an seksyon (egzanp "Diamants", "Abonnement").
 export const CATEGORIES = ["Tout", "Jwèt", "Abònman", "Gift Card"];
+
+const FREE_FIRE_ABONNEMENT = [
+  { label: "SEMAINE", price: 350 },
+  { label: "MOIS", price: 1800 },
+  { label: "BOOYAH PASS PAR ID", price: 600 },
+  { label: "LEVEL UP PASS 1355💎", price: 900 },
+];
 
 export const PRODUCTS = [
   {
@@ -24,11 +32,12 @@ export const PRODUCTS = [
     isNew: true,
     image: freeFireImg,
     packages: [
-      { label: "100 + BONUS 10", price: 155 },
-      { label: "310 + BONUS 31", price: 460 },
-      { label: "1060 + BONUS 106", price: 1550 },
-      { label: "2180 + BONUS 218", price: 3100 },
-      { label: "5600 + BONUS 560", price: 7500 },
+      { group: "Diamants", label: "100 + BONUS 10", price: 155 },
+      { group: "Diamants", label: "310 + BONUS 31", price: 460 },
+      { group: "Diamants", label: "1060 + BONUS 106", price: 1550 },
+      { group: "Diamants", label: "2180 + BONUS 218", price: 3100 },
+      { group: "Diamants", label: "5600 + BONUS 560", price: 7500 },
+      ...FREE_FIRE_ABONNEMENT.map((p) => ({ ...p, group: "Abonnement" })),
     ],
   },
   {
@@ -37,12 +46,7 @@ export const PRODUCTS = [
     category: "Abònman",
     isNew: true,
     image: freeFireImg,
-    packages: [
-      { label: "SEMAINE", price: 350 },
-      { label: "MOIS", price: 1800 },
-      { label: "BOOYAH PASS PAR ID", price: 600 },
-      { label: "LEVEL UP PASS 1355💎", price: 900 },
-    ],
+    packages: FREE_FIRE_ABONNEMENT,
   },
   { id: "starlink", name: "STARLINK", category: "Abònman", isNew: true, Icon: Satellite, gradient: "from-slate-800 via-indigo-950 to-black" },
   { id: "pubg", name: "PUBG Mobile", category: "Jwèt", Icon: Crosshair, gradient: "from-yellow-500 via-amber-600 to-stone-800" },

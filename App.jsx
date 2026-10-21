@@ -65,7 +65,7 @@ function IconButton({ label, onClick, children }) {
   );
 }
 
-function Sheet({ open, onClose, title, children }) {
+function Sheet({ open, onClose, title, footer, children }) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -77,12 +77,14 @@ function Sheet({ open, onClose, title, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white p-5 pb-8 shadow-2xl dark:bg-slate-900 sm:rounded-3xl sm:pb-5">
-        <div className="mb-4 flex items-center justify-between">
+      <div className="relative flex max-h-[90vh] w-full max-w-md flex-col rounded-t-3xl bg-white shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
+        <div className="flex items-center justify-between px-5 pb-4 pt-5">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h3>
           <IconButton label="Fèmen" onClick={onClose}><X className="h-5 w-5" /></IconButton>
         </div>
-        {children}
+        <div className={`min-h-0 flex-1 overflow-y-auto px-5 ${footer ? "pb-4" : "pb-8 sm:pb-5"}`}>{children}</div>
+        {/* Footer la rete anba fenèt la menm lè lis la long */}
+        {footer && <div className="border-t border-slate-100 px-5 pb-8 pt-3 dark:border-slate-800 sm:pb-5">{footer}</div>}
       </div>
     </div>
   );
@@ -192,17 +194,40 @@ function ProductGrid({ products, onOpen }) {
   );
 }
 
-function ProductDetail({ product }) {
+function ProductSheet({ product, onClose }) {
   const packages = product.packages || [];
   const [selected, setSelected] = useState(null);
   const pkg = packages[selected];
   const mustChoose = packages.length > 0 && !pkg;
   const message = pkg
-    ? `Bonjou Aswer Top Up, mwen vle achte ${product.name}: ${pkg.label} (${pkg.price} gdes).`
+    ? `Bonjou Aswer Top Up, mwen vle achte ${product.name}${pkg.group ? ` (${pkg.group})` : ""}: ${pkg.label} (${pkg.price} gdes).`
     : `Bonjou Aswer Top Up, mwen vle achte ${product.name}.`;
 
+  // Mete pake ki gen menm `group` yo ansanm anba yon menm tit
+  const sections = [];
+  packages.forEach((p, i) => {
+    const last = sections[sections.length - 1];
+    if (!last || last.title !== p.group) sections.push({ title: p.group, items: [] });
+    sections[sections.length - 1].items.push({ ...p, index: i });
+  });
+
+  const footer = mustChoose ? (
+    <button type="button" disabled className="w-full rounded-xl bg-slate-200 py-3.5 font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+      Chwazi yon pake
+    </button>
+  ) : (
+    <a
+      href={waLink(message)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3.5 font-semibold text-white hover:brightness-95"
+    >
+      <WhatsAppIcon className="h-5 w-5" /> Kòmande sou WhatsApp{pkg && ` · ${pkg.price} gdes`}
+    </a>
+  );
+
   return (
-    <>
+    <Sheet open onClose={onClose} title={product.name} footer={footer}>
       <div className="flex items-center gap-4">
         <div className="w-24 shrink-0"><ProductCard product={{ ...product, name: "", isNew: false }} /></div>
         <div>
@@ -216,46 +241,40 @@ function ProductDetail({ product }) {
       </div>
 
       {packages.length > 0 && (
-        <ul className="mt-5 space-y-2" role="radiogroup" aria-label="Pake">
-          {packages.map((p, i) => {
-            const active = i === selected;
-            return (
-              <li key={p.label}>
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => setSelected(i)}
-                  className={`flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3.5 text-left ring-2 transition ${
-                    active ? "bg-sky-50 ring-sky-500 dark:bg-sky-500/10" : "bg-slate-50 ring-transparent hover:ring-slate-200 dark:bg-slate-800/60 dark:hover:ring-slate-700"
-                  }`}
-                >
-                  <span className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
-                    <Gem className="h-4 w-4 shrink-0 text-sky-500" /> {p.label}
-                  </span>
-                  <span className="shrink-0 font-bold text-sky-600 dark:text-sky-400">{p.price} gdes</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="mt-5 space-y-5" role="radiogroup" aria-label="Pake">
+          {sections.map((s) => (
+            <section key={s.title || "pake"}>
+              {s.title && (
+                <h4 className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{s.title}</h4>
+              )}
+              <ul className="space-y-2">
+                {s.items.map((p) => {
+                  const active = p.index === selected;
+                  return (
+                    <li key={p.label}>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        onClick={() => setSelected(p.index)}
+                        className={`flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3.5 text-left ring-2 transition ${
+                          active ? "bg-sky-50 ring-sky-500 dark:bg-sky-500/10" : "bg-slate-50 ring-transparent hover:ring-slate-200 dark:bg-slate-800/60 dark:hover:ring-slate-700"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
+                          <Gem className="h-4 w-4 shrink-0 text-sky-500" /> {p.label}
+                        </span>
+                        <span className="shrink-0 font-bold text-sky-600 dark:text-sky-400">{p.price} gdes</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
       )}
-
-      {mustChoose ? (
-        <button type="button" disabled className="mt-5 w-full rounded-xl bg-slate-200 py-3.5 font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-          Chwazi yon pake
-        </button>
-      ) : (
-        <a
-          href={waLink(message)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3.5 font-semibold text-white hover:brightness-95"
-        >
-          <WhatsAppIcon className="h-5 w-5" /> Kòmande sou WhatsApp{pkg && ` · ${pkg.price} gdes`}
-        </a>
-      )}
-    </>
+    </Sheet>
   );
 }
 
@@ -442,9 +461,7 @@ export default function App() {
 
       <BottomNav tab={tab} onChange={setTab} />
 
-      <Sheet open={!!product} onClose={() => setProduct(null)} title={product?.name}>
-        {product && <ProductDetail key={product.id} product={product} />}
-      </Sheet>
+      {product && <ProductSheet key={product.id} product={product} onClose={() => setProduct(null)} />}
 
       <Sheet open={panel === "notifications"} onClose={() => setPanel(null)} title="Notifikasyon">
         <ul className="space-y-2">
