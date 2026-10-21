@@ -60,7 +60,20 @@ function Carousel({ onAction }) {
         onScroll={(e) => { e.currentTarget.scrollLeft = 0; }}
       >
         <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${index * 100}%)` }}>
-          {SLIDES.map((s, i) => (
+          {SLIDES.map((s, i) => s.image ? (
+            // Banye ak foto: tout imaj la se yon bouton
+            <button
+              key={i}
+              type="button"
+              tabIndex={i === index ? 0 : -1}
+              aria-hidden={i !== index}
+              aria-label={s.title}
+              onClick={() => onAction(s.action)}
+              className="block w-full shrink-0"
+            >
+              <img src={s.image} alt={s.title} loading={i === 0 ? "eager" : "lazy"} className="block aspect-[2/1] w-full object-cover" />
+            </button>
+          ) : (
             <div key={i} className="relative min-h-[190px] w-full shrink-0 overflow-hidden p-5 sm:p-6" aria-hidden={i !== index}>
               <s.Art className="pointer-events-none absolute -bottom-8 -right-6 h-48 w-48 text-sky-500/10 dark:text-sky-400/10" strokeWidth={1.25} />
               <div className="flex items-center gap-3 pr-16">
@@ -79,7 +92,7 @@ function Carousel({ onAction }) {
             </div>
           ))}
         </div>
-        <span className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-sm font-semibold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700">
+        <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-sm font-semibold text-slate-600 ring-1 ring-slate-200 backdrop-blur dark:bg-slate-900/80 dark:text-slate-300 dark:ring-slate-700">
           <span className="text-sky-500">{index + 1}</span> / {total}
         </span>
       </div>

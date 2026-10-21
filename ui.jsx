@@ -121,7 +121,11 @@ export function Sheet({ open, onClose, title, icon, footer, children }) {
 export function ProductArt({ product: p, className = "" }) {
   return (
     <div className={`overflow-hidden ${className}`}>
-      {p.image ? (
+      {p.image && p.bg ? (
+        <div className="absolute inset-0" style={{ background: p.bg }}>
+          <img src={p.image} alt="" loading="lazy" className="absolute inset-x-0 top-0 aspect-square w-full object-contain transition duration-300 group-hover:scale-105" />
+        </div>
+      ) : p.image ? (
         <img src={p.image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105" />
       ) : (
         <div className={`absolute inset-0 bg-gradient-to-br ${p.gradient}`}>
