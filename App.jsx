@@ -122,8 +122,46 @@ function ProductGrid({ products, prices, onOpen }) {
   );
 }
 
+// Fè yon ranje defile poukont li, yon kat chak 3 segonn, epi tounen nan kòmansman
+// an rive nan bout la. Li kanpe lè kliyan an touche ranje a, epi l rekòmanse 6 s apre.
+function useAutoScroll(ref, startDelay) {
+  useEffect(() => {
+    const row = ref.current;
+    if (!row || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let pausedUntil = 0;
+    let visible = true;
+    let interval;
+
+    const pause = () => { pausedUntil = Date.now() + 6000; };
+    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; });
+    observer.observe(row);
+
+    const tick = () => {
+      if (!visible || document.hidden || Date.now() < pausedUntil) return;
+      const card = row.firstElementChild;
+      if (!card || row.scrollWidth <= row.clientWidth) return;
+      const step = card.getBoundingClientRect().width + parseFloat(getComputedStyle(row).columnGap || "0");
+      const atEnd = row.scrollLeft + row.clientWidth >= row.scrollWidth - 4;
+      row.scrollTo({ left: atEnd ? 0 : row.scrollLeft + step, behavior: "smooth" });
+    };
+    // Chak seksyon kòmanse yon ti jan apre lòt la pou yo pa deplase ansanm
+    const start = setTimeout(() => { interval = setInterval(tick, 3000); }, startDelay);
+
+    const events = ["touchstart", "pointerdown", "wheel", "mouseenter", "focusin"];
+    events.forEach((e) => row.addEventListener(e, pause, { passive: true }));
+    return () => {
+      clearTimeout(start);
+      clearInterval(interval);
+      observer.disconnect();
+      events.forEach((e) => row.removeEventListener(e, pause));
+    };
+  }, [ref, startDelay]);
+}
+
 // Yon seksyon paj akèy: tit nan mitan, "Voir tout", ak yon ranje ki defile sou kote
-function ProductRail({ section, prices, onOpen, onSeeAll }) {
+function ProductRail({ section, index, prices, onOpen, onSeeAll }) {
+  const rowRef = useRef(null);
+  useAutoScroll(rowRef, 1500 + index * 750);
   const products = PRODUCTS.filter((p) => p.category === section.category);
   if (products.length === 0) return null;
   return (
@@ -142,7 +180,7 @@ function ProductRail({ section, prices, onOpen, onSeeAll }) {
           Voir tout <ArrowRight className="h-4 w-4" />
         </button>
       </div>
-      <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2">
+      <div ref={rowRef} className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2">
         {products.map((p) => <ProductTile key={p.id} product={p} prices={prices} tagline={section.tagline} onOpen={onOpen} />)}
       </div>
     </section>
@@ -381,8 +419,8 @@ export default function App() {
             ) : (
               <>
                 <div className="mt-5"><Carousel onAction={handleSlideAction} /></div>
-                {HOME_SECTIONS.map((s) => (
-                  <ProductRail key={s.category} section={s} prices={account.prices} onOpen={openProduct} onSeeAll={seeAll} />
+                {HOME_SECTIONS.map((s, i) => (
+                  <ProductRail key={s.category} section={s} index={i} prices={account.prices} onOpen={openProduct} onSeeAll={seeAll} />
                 ))}
               </>
             )}
