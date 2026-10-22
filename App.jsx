@@ -11,7 +11,7 @@ import WalletPage from "./WalletPage.jsx";
 import SettingsPage from "./SettingsPage.jsx";
 import { initials } from "./ProfileWallet.jsx";
 import AdminPage from "./AdminPage.jsx";
-import AuthSheet, { NewPasswordSheet } from "./AuthSheet.jsx";
+import AuthSheet from "./AuthSheet.jsx";
 import { DepositSheet, TransferSheet } from "./WalletSheets.jsx";
 import { NotificationsSheet, LiveToast } from "./Notifications.jsx";
 
@@ -524,7 +524,6 @@ export default function App() {
       {panel === "transfer" && signedIn && <TransferSheet profile={account.profile} onClose={() => setPanel(null)} />}
       {openOrder && <OrderSheet order={openOrder} onClose={() => setOpenOrderId(null)} onToast={setToast} />}
       {auth && account.enabled && !signedIn && <AuthSheet initialMode={auth} onClose={() => setAuth(null)} />}
-      {account.recovery && <NewPasswordSheet onClose={account.endRecovery} />}
 
       {live && <LiveToast notification={live} onOpen={() => openNotification(live)} onClose={closeLive} />}
       {toast && (

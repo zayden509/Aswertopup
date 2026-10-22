@@ -1,14 +1,28 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, ShieldCheck, Copy, Check, X, Loader2, RefreshCw, PackageCheck, Clock } from "lucide-react";
-import { PAYMENT_METHODS } from "./data.js";
-import { supabase, errorText } from "./supabase.js";
-import { StatusChip, ErrorNote, formatPrice, formatDateTime, copyText, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
+import React, { useEffect, useState } from "react";
+import { ArrowLeft, ShieldCheck, Copy, Check, X, Loader2, RefreshCw, PackageCheck, Clock, PackagePlus } from "lucide-react";
+import { PAYMENT_METHODS, PRODUCTS } from "./data.js";
+import { backend, errorText } from "./backend.js";
+import { StatusChip, ErrorNote, formatPrice, formatDateTime, copyText, packageName, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
 
 const TABS = [
   { id: "orders", label: "Kòmand" },
   { id: "deposits", label: "Depo" },
   { id: "prices", label: "Pri" },
 ];
+// Tout pake ki nan data.js, jan yo dwe ye nan baz done a
+const CATALOG = PRODUCTS.flatMap((product) =>
+  (product.groups || []).flatMap((group) => group.items.map((item) => ({ product, item }))),
+)
+  .filter(({ item }, index, all) => all.findIndex((x) => x.item.id === item.id) === index)
+  .map(({ product, item }, sort) => ({
+    id: item.id,
+    product_name: product.name,
+    label: packageName(item),
+    price: item.price,
+    needs_id: Boolean(item.needsId),
+    sort,
+  }));
+
 const ORDER_FILTERS = [
   { id: "open", label: "Pou trete", test: (o) => o.status === "pending" || o.status === "processing" },
   { id: "delivered", label: "Livré", test: (o) => o.status === "delivered" },
@@ -33,7 +47,7 @@ function CopyChip({ label, value, onToast }) {
   );
 }
 
-function OrderCard({ order, profile, onToast, onChanged }) {
+function OrderCard({ order, profile, onToast }) {
   const [mode, setMode] = useState(null); // "deliver" | "refuse"
   const [code, setCode] = useState("");
   const [note, setNote] = useState("");
@@ -43,17 +57,15 @@ function OrderCard({ order, profile, onToast, onChanged }) {
   const update = async (status) => {
     setBusy(true);
     setError("");
-    const { error: err } = await supabase.rpc("admin_update_order", {
-      p_order_id: order.id,
-      p_status: status,
-      p_delivery_code: code || null,
-      p_note: note || null,
-    });
-    setBusy(false);
-    if (err) return setError(errorText(err));
-    setMode(null);
-    onToast(status === "refused" ? `${order.code} refize, kliyan an ranbouse.` : `${order.code}: ${ORDER_STATUS[status].label}.`);
-    onChanged();
+    try {
+      await backend.adminUpdateOrder(order, status, code, note);
+      setMode(null);
+      onToast(status === "refused" ? `${order.code} refize, kliyan an ranbouse.` : `${order.code}: ${ORDER_STATUS[status].label}.`);
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -128,7 +140,7 @@ function OrderCard({ order, profile, onToast, onChanged }) {
   );
 }
 
-function DepositCard({ deposit, profile, onToast, onChanged }) {
+function DepositCard({ deposit, profile, onToast }) {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -137,11 +149,13 @@ function DepositCard({ deposit, profile, onToast, onChanged }) {
   const review = async (approve) => {
     setBusy(true);
     setError("");
-    const { error: err } = await supabase.rpc("admin_review_deposit", { p_deposit_id: deposit.id, p_approve: approve, p_note: note || null });
-    setBusy(false);
-    if (err) return setError(errorText(err));
-    onToast(approve ? `${formatPrice(Number(deposit.amount))} ajoute nan Wallet kliyan an.` : "Depo a refize.");
-    onChanged();
+    try {
+      await backend.adminReviewDeposit(deposit, approve, note);
+      onToast(approve ? `${formatPrice(Number(deposit.amount))} ajoute nan Wallet kliyan an.` : "Depo a refize.");
+    } catch (err) {
+      setError(errorText(err));
+      setBusy(false);
+    }
   };
 
   return (
@@ -185,7 +199,7 @@ function DepositCard({ deposit, profile, onToast, onChanged }) {
   );
 }
 
-function PriceRow({ pkg, onToast, onChanged }) {
+function PriceRow({ pkg, onToast }) {
   const [price, setPrice] = useState(String(Number(pkg.price)));
   const [available, setAvailable] = useState(pkg.available);
   const [busy, setBusy] = useState(false);
@@ -193,11 +207,14 @@ function PriceRow({ pkg, onToast, onChanged }) {
 
   const save = async () => {
     setBusy(true);
-    const { error } = await supabase.rpc("admin_set_package", { p_id: pkg.id, p_price: Number(price), p_available: available });
-    setBusy(false);
-    if (error) return onToast(errorText(error));
-    onToast(`${pkg.label}: ${formatPrice(Number(price))}${available ? "" : " (pa disponib)"}.`);
-    onChanged();
+    try {
+      await backend.adminSetPackage(pkg.id, price, available);
+      onToast(`${pkg.label}: ${formatPrice(Number(price))}${available ? "" : " (pa disponib)"}.`);
+    } catch (error) {
+      onToast(errorText(error));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -210,8 +227,9 @@ function PriceRow({ pkg, onToast, onChanged }) {
         <input
           id={`price-${pkg.id}`}
           type="number"
-          inputMode="decimal"
+          inputMode="numeric"
           min="1"
+          step="1"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
           aria-label={`Pri ${pkg.label}`}
@@ -248,33 +266,35 @@ export default function AdminPage({ onBack, onToast }) {
   const [packages, setPackages] = useState([]);
   const [profiles, setProfiles] = useState({});
   const [loading, setLoading] = useState(true);
+  const [epoch, setEpoch] = useState(0); // bouton 🔄: rekòmanse koute done yo
+  const [adding, setAdding] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const recent = (q) => q.order("created_at", { ascending: false }).limit(200);
-    const [o, d, p, u] = await Promise.all([
-      recent(supabase.from("orders").select("*")),
-      recent(supabase.from("deposits").select("*")),
-      supabase.from("packages").select("*").order("sort"),
-      supabase.from("profiles").select("id, email, full_name, wallet_code").limit(2000),
-    ]);
-    if (o.data) setOrders(o.data);
-    if (d.data) setDeposits(d.data);
-    if (p.data) setPackages(p.data);
-    if (u.data) setProfiles(Object.fromEntries(u.data.map((x) => [x.id, x])));
-    setLoading(false);
-  }, []);
-
-  // Nouvo kòmand ak depo parèt poukont yo
+  // Nouvo kòmand ak depo parèt poukont yo, an dirèk
   useEffect(() => {
-    load();
-    const channel = supabase
-      .channel("admin")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, load)
-      .on("postgres_changes", { event: "*", schema: "public", table: "deposits" }, load)
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [load]);
+    setLoading(true);
+    return backend.subscribeAdmin({
+      onOrders: (list) => {
+        setOrders(list);
+        setLoading(false);
+      },
+      onDeposits: setDeposits,
+      onPackages: setPackages,
+      onProfiles: setProfiles,
+    });
+  }, [epoch]);
+
+  const missing = CATALOG.filter((c) => !packages.some((p) => p.id === c.id));
+  const addMissing = async () => {
+    setAdding(true);
+    try {
+      await backend.adminAddPackages(missing);
+      onToast(`${missing.length} pake ajoute nan baz done a.`);
+    } catch (error) {
+      onToast(errorText(error));
+    } finally {
+      setAdding(false);
+    }
+  };
 
   const openOrders = orders.filter(ORDER_FILTERS[0].test).length;
   const pendingDeposits = deposits.filter((d) => d.status === "pending").length;
@@ -289,7 +309,7 @@ export default function AdminPage({ onBack, onToast }) {
       </button>
       <div className="flex items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight"><ShieldCheck className="h-7 w-7 text-emerald-500" /> Panneau admin</h1>
-        <button type="button" onClick={load} aria-label="Rechaje" className="grid h-10 w-10 place-items-center rounded-xl bg-white ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+        <button type="button" onClick={() => setEpoch((e) => e + 1)} aria-label="Rechaje" className="grid h-10 w-10 place-items-center rounded-xl bg-white ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
           <RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
@@ -324,7 +344,7 @@ export default function AdminPage({ onBack, onToast }) {
           </div>
           <ul className="space-y-3">
             {orders.filter(filterTest).map((o) => (
-              <OrderCard key={`${o.id}-${o.status}-${o.updated_at}`} order={o} profile={profiles[o.user_id]} onToast={onToast} onChanged={load} />
+              <OrderCard key={`${o.id}-${o.status}-${o.updated_at}`} order={o} profile={profiles[o.user_id]} onToast={onToast} />
             ))}
           </ul>
           {!loading && orders.filter(filterTest).length === 0 && <p className="py-8 text-center text-slate-500 dark:text-slate-400">Pa gen kòmand isit la.</p>}
@@ -335,7 +355,7 @@ export default function AdminPage({ onBack, onToast }) {
         <>
           <ul className="space-y-3">
             {sortedDeposits.map((d) => (
-              <DepositCard key={`${d.id}-${d.status}`} deposit={d} profile={profiles[d.user_id]} onToast={onToast} onChanged={load} />
+              <DepositCard key={`${d.id}-${d.status}`} deposit={d} profile={profiles[d.user_id]} onToast={onToast} />
             ))}
           </ul>
           {!loading && deposits.length === 0 && <p className="py-8 text-center text-slate-500 dark:text-slate-400">Pa gen depo ankò.</p>}
@@ -345,9 +365,24 @@ export default function AdminPage({ onBack, onToast }) {
       {tab === "prices" && (
         <>
           <p className="text-sm text-slate-500 dark:text-slate-400">Chanje pri a oswa dezaktive yon pake, epi peze Sove. Sit la mete l ajou pou tout kliyan yo.</p>
+          {missing.length > 0 && (
+            <div className="rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:ring-amber-500/30">
+              <p className="text-sm text-amber-900 dark:text-amber-100">
+                <b>{missing.length} pake</b> nan sit la poko nan baz done a, kidonk kliyan yo pa ka achte yo ankò: {missing.map((m) => m.label).join(", ")}.
+              </p>
+              <button
+                type="button"
+                onClick={addMissing}
+                disabled={adding}
+                className="mt-3 flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+              >
+                {adding ? <Loader2 className="h-4 w-4 animate-spin" /> : <PackagePlus className="h-4 w-4" />} Ajoute yo ak pri ki nan sit la
+              </button>
+            </div>
+          )}
           <ul className="space-y-2">
             {packages.map((p) => (
-              <PriceRow key={`${p.id}-${p.price}-${p.available}`} pkg={p} onToast={onToast} onChanged={load} />
+              <PriceRow key={`${p.id}-${p.price}-${p.available}`} pkg={p} onToast={onToast} />
             ))}
           </ul>
         </>

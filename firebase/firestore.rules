@@ -1,0 +1,293 @@
+rules_version = '2';
+
+// =====================================================================
+// Aswer Top Up — règ sekirite Firestore
+//
+// Kijan pou itilize l: Firebase console → Firestore Database → Rules →
+// kole tout fichye sa a → Publish.
+//
+// Plan gratis la (Spark) pa gen sèvè pou nou, kidonk se règ sa yo ki
+// pwoteje kòb la. Solde yon kliyan ka chanje sèlman nan menm operasyon
+// ak youn nan aksyon sa yo, epi montan an dwe egzak:
+//   - yon nouvo kòmand (solde - pri pake a nan tab packages la)
+//   - yon nouvo transfè (solde moun k ap voye a - montan, moun k ap
+//     resevwa a + montan)
+//   - yon admin ki konfime yon depo (+ montan depo a) oswa ki refize
+//     yon kòmand (+ pri kòmand lan, yon sèl fwa)
+// =====================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Zouti ----------
+    function signedIn() { return request.auth != null; }
+    function me() { return request.auth.uid; }
+    function userDoc(id) { return /databases/$(database)/documents/users/$(id); }
+    function orderDoc(id) { return /databases/$(database)/documents/orders/$(id); }
+    function transferDoc(id) { return /databases/$(database)/documents/transfers/$(id); }
+    function depositDoc(id) { return /databases/$(database)/documents/deposits/$(id); }
+    function packageDoc(id) { return /databases/$(database)/documents/packages/$(id); }
+    function walletCodeDoc(id) { return /databases/$(database)/documents/walletCodes/$(id); }
+    function depositRefDoc(id) { return /databases/$(database)/documents/depositRefs/$(id); }
+    function isAdmin() { return signedIn() && get(userDoc(me())).data.is_admin == true; }
+    function changedOnly(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+    function exactKeys(keys) { return request.resource.data.keys().hasOnly(keys) && request.resource.data.keys().hasAll(keys); }
+    function optString(v, max) { return v == null || (v is string && v.size() <= max); }
+
+    // ---------- Kliyan yo ----------
+    match /users/{uid} {
+      allow read: if signedIn() && (me() == uid || isAdmin());
+      allow create: if signedIn() && me() == uid && validNewUser(uid);
+      allow update: if signedIn() && (
+        (me() == uid && changedOnly(['full_name']) && optString(request.resource.data.full_name, 60))
+        || (me() == uid && spendOk(uid))
+        || transferCreditOk(uid)
+        || adminCreditOk(uid)
+      );
+
+      // Notifikasyon kliyan an
+      match /notifications/{nid} {
+        allow read: if signedIn() && me() == uid;
+        allow update: if signedIn() && me() == uid
+          && changedOnly(['read_at']) && request.resource.data.read_at == request.time;
+        allow create: if signedIn() && validNotification()
+          && (me() == uid || isAdmin() || transferNotificationOk(uid));
+      }
+    }
+
+    function validNewUser(uid) {
+      let d = request.resource.data;
+      return exactKeys(['email', 'full_name', 'wallet_code', 'balance', 'total_spent', 'is_admin',
+                        'created_at', 'last_op', 'last_credit', 'last_admin_op'])
+        && d.email == request.auth.token.email
+        && optString(d.full_name, 60)
+        && d.wallet_code is string && d.wallet_code.matches('^[A-HJ-NP-Z2-9]{8}$')
+        && d.balance == 0 && d.total_spent == 0 && d.is_admin == false
+        && d.created_at == request.time
+        && d.last_op == null && d.last_credit == null && d.last_admin_op == null
+        && getAfter(walletCodeDoc(d.wallet_code)).data.uid == uid;
+    }
+
+    // Kliyan an peye pou yon kòmand oswa li voye kòb
+    function spendOk(uid) {
+      let before = resource.data;
+      let after = request.resource.data;
+      let op = after.last_op;
+      return changedOnly(['balance', 'total_spent', 'last_op'])
+        && after.balance is int && after.balance >= 0
+        && op.keys().hasOnly(['kind', 'id'])
+        && ((op.kind == 'order' && orderSpendOk(uid, op.id, before, after))
+            || (op.kind == 'transfer' && transferSpendOk(uid, op.id, before, after)));
+    }
+
+    function orderSpendOk(uid, id, before, after) {
+      let order = getAfter(orderDoc(id)).data;
+      return !exists(orderDoc(id))
+        && order.user_id == uid
+        && after.balance == before.balance - order.price
+        && after.total_spent == before.total_spent + order.price;
+    }
+
+    function transferSpendOk(uid, id, before, after) {
+      let t = getAfter(transferDoc(id)).data;
+      return !exists(transferDoc(id))
+        && t.from_user == uid
+        && after.balance == before.balance - t.amount
+        && after.total_spent == before.total_spent;
+    }
+
+    // Moun k ap voye kòb la ajoute montan an sou solde moun k ap resevwa a
+    function transferCreditOk(uid) {
+      let before = resource.data;
+      let after = request.resource.data;
+      let id = after.last_credit;
+      let t = getAfter(transferDoc(id)).data;
+      return signedIn() && me() != uid
+        && changedOnly(['balance', 'last_credit'])
+        && id is string
+        && !exists(transferDoc(id))
+        && t.to_user == uid && t.from_user == me()
+        && after.balance == before.balance + t.amount;
+    }
+
+    // Admin nan konfime yon depo oswa li ranbouse yon kòmand refize
+    function adminCreditOk(uid) {
+      let before = resource.data;
+      let after = request.resource.data;
+      let op = after.last_admin_op;
+      return isAdmin()
+        && changedOnly(['balance', 'total_spent', 'last_admin_op'])
+        && op.keys().hasOnly(['kind', 'id'])
+        && ((op.kind == 'deposit' && depositCreditOk(uid, op.id, before, after))
+            || (op.kind == 'refund' && refundOk(uid, op.id, before, after)));
+    }
+
+    function depositCreditOk(uid, id, before, after) {
+      let path = depositDoc(id);
+      let d = get(path).data;
+      return d.user_id == uid && d.status == 'pending' && getAfter(path).data.status == 'completed'
+        && after.balance == before.balance + d.amount
+        && after.total_spent == before.total_spent;
+    }
+
+    function refundOk(uid, id, before, after) {
+      let path = orderDoc(id);
+      let o = get(path).data;
+      return o.user_id == uid && o.status != 'refused' && getAfter(path).data.status == 'refused'
+        && after.balance == before.balance + o.price
+        && after.total_spent == before.total_spent - o.price;
+    }
+
+    // ---------- ASWER-ID (pou transfè yo) ----------
+    match /walletCodes/{code} {
+      allow get: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid', 'name'])
+        && request.resource.data.uid == me()
+        && request.resource.data.name is string && request.resource.data.name.size() <= 60
+        && !exists(userDoc(me()))
+        && getAfter(userDoc(me())).data.wallet_code == code;
+    }
+
+    // ---------- Pri yo ----------
+    match /packages/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+        && exactKeys(['product_name', 'label', 'price', 'needs_id', 'available', 'sort'])
+        && request.resource.data.product_name is string && request.resource.data.label is string
+        && request.resource.data.price is int && request.resource.data.price > 0
+        && request.resource.data.needs_id is bool && request.resource.data.available is bool
+        && request.resource.data.sort is int;
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Kòmand yo ----------
+    match /orders/{id} {
+      allow read: if signedIn() && (resource.data.user_id == me() || isAdmin());
+      allow create: if signedIn() && validNewOrder(id);
+      allow update: if isAdmin() && validOrderUpdate();
+    }
+
+    function validNewOrder(id) {
+      let d = request.resource.data;
+      let pkg = get(packageDoc(d.package_id)).data;
+      let before = get(userDoc(me())).data;
+      let after = getAfter(userDoc(me())).data;
+      return exactKeys(['code', 'user_id', 'package_id', 'product_name', 'package_label', 'price',
+                        'player_id', 'status', 'delivery_code', 'admin_note', 'created_at', 'updated_at'])
+        && d.user_id == me()
+        && pkg.available == true
+        && d.price == pkg.price && d.product_name == pkg.product_name && d.package_label == pkg.label
+        && d.status == 'pending' && d.delivery_code == null && d.admin_note == null
+        && (d.player_id == null || (d.player_id is string && d.player_id.matches('^[0-9]{6,15}$')))
+        && (pkg.needs_id != true || d.player_id != null)
+        && d.code is string && d.code.matches('^AS-[A-HJ-NP-Z2-9]{6}$')
+        && d.created_at == request.time && d.updated_at == request.time
+        && after.balance == before.balance - d.price
+        && after.total_spent == before.total_spent + d.price
+        && after.last_op == {'kind': 'order', 'id': id};
+    }
+
+    function validOrderUpdate() {
+      let before = resource.data;
+      let after = request.resource.data;
+      let u = userDoc(before.user_id);
+      return changedOnly(['status', 'delivery_code', 'admin_note', 'updated_at'])
+        && before.status != 'refused'
+        && after.status in ['pending', 'processing', 'delivered', 'refused']
+        && after.updated_at == request.time
+        && optString(after.delivery_code, 200)
+        && optString(after.admin_note, 300)
+        && (after.status != 'refused' || getAfter(u).data.balance == get(u).data.balance + before.price);
+    }
+
+    // ---------- Depo yo ----------
+    match /deposits/{id} {
+      allow read: if signedIn() && (resource.data.user_id == me() || isAdmin());
+      allow create: if signedIn() && validNewDeposit(id);
+      allow update: if isAdmin() && validDepositReview();
+    }
+
+    function validNewDeposit(id) {
+      let d = request.resource.data;
+      let key = d.method + '_' + d.reference;
+      let ref = depositRefDoc(key);
+      return exactKeys(['user_id', 'amount', 'method', 'reference', 'sender_phone', 'status',
+                        'admin_note', 'created_at', 'updated_at'])
+        && d.user_id == me() && d.status == 'pending' && d.admin_note == null
+        && d.amount is int && d.amount >= 50 && d.amount <= 100000
+        && d.method in ['moncash', 'natcash']
+        && d.reference is string && d.reference.matches('^[A-Z0-9-]{4,40}$')
+        && optString(d.sender_phone, 20)
+        && d.created_at == request.time && d.updated_at == request.time
+        && !exists(ref) && getAfter(ref).data.deposit_id == id;
+    }
+
+    function validDepositReview() {
+      let before = resource.data;
+      let after = request.resource.data;
+      let u = userDoc(before.user_id);
+      return changedOnly(['status', 'admin_note', 'updated_at'])
+        && before.status == 'pending'
+        && after.status in ['completed', 'refused']
+        && after.updated_at == request.time
+        && optString(after.admin_note, 300)
+        && (after.status != 'completed' || getAfter(u).data.balance == get(u).data.balance + before.amount);
+    }
+
+    // Yon nimewo tranzaksyon MonCash/NatCash ka sèvi yon sèl fwa
+    match /depositRefs/{key} {
+      allow get: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['deposit_id', 'user_id'])
+        && request.resource.data.user_id == me()
+        && depositRefOk(key, getAfter(depositDoc(request.resource.data.deposit_id)).data);
+    }
+
+    function depositRefOk(key, d) {
+      return d.user_id == me() && key == d.method + '_' + d.reference;
+    }
+
+    // ---------- Transfè yo ----------
+    match /transfers/{id} {
+      allow read: if signedIn() && (resource.data.from_user == me() || resource.data.to_user == me() || isAdmin());
+      allow create: if signedIn() && validNewTransfer();
+    }
+
+    function validNewTransfer() {
+      let d = request.resource.data;
+      let from = userDoc(me());
+      let to = userDoc(d.to_user);
+      return exactKeys(['from_user', 'to_user', 'from_code', 'to_code', 'amount', 'created_at'])
+        && d.from_user == me()
+        && d.to_user is string && d.to_user != me()
+        && d.amount is int && d.amount >= 10
+        && d.created_at == request.time
+        && d.from_code == get(from).data.wallet_code
+        && d.to_code == get(to).data.wallet_code
+        && getAfter(from).data.balance == get(from).data.balance - d.amount
+        && getAfter(to).data.balance == get(to).data.balance + d.amount;
+    }
+
+    // ---------- Notifikasyon ----------
+    function validNotification() {
+      let d = request.resource.data;
+      return exactKeys(['kind', 'title', 'body', 'ref', 'read_at', 'created_at'])
+        && d.kind in ['order', 'deposit', 'transfer', 'info']
+        && d.title is string && d.title.size() <= 120
+        && optString(d.body, 400)
+        && optString(d.ref, 100)
+        && d.read_at == null
+        && d.created_at == request.time;
+    }
+
+    // Moun k ap voye kòb la ka avèti moun k ap resevwa a, nan menm operasyon an
+    function transferNotificationOk(uid) {
+      let path = transferDoc(request.resource.data.ref);
+      return request.resource.data.kind == 'transfer'
+        && !exists(path)
+        && getAfter(path).data.to_user == uid
+        && getAfter(path).data.from_user == me();
+    }
+  }
+}

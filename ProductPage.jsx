@@ -4,7 +4,7 @@ import {
   ShieldCheck, Wallet, Plus, Loader2, AlertTriangle, LogIn,
 } from "lucide-react";
 import { PAYMENT_METHODS } from "./data.js";
-import { supabase, errorText } from "./supabase.js";
+import { backend, errorText } from "./backend.js";
 import { Sheet, StepCard, ProductArt, GemIcon, WhatsAppIcon, ErrorNote, formatPrice, packageName, waLink } from "./ui.jsx";
 import { loadPlayerId, savePlayerId, newOrderId, orderMessage } from "./orders.js";
 
@@ -97,7 +97,7 @@ function withLivePrices(groups, prices) {
 }
 
 export default function ProductPage({ product, account, onBack, onOrder, onLogin, onDeposit, onViewOrders }) {
-  const backend = account.enabled;
+  const walletMode = account.enabled; // kont + Wallet (Firebase) olye WhatsApp
   const groups = withLivePrices(product.groups || [], account.prices);
   const [playerId, setPlayerId] = useState(() => (product.playerId ? loadPlayerId() : ""));
   const [showIdHelp, setShowIdHelp] = useState(false);
@@ -126,11 +126,11 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
   if (!item) action = { text: "Chwazi yon pake", run: null };
   else if (idMissing) action = { text: "Mete Player ID ou", run: null };
   else if (idError) action = { text: "Korije Player ID a", run: null };
-  else if (backend && !loggedIn) action = { text: "Konekte pou achte", icon: LogIn, run: () => onLogin("login") };
-  else if (backend && missing > 0) action = { text: "Ajouter de l'argent", icon: Plus, run: onDeposit };
+  else if (walletMode && !loggedIn) action = { text: "Konekte pou achte", icon: LogIn, run: () => onLogin("login") };
+  else if (walletMode && missing > 0) action = { text: "Ajouter de l'argent", icon: Plus, run: onDeposit };
 
   // Mòd WhatsApp (pa gen baz done)
-  const waOrder = !backend && item && orderId && {
+  const waOrder = !walletMode && item && orderId && {
     id: orderId,
     productId: product.id,
     product: product.name,
@@ -152,12 +152,15 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
   const placeOrder = async () => {
     setBusy(true);
     setError("");
-    const { data, error: err } = await supabase.rpc("place_order", { p_package_id: item.id, p_player_id: id || null });
-    setBusy(false);
-    if (err) return setError(errorText(err));
-    if (id) savePlayerId(id);
-    setPlaced(data);
-    account.reload();
+    try {
+      const order = await backend.placeOrder(item.id, id || null);
+      if (id) savePlayerId(id);
+      setPlaced(order);
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const closeConfirm = () => {
@@ -166,7 +169,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
     setError("");
   };
 
-  const confirmFooter = backend ? (
+  const confirmFooter = walletMode ? (
     placed ? null : (
       <button
         type="button"
@@ -301,8 +304,8 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
             </div>
           </StepCard>
 
-          <StepCard step={product.playerId ? 3 : 2} title={backend ? "Paiement" : "Mode de paiement"}>
-            {backend ? (
+          <StepCard step={product.playerId ? 3 : 2} title={walletMode ? "Paiement" : "Mode de paiement"}>
+            {walletMode ? (
               loggedIn ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 rounded-2xl border-2 border-sky-500 bg-sky-50 p-3 dark:bg-sky-500/10">
@@ -421,7 +424,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                 <dl className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
                   <SummaryRow icon={Package} label="Produit">{product.name}</SummaryRow>
                   {id && <SummaryRow icon={User} label="Player ID"><span className="tabular-nums">{id}</span></SummaryRow>}
-                  {backend ? (
+                  {walletMode ? (
                     <>
                       <SummaryRow icon={CreditCard} label="Paiement">Solde</SummaryRow>
                       <SummaryRow icon={Wallet} label="Solde apre acha">
@@ -439,7 +442,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                     </>
                   )}
                 </dl>
-                {backend ? (
+                {walletMode ? (
                   <ErrorNote>{error}</ErrorNote>
                 ) : (
                   <p className="mt-2 flex gap-3 rounded-2xl bg-sky-50 p-3.5 text-sm text-sky-900 dark:bg-sky-500/10 dark:text-sky-100">

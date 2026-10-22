@@ -30,17 +30,8 @@ import bannerPeman from "./img/banners/peman.jpg";
 import bannerSipo from "./img/banners/sipo.jpg";
 
 /* ============ KONFIGIRASYON ============ */
-// Mete nimewo WhatsApp la ak kòd peyi a, san "+" ni espas (egzanp: "50937000000").
-export const WHATSAPP_NUMBER = "";
-// Lyen videyo tutoriel la (YouTube, TikTok…). Kite l vid si l poko pare.
-export const VIDEO_TUTORIAL_URL = "";
-
-// Baz done Supabase (Project Settings → API). Si yo vid, sit la mache an mòd
-// WhatsApp sèlman: pa gen kont, pa gen Wallet.
-export const SUPABASE_URL = "";
-export const SUPABASE_ANON_KEY = "";
-// Mete true lè w fin aktive Google nan Supabase (Authentication → Providers → Google)
-export const GOOGLE_LOGIN = false;
+// Nimewo WhatsApp, videyo tutoriel ak kle Firebase yo nan config.js
+export { WHATSAPP_NUMBER, VIDEO_TUTORIAL_URL, GOOGLE_LOGIN } from "./config.js";
 
 // Rang kliyan yo selon kantite kòb yo depanse (an goud)
 export const RANKS = [
@@ -68,8 +59,8 @@ export const PAYMENT_METHODS = [
 //   - style "deal": kat abònman / pas, ak yon ikòn
 // `playerId: true` mande kliyan an Player ID (UID) li; `needsId: true` sou yon pake
 // fè ID a obligatwa pou pake sa a.
-// `id` yon pake dwe menm ak `id` li nan tab `packages` Supabase la (supabase/schema.sql):
-// lè baz done a konekte, se pri ki nan baz done a ki konte.
+// `id` yon pake dwe menm ak `id` li nan koleksyon `packages` Firebase la: lè baz done a
+// konekte, se pri ki nan baz done a ki konte (Panneau admin → Pri pou ajoute/chanje yo).
 export const CATEGORIES = ["Tout", "Jwèt", "Abònman", "Gift Card", "Finans"];
 
 // Seksyon paj akèy la, nan lòd sa a. `tagline` parèt anba non pwodwi ki poko gen pri

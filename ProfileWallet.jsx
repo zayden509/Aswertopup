@@ -31,7 +31,7 @@ export default function ProfileWallet({ account, onDeposit, onTransfer, onOpenOr
   const [hidden, toggleHidden] = useHiddenBalance();
   const [refreshing, setRefreshing] = useState(false);
   const profile = account.profile;
-  if (!profile) return null;
+  if (!profile || !account.user) return null;
 
   const refresh = async () => {
     setRefreshing(true);

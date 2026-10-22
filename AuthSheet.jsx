@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { UserRound, Mail, Lock, User, Loader2, CheckCircle2 } from "lucide-react";
 import { GOOGLE_LOGIN } from "./data.js";
-import { supabase, errorText } from "./supabase.js";
+import { backend, errorText } from "./backend.js";
 import { Sheet } from "./ui.jsx";
 
 const TITLES = { login: "Konekte", signup: "Kreye yon kont", reset: "Modpas bliye" };
@@ -29,56 +29,6 @@ function GoogleIcon() {
   );
 }
 
-// Lè kliyan an peze lyen "modpas bliye" a nan imèl li, li tounen sou sit la
-// konekte, epi li chwazi yon nouvo modpas isit la.
-export function NewPasswordSheet({ onClose }) {
-  const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
-
-  const submit = async (e) => {
-    e.preventDefault();
-    setBusy(true);
-    setError("");
-    const { error: err } = await supabase.auth.updateUser({ password });
-    setBusy(false);
-    if (err) setError(errorText(err));
-    else setDone(true);
-  };
-
-  return (
-    <Sheet open onClose={onClose} title="Nouvo modpas" icon={<Lock className="h-6 w-6" />}>
-      {done ? (
-        <div className="py-4 text-center">
-          <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" />
-          <p className="mt-3 text-slate-600 dark:text-slate-300">Modpas ou chanje.</p>
-          <button type="button" onClick={onClose} className="mt-5 rounded-2xl bg-sky-500 px-6 py-3 font-bold text-white hover:bg-sky-600">Fini</button>
-        </div>
-      ) : (
-        <form onSubmit={submit} className="space-y-4">
-          <Field
-            id="new-password"
-            label="Nouvo modpas"
-            icon={Lock}
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-            placeholder="Omwen 6 karaktè"
-          />
-          {error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-500/10 dark:text-red-300" role="alert">{error}</p>}
-          <button type="submit" disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white hover:bg-sky-600 disabled:opacity-60">
-            {busy && <Loader2 className="h-5 w-5 animate-spin" />} Chanje modpas la
-          </button>
-        </form>
-      )}
-    </Sheet>
-  );
-}
-
 export default function AuthSheet({ initialMode = "login", onClose }) {
   const [mode, setMode] = useState(initialMode);
   const [name, setName] = useState("");
@@ -100,22 +50,14 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
     setError("");
     try {
       if (mode === "login") {
-        const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-        if (err) throw err;
+        await backend.signIn(email, password);
         onClose();
       } else if (mode === "signup") {
-        const { data, error: err } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-          options: { data: { full_name: name.trim() }, emailRedirectTo: window.location.origin },
-        });
-        if (err) throw err;
-        if (data.session) onClose();
-        else setDone("Kont ou kreye! Nou voye yon imèl ba ou: peze lyen ki ladan l lan pou konfime kont ou, epi konekte.");
+        await backend.signUp(name, email, password);
+        onClose();
       } else {
-        const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin });
-        if (err) throw err;
-        setDone("Si gen yon kont ak imèl sa a, ou pral resevwa yon lyen pou chanje modpas ou.");
+        await backend.resetPassword(email);
+        setDone("Si gen yon kont ak imèl sa a, ou pral resevwa yon imèl pou chanje modpas ou. Gade nan Spam tou.");
       }
     } catch (err) {
       setError(errorText(err));
@@ -124,7 +66,15 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
     }
   };
 
-  const google = () => supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
+  const google = async () => {
+    setError("");
+    try {
+      await backend.googleSignIn();
+      onClose();
+    } catch (err) {
+      setError(errorText(err));
+    }
+  };
 
   return (
     <Sheet open onClose={onClose} title={TITLES[mode]} icon={<UserRound className="h-6 w-6" />}>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Plus, Send, ChevronRight, ChevronLeft, BookOpen, Copy, CheckCircle2, Loader2, Hash, Phone, Banknote, UserRound, AlertTriangle } from "lucide-react";
 import { PAYMENT_METHODS, VIDEO_TUTORIAL_URL } from "./data.js";
-import { supabase, errorText } from "./supabase.js";
+import { backend, errorText } from "./backend.js";
 import { Sheet, ErrorNote, waLink, openExternal, formatPrice, copyText } from "./ui.jsx";
 
 function Input({ id, label, icon: Icon, hint, ...props }) {
@@ -89,15 +89,13 @@ export function DepositSheet({ onClose, onToast }) {
     e.preventDefault();
     setBusy(true);
     setError("");
-    const { data, error: err } = await supabase.rpc("request_deposit", {
-      p_amount: Number(amount),
-      p_method: method.id,
-      p_reference: reference,
-      p_sender_phone: phone || null,
-    });
-    setBusy(false);
-    if (err) setError(errorText(err));
-    else setSent(data);
+    try {
+      setSent(await backend.requestDeposit({ amount, method: method.id, reference, senderPhone: phone }));
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -143,7 +141,7 @@ export function DepositSheet({ onClose, onToast }) {
           </div>
 
           <p className="font-bold text-slate-900 dark:text-white">2. Mete enfòmasyon tranzaksyon an</p>
-          <Input id="deposit-amount" label="Montan ou voye a (HTG)" icon={Banknote} inputMode="decimal" type="number" min="50" max="100000" step="any" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Ex: 1000" />
+          <Input id="deposit-amount" label="Montan ou voye a (HTG)" icon={Banknote} inputMode="numeric" type="number" min="50" max="100000" step="1" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Ex: 1000" />
           <Input
             id="deposit-reference"
             label="ID tranzaksyon an"
@@ -182,23 +180,26 @@ export function TransferSheet({ profile, onClose }) {
     setRecipient(null);
     if (code.length !== 8) return;
     let stale = false;
-    supabase.rpc("lookup_wallet", { p_code: code }).then(({ data }) => {
-      if (!stale) setRecipient(data ? { name: data } : { missing: true });
-    });
+    backend.lookupWallet(code).then(
+      (name) => !stale && setRecipient(name ? { name } : { missing: true }),
+      () => !stale && setRecipient({ missing: true }),
+    );
     return () => { stale = true; };
   }, [code]);
 
-  const canSend = recipient?.name && code !== profile?.wallet_code && value >= 10 && value <= balance;
+  const canSend = recipient?.name && code !== profile?.wallet_code && Number.isInteger(value) && value >= 10 && value <= balance;
 
   const send = async () => {
     setBusy(true);
     setError("");
-    const { data, error: err } = await supabase.rpc("transfer_funds", { p_to_code: code, p_amount: value });
-    setBusy(false);
-    if (err) {
+    try {
+      setSent(await backend.transferFunds(code, value));
+    } catch (err) {
       setError(errorText(err));
       setConfirming(false);
-    } else setSent(data);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -248,10 +249,10 @@ export function TransferSheet({ profile, onClose }) {
             id="transfer-amount"
             label="Montan (HTG)"
             icon={Banknote}
-            inputMode="decimal"
+            inputMode="numeric"
             type="number"
             min="10"
-            step="any"
+            step="1"
             required
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
