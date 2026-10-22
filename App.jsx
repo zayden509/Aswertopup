@@ -9,6 +9,7 @@ import PaymentPage from "./PaymentPage.jsx";
 import HistoryPage, { OrderSheet } from "./HistoryPage.jsx";
 import WalletPage from "./WalletPage.jsx";
 import SettingsPage from "./SettingsPage.jsx";
+import { initials } from "./ProfileWallet.jsx";
 import AdminPage from "./AdminPage.jsx";
 import AuthSheet, { NewPasswordSheet } from "./AuthSheet.jsx";
 import { DepositSheet, TransferSheet } from "./WalletSheets.jsx";
@@ -387,9 +388,20 @@ export default function App() {
                 </span>
               )}
             </IconButton>
-            <IconButton label="Paramèt" onClick={() => goToTab("settings")}>
-              <Settings className="h-6 w-6" />
-            </IconButton>
+            {account.profile ? (
+              <button
+                type="button"
+                onClick={() => goToTab("settings")}
+                aria-label="Mon profil"
+                className="ml-1 grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 text-sm font-extrabold text-white ring-2 ring-white transition active:scale-95 dark:ring-slate-800"
+              >
+                {initials(account.profile)}
+              </button>
+            ) : (
+              <IconButton label="Paramèt" onClick={() => goToTab("settings")}>
+                <Settings className="h-6 w-6" />
+              </IconButton>
+            )}
           </div>
         </div>
       </header>
@@ -479,6 +491,10 @@ export default function App() {
             onAdmin={() => setTab("admin")}
             onToast={setToast}
             installPrompt={installPrompt}
+            onDeposit={startDeposit}
+            onTransfer={() => setPanel("transfer")}
+            onOpenOrder={(o) => setOpenOrderId(o.id)}
+            onSeeWallet={() => setTab("wallet")}
           />
         )}
         {!product && tab === "admin" && account.profile?.is_admin && <AdminPage onBack={() => setTab("settings")} onToast={setToast} />}

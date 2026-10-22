@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Award, Mail, Wallet, Copy, Smartphone, Moon, Sun, ShieldCheck, LogOut, ChevronRight, Settings, Share, MoreVertical } from "lucide-react";
+import { Award, Mail, Copy, Smartphone, Moon, Sun, ShieldCheck, LogOut, ChevronRight, Settings, Share, MoreVertical } from "lucide-react";
 import { RANKS } from "./data.js";
 import { WhatsAppIcon, waLink, formatPrice, formatDate, copyText } from "./ui.jsx";
 import { LoginPrompt } from "./WalletPage.jsx";
+import ProfileWallet, { initials } from "./ProfileWallet.jsx";
 
 export function rankInfo(spent) {
   const current = [...RANKS].reverse().find((r) => spent >= r.min) || null;
@@ -37,7 +38,7 @@ function Row({ icon: Icon, label, value, onClick, href, danger }) {
   );
 }
 
-export default function SettingsPage({ account, dark, onToggleTheme, onLogin, onAdmin, onToast, installPrompt }) {
+export default function SettingsPage({ account, dark, onToggleTheme, onLogin, onAdmin, onToast, installPrompt, onDeposit, onTransfer, onOpenOrder, onSeeWallet }) {
   const [showInstall, setShowInstall] = useState(false);
   const profile = account.profile;
   const spent = Number(profile?.total_spent || 0);
@@ -50,7 +51,22 @@ export default function SettingsPage({ account, dark, onToggleTheme, onLogin, on
 
   return (
     <div className="space-y-6">
-      <h1 className="flex items-center gap-3 text-3xl font-extrabold tracking-tight"><Settings className="h-7 w-7 text-slate-400" /> Paramètres</h1>
+      {profile ? (
+        <div className="flex items-center gap-4">
+          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 text-xl font-extrabold text-white shadow-lg shadow-sky-500/20 ring-4 ring-white dark:ring-slate-900">
+            {initials(profile)}
+          </span>
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-extrabold tracking-tight">{profile.full_name || "Mon profil"}</h1>
+            <p className="truncate text-slate-500 dark:text-slate-400">{profile.email}</p>
+            <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-bold text-violet-600 dark:bg-violet-500/10 dark:text-violet-300">
+              {rank.current ? `${rank.current.emoji} ${rank.current.name}` : "Nouveau membre"}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <h1 className="flex items-center gap-3 text-3xl font-extrabold tracking-tight"><Settings className="h-7 w-7 text-slate-400" /> Paramètres</h1>
+      )}
 
       {account.enabled && !account.user && (
         <LoginPrompt title="Kont ou" text="Konekte pou w wè rang ou, solde ou ak tout kòmand ou yo." onLogin={onLogin} />
@@ -58,6 +74,15 @@ export default function SettingsPage({ account, dark, onToggleTheme, onLogin, on
 
       {profile && (
         <>
+          <ProfileWallet
+            account={account}
+            onDeposit={onDeposit}
+            onTransfer={onTransfer}
+            onOpenOrder={onOpenOrder}
+            onSeeAll={onSeeWallet}
+            onToast={onToast}
+          />
+
           <section className="rounded-3xl bg-slate-50 p-5 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
             <div className="flex items-center gap-4">
               <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-white text-3xl ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
@@ -87,7 +112,6 @@ export default function SettingsPage({ account, dark, onToggleTheme, onLogin, on
 
           <Section title="Mon compte">
             <Row icon={Mail} label="Adresse email" value={profile.email} />
-            <Row icon={Wallet} label="Solde du compte" value={<span className="text-sky-500">{formatPrice(Number(profile.balance))}</span>} />
             <Row icon={Copy} label="ASWER-ID" value={<span className="font-mono tracking-wider">{profile.wallet_code}</span>} onClick={() => copyText(profile.wallet_code, onToast)} />
             <Row icon={Award} label="Manm depi" value={formatDate(profile.created_at)} />
           </Section>

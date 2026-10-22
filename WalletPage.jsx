@@ -12,8 +12,22 @@ const FILTERS = [
 ];
 const DONE = { label: "Complété", className: DEPOSIT_STATUS.completed.className };
 
+// Kache/montre solde a; chwa a pataje ant Wallet la ak Profil la
+export function useHiddenBalance() {
+  const [hidden, setHidden] = useState(() => {
+    try { return localStorage.getItem(HIDE_KEY) === "1"; } catch { return false; }
+  });
+  const toggle = () => {
+    setHidden((h) => {
+      try { localStorage.setItem(HIDE_KEY, h ? "0" : "1"); } catch {}
+      return !h;
+    });
+  };
+  return [hidden, toggle];
+}
+
 // Mete kòmand, depo ak transfè yo nan yon sèl lis, pi resan an anwo
-function buildTransactions({ orders, deposits, transfers, user }) {
+export function buildTransactions({ orders, deposits, transfers, user }) {
   const rows = [
     ...orders.map((o) => ({
       kind: "order", key: `o-${o.id}`, date: o.created_at, raw: o,
@@ -44,6 +58,29 @@ function TxIcon({ row }) {
   return <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${cls}`}><Icon className="h-5 w-5" /></span>;
 }
 
+// Yon liy tranzaksyon; yon acha louvri detay kòmand lan
+export function TxRow({ row: r, onOpenOrder }) {
+  const Tag = r.kind === "order" ? "button" : "div";
+  return (
+    <Tag
+      {...(r.kind === "order" && { type: "button", onClick: () => onOpenOrder(r.raw) })}
+      className="flex w-full items-center gap-3 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800"
+    >
+      <TxIcon row={r} />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-semibold text-slate-900 dark:text-white">{r.title}</span>
+        <span className="block text-sm text-slate-500 dark:text-slate-400">{formatDate(r.date)}</span>
+      </span>
+      <span className="shrink-0 text-right">
+        <span className={`block font-bold tabular-nums ${r.amount < 0 ? "text-orange-500" : "text-emerald-500"}`}>
+          {r.amount < 0 ? "−" : "+"}{formatPrice(Math.abs(r.amount))}
+        </span>
+        <span className="block text-xs text-slate-500 dark:text-slate-400">{r.status.label}</span>
+      </span>
+    </Tag>
+  );
+}
+
 export function LoginPrompt({ title, text, onLogin, icon: Icon = Wallet }) {
   return (
     <div className="rounded-3xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
@@ -65,9 +102,7 @@ export function LoginPrompt({ title, text, onLogin, icon: Icon = Wallet }) {
 }
 
 export default function WalletPage({ account, onLogin, onDeposit, onTransfer, onOpenOrder, onToast }) {
-  const [hidden, setHidden] = useState(() => {
-    try { return localStorage.getItem(HIDE_KEY) === "1"; } catch { return false; }
-  });
+  const [hidden, toggleHidden] = useHiddenBalance();
   const [filter, setFilter] = useState("all");
 
   if (!account.user) {
@@ -86,12 +121,6 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
   }
 
   const profile = account.profile;
-  const toggleHidden = () => {
-    setHidden((h) => {
-      try { localStorage.setItem(HIDE_KEY, h ? "0" : "1"); } catch {}
-      return !h;
-    });
-  };
 
   const rows = buildTransactions(account);
   const visible = filter === "all" ? rows : rows.filter((r) => r.kind === filter);
@@ -185,29 +214,9 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
           </p>
         ) : (
           <ul className="mt-4 space-y-3">
-            {visible.map((r) => {
-              const Row = r.kind === "order" ? "button" : "div";
-              return (
-                <li key={r.key}>
-                  <Row
-                    {...(r.kind === "order" && { type: "button", onClick: () => onOpenOrder(r.raw) })}
-                    className="flex w-full items-center gap-3 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800"
-                  >
-                    <TxIcon row={r} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold text-slate-900 dark:text-white">{r.title}</span>
-                      <span className="block text-sm text-slate-500 dark:text-slate-400">{formatDate(r.date)}</span>
-                    </span>
-                    <span className="shrink-0 text-right">
-                      <span className={`block font-bold tabular-nums ${r.amount < 0 ? "text-orange-500" : "text-emerald-500"}`}>
-                        {r.amount < 0 ? "−" : "+"}{formatPrice(Math.abs(r.amount))}
-                      </span>
-                      <span className="block text-xs text-slate-500 dark:text-slate-400">{r.status.label}</span>
-                    </span>
-                  </Row>
-                </li>
-              );
-            })}
+            {visible.map((r) => (
+              <li key={r.key}><TxRow row={r} onOpenOrder={onOpenOrder} /></li>
+            ))}
           </ul>
         )}
       </section>
