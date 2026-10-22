@@ -160,6 +160,33 @@ export function ProductCard({ product: p, prices, onOpen }) {
   );
 }
 
+// Kat kare pou ranje ki defile sou paj akèy la: foto anlè, non ak pri anba
+export function ProductTile({ product: p, prices, tagline, onOpen }) {
+  const from = minPrice(p, prices);
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(p)}
+      className="group w-[44%] shrink-0 snap-start overflow-hidden rounded-3xl bg-white text-left shadow-sm ring-1 ring-slate-200 transition active:scale-[.98] dark:bg-slate-900 dark:ring-slate-800 sm:w-[30%]"
+    >
+      <span className="relative block aspect-square">
+        <ProductArt product={p} className="absolute inset-0" />
+        {p.isNew && (
+          <span className="absolute left-2.5 top-2.5 rounded-full bg-emerald-300 px-2.5 py-0.5 text-[10px] font-extrabold tracking-[.12em] text-emerald-950 shadow">
+            NOUVEAU
+          </span>
+        )}
+      </span>
+      <span className="block px-3.5 pb-3.5 pt-3">
+        <span className="block truncate font-semibold text-slate-900 dark:text-white">{p.name}</span>
+        <span className="mt-0.5 block truncate text-sm font-medium text-sky-500">
+          {from != null ? `Dès ${formatPrice(from)}` : p.tagline || tagline}
+        </span>
+      </span>
+    </button>
+  );
+}
+
 // Kat ak tit nimewote pou etap paj acha a
 export function StepCard({ step, title, children }) {
   return (

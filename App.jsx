@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Moon, Sun, Bell, Settings, Search, Home, ShoppingCart, Tag, History, Wallet } from "lucide-react";
-import { PRODUCTS, CATEGORIES, SLIDES, NOTIFICATIONS, VIDEO_TUTORIAL_URL } from "./data.js";
-import { waLink, openExternal, Logo, WhatsAppIcon, IconButton, ProductCard } from "./ui.jsx";
+import { Moon, Sun, Bell, Settings, Search, Home, ShoppingCart, Tag, History, Wallet, ArrowRight } from "lucide-react";
+import { PRODUCTS, CATEGORIES, HOME_SECTIONS, SLIDES, NOTIFICATIONS, VIDEO_TUTORIAL_URL } from "./data.js";
+import { waLink, openExternal, Logo, WhatsAppIcon, IconButton, ProductCard, ProductTile } from "./ui.jsx";
 import { loadOrders, saveOrder } from "./orders.js";
 import { useAccount } from "./account.js";
 import ProductPage from "./ProductPage.jsx";
@@ -119,6 +119,33 @@ function ProductGrid({ products, prices, onOpen }) {
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
       {products.map((p) => <ProductCard key={p.id} product={p} prices={prices} onOpen={onOpen} />)}
     </div>
+  );
+}
+
+// Yon seksyon paj akèy: tit nan mitan, "Voir tout", ak yon ranje ki defile sou kote
+function ProductRail({ section, prices, onOpen, onSeeAll }) {
+  const products = PRODUCTS.filter((p) => p.category === section.category);
+  if (products.length === 0) return null;
+  return (
+    <section className="mt-9" aria-label={section.title}>
+      <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <span />
+        <div className="text-center">
+          <h2 className="text-[22px] font-extrabold tracking-tight text-sky-500 [text-wrap:balance]">{section.title}</h2>
+          <span className="mx-auto mt-2 block h-1 w-12 rounded-full bg-sky-500/60" />
+        </div>
+        <button
+          type="button"
+          onClick={() => onSeeAll(section.category)}
+          className="flex items-center gap-1 justify-self-end whitespace-nowrap text-sm font-semibold text-sky-500 hover:text-sky-600"
+        >
+          Voir tout <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2">
+        {products.map((p) => <ProductTile key={p.id} product={p} prices={prices} tagline={section.tagline} onOpen={onOpen} />)}
+      </div>
+    </section>
   );
 }
 
@@ -259,6 +286,10 @@ export default function App() {
     setToast(`Kòmand ${order.id} anrejistre nan Historique.`);
   };
   const needLogin = (mode = "login") => setAuth(mode);
+  const seeAll = (cat) => {
+    setCategory(cat);
+    setTab("shop");
+  };
   const startDeposit = () => (signedIn ? setPanel("deposit") : needLogin("login"));
 
   // Ouvri sa yon notifikasyon pale de li: kòmand lan, oswa Wallet la
@@ -342,9 +373,19 @@ export default function App() {
         {!product && tab === "home" && (
           <>
             <SearchBar value={query} onChange={setQuery} placeholder="Rechercher un jeu..." />
-            {!q && <div className="mt-5"><Carousel onAction={handleSlideAction} /></div>}
-            <h2 className="mb-4 mt-7 text-2xl font-extrabold tracking-tight">Produits Disponibles</h2>
-            <ProductGrid products={filtered} prices={account.prices} onOpen={openProduct} />
+            {q ? (
+              <>
+                <h2 className="mb-4 mt-7 text-2xl font-extrabold tracking-tight">Résultats</h2>
+                <ProductGrid products={filtered} prices={account.prices} onOpen={openProduct} />
+              </>
+            ) : (
+              <>
+                <div className="mt-5"><Carousel onAction={handleSlideAction} /></div>
+                {HOME_SECTIONS.map((s) => (
+                  <ProductRail key={s.category} section={s} prices={account.prices} onOpen={openProduct} onSeeAll={seeAll} />
+                ))}
+              </>
+            )}
           </>
         )}
 

@@ -72,6 +72,15 @@ export const PAYMENT_METHODS = [
 // lè baz done a konekte, se pri ki nan baz done a ki konte.
 export const CATEGORIES = ["Tout", "Jwèt", "Abònman", "Gift Card", "Finans"];
 
+// Seksyon paj akèy la, nan lòd sa a. `tagline` parèt anba non pwodwi ki poko gen pri
+// (yon pwodwi ka gen pwòp `tagline` pa l).
+export const HOME_SECTIONS = [
+  { category: "Jwèt", title: "Recharge de Jeux", tagline: "Recharge" },
+  { category: "Abònman", title: "Abonnements", tagline: "Premium" },
+  { category: "Gift Card", title: "Cartes Cadeaux", tagline: "Carte cadeau" },
+  { category: "Finans", title: "Services Financiers", tagline: "Transfert" },
+];
+
 const FREE_FIRE_ID_HELP = "Louvri Free Fire epi peze foto pwofil ou anwo agoch. UID ou se nimewo ki anba non ou a.";
 
 const FREE_FIRE_DIAMANTS = {
@@ -118,7 +127,7 @@ export const PRODUCTS = [
     playerIdHelp: FREE_FIRE_ID_HELP,
     groups: [FREE_FIRE_ABONNEMENT],
   },
-  { id: "starlink", name: "STARLINK", category: "Abònman", isNew: true, Icon: Satellite, gradient: "from-slate-800 via-indigo-950 to-black" },
+  { id: "starlink", name: "STARLINK", category: "Abònman", tagline: "Abonnement", isNew: true, Icon: Satellite, gradient: "from-slate-800 via-indigo-950 to-black" },
   { id: "pubg", name: "PUBG Mobile", category: "Jwèt", image: pubgImg },
   { id: "codm", name: "Call of Duty Mobile", category: "Jwèt", Icon: Target, gradient: "from-zinc-600 via-zinc-800 to-black" },
   { id: "blood-strike", name: "Blood Strike", category: "Jwèt", image: bloodStrikeImg },
@@ -128,7 +137,7 @@ export const PRODUCTS = [
   { id: "spotify", name: "Spotify", category: "Abònman", Icon: Music, gradient: "from-green-400 via-emerald-600 to-slate-900" },
   { id: "google-play", name: "Google Play", category: "Gift Card", Icon: Play, gradient: "from-emerald-400 via-sky-500 to-indigo-600" },
   { id: "app-store", name: "App Store & iTunes", category: "Gift Card", image: appStoreImg, bg: "#ffffff" },
-  { id: "tiktok", name: "TikTok Coins", category: "Gift Card", Icon: Coins, gradient: "from-cyan-400 via-slate-900 to-pink-500" },
+  { id: "tiktok", name: "TikTok Coins", category: "Gift Card", tagline: "Coins", Icon: Coins, gradient: "from-cyan-400 via-slate-900 to-pink-500" },
   { id: "efootball", name: "eFootball", category: "Jwèt", image: efootballImg },
   { id: "fc-mobile", name: "EA FC Mobile", category: "Jwèt", image: fcMobileImg },
   { id: "dls", name: "Dream League Soccer", category: "Jwèt", image: dlsImg },
@@ -139,10 +148,10 @@ export const PRODUCTS = [
   { id: "nintendo", name: "Nintendo Gift Card", category: "Gift Card", image: nintendoImg, bg: "#e70012" },
   { id: "playstation", name: "PlayStation Gift Card", category: "Gift Card", image: playstationImg, bg: "#094591" },
   { id: "xbox", name: "Xbox Gift Card", category: "Gift Card", image: xboxImg, bg: "#107b10" },
-  { id: "cash-app", name: "Cash App", category: "Finans", image: cashAppImg, bg: "#ffffff" },
-  { id: "binance", name: "Binance Pay", category: "Finans", image: binanceImg, bg: "#151a1d" },
-  { id: "wise", name: "Wise", category: "Finans", image: wiseImg, bg: "#9ee86f" },
-  { id: "meru", name: "Meru", category: "Finans", image: meruImg, bg: "#ffffff" },
+  { id: "cash-app", name: "Cash App", category: "Finans", tagline: "Recharge", image: cashAppImg, bg: "#ffffff" },
+  { id: "binance", name: "Binance Pay", category: "Finans", tagline: "Recharge", image: binanceImg, bg: "#151a1d" },
+  { id: "wise", name: "Wise", category: "Finans", tagline: "Transfert", image: wiseImg, bg: "#9ee86f" },
+  { id: "meru", name: "Meru", category: "Finans", tagline: "Transfert", image: meruImg, bg: "#ffffff" },
 ];
 
 /* ============ BANYE (KAROUSÈL) ============ */
