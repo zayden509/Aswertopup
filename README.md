@@ -22,7 +22,11 @@ swiv gid [`firebase/README.md`](firebase/README.md) (Firebase, plan gratis la).
 - `PaymentPage.jsx`: paj Wallet la (MonCash, NatCash, tutoriel).
 - `HistoryPage.jsx`: istorik kòmand yo (sove sou telefòn kliyan an).
 - `WalletPage.jsx`, `WalletSheets.jsx`: Wallet la, depo ak transfè (lè baz done a konekte).
-- `SettingsPage.jsx`, `AdminPage.jsx`: Paramètres (rang, kont) ak Panneau admin nan.
+- `SettingsPage.jsx`: Paramètres (rang, kont).
+- `AdminPage.jsx` ak `Admin*.jsx`, `adminUi.jsx`: Panneau admin nan (estatistik, kòmand, depo,
+  kliyan, pwodwi, mesaj, ekip). Li chaje sèlman pou admin yo.
+- `catalog.js`: mete pwodwi ki nan `data.js` ansanm ak sa admin nan kreye yo.
+- `days.js`: jou yo ak lè Ayiti, pou estatistik yo.
 - `AuthSheet.jsx`, `Notifications.jsx`: koneksyon ak notifikasyon yo.
 - `ProfileWallet.jsx`: kat Wallet la nan pwofil la.
 - `account.js`, `backend.js`, `firebase.js`, `errors.js`: koneksyon ak Firebase

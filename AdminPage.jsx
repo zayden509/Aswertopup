@@ -1,27 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, ShieldCheck, Copy, Check, X, Loader2, RefreshCw, PackageCheck, Clock, PackagePlus } from "lucide-react";
-import { PAYMENT_METHODS, PRODUCTS } from "./data.js";
+import {
+  ArrowLeft, ShieldCheck, Crown, Check, X, Loader2, RefreshCw, PackageCheck, Clock, Search,
+  LayoutDashboard, ShoppingBag, ArrowDownLeft, Users, Package, MessageSquareText,
+} from "lucide-react";
+import { PAYMENT_METHODS } from "./data.js";
 import { backend, errorText } from "./backend.js";
-import { StatusChip, ErrorNote, formatPrice, formatDateTime, copyText, packageName, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
+import { StatusChip, ErrorNote, formatPrice, formatDateTime, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
+import { Chips, CopyChip, CustomerLine, Empty, normalize } from "./adminUi.jsx";
+import AdminDashboard from "./AdminDashboard.jsx";
+import AdminCustomers from "./AdminCustomers.jsx";
+import AdminCatalog from "./AdminCatalog.jsx";
+import AdminMessages from "./AdminMessages.jsx";
+import AdminTeam, { isOwner } from "./AdminTeam.jsx";
 
 const TABS = [
-  { id: "orders", label: "Kòmand" },
-  { id: "deposits", label: "Depo" },
-  { id: "prices", label: "Pri" },
+  { id: "dashboard", label: "Tablo", Icon: LayoutDashboard },
+  { id: "orders", label: "Kòmand", Icon: ShoppingBag },
+  { id: "deposits", label: "Depo", Icon: ArrowDownLeft },
+  { id: "customers", label: "Kliyan", Icon: Users },
+  { id: "catalog", label: "Pwodwi", Icon: Package },
+  { id: "messages", label: "Mesaj", Icon: MessageSquareText },
+  { id: "team", label: "Ekip", Icon: ShieldCheck },
 ];
-// Tout pake ki nan data.js, jan yo dwe ye nan baz done a
-const CATALOG = PRODUCTS.flatMap((product) =>
-  (product.groups || []).flatMap((group) => group.items.map((item) => ({ product, item }))),
-)
-  .filter(({ item }, index, all) => all.findIndex((x) => x.item.id === item.id) === index)
-  .map(({ product, item }, sort) => ({
-    id: item.id,
-    product_name: product.name,
-    label: packageName(item),
-    price: item.price,
-    needs_id: Boolean(item.needsId),
-    sort,
-  }));
 
 const ORDER_FILTERS = [
   { id: "open", label: "Pou trete", test: (o) => o.status === "pending" || o.status === "processing" },
@@ -29,23 +29,6 @@ const ORDER_FILTERS = [
   { id: "refused", label: "Refusé", test: (o) => o.status === "refused" },
   { id: "all", label: "Tout", test: () => true },
 ];
-
-function Customer({ profile }) {
-  if (!profile) return null;
-  return (
-    <p className="truncate text-sm text-slate-500 dark:text-slate-400">
-      {profile.full_name ? `${profile.full_name} · ` : ""}{profile.email} · <span className="font-mono">{profile.wallet_code}</span>
-    </p>
-  );
-}
-
-function CopyChip({ label, value, onToast }) {
-  return (
-    <button type="button" onClick={() => copyText(value, onToast)} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-      {label} <span className="font-mono tabular-nums">{value}</span> <Copy className="h-3.5 w-3.5" />
-    </button>
-  );
-}
 
 function OrderCard({ order, profile, onToast }) {
   const [mode, setMode] = useState(null); // "deliver" | "refuse"
@@ -73,7 +56,7 @@ function OrderCard({ order, profile, onToast }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-bold text-slate-900 dark:text-white">{order.product_name} · {order.package_label}</p>
-          <Customer profile={profile} />
+          <CustomerLine profile={profile} />
         </div>
         <StatusChip status={ORDER_STATUS[order.status]} />
       </div>
@@ -164,7 +147,7 @@ function DepositCard({ deposit, profile, onToast }) {
         {method && <img src={method.logo} alt="" className="h-11 w-11 shrink-0 rounded-xl object-cover" />}
         <div className="min-w-0 flex-1">
           <p className="text-xl font-extrabold tabular-nums text-emerald-500">+{formatPrice(Number(deposit.amount))}</p>
-          <Customer profile={profile} />
+          <CustomerLine profile={profile} />
         </div>
         <StatusChip status={DEPOSIT_STATUS[deposit.status]} />
       </div>
@@ -199,77 +182,47 @@ function DepositCard({ deposit, profile, onToast }) {
   );
 }
 
-function PriceRow({ pkg, onToast }) {
-  const [price, setPrice] = useState(String(Number(pkg.price)));
-  const [available, setAvailable] = useState(pkg.available);
-  const [busy, setBusy] = useState(false);
-  const dirty = Number(price) !== Number(pkg.price) || available !== pkg.available;
-
-  const save = async () => {
-    setBusy(true);
-    try {
-      await backend.adminSetPackage(pkg.id, price, available);
-      onToast(`${pkg.label}: ${formatPrice(Number(price))}${available ? "" : " (pa disponib)"}.`);
-    } catch (error) {
-      onToast(errorText(error));
-    } finally {
-      setBusy(false);
-    }
-  };
+function OrdersTab({ orders, profiles, loading, onToast }) {
+  const [filter, setFilter] = useState("open");
+  const [search, setSearch] = useState("");
+  const q = normalize(search.trim());
+  const test = ORDER_FILTERS.find((f) => f.id === filter).test;
+  const list = orders.filter(test).filter((o) => {
+    if (!q) return true;
+    const p = profiles[o.user_id];
+    return normalize(`${o.code} ${o.player_id} ${o.product_name} ${o.package_label} ${p?.email} ${p?.full_name} ${p?.wallet_code}`).includes(q);
+  });
+  const options = ORDER_FILTERS.map((f) => ({ ...f, count: f.id === "open" ? orders.filter(f.test).length : 0 }));
 
   return (
-    <li className="flex flex-wrap items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-      <div className="min-w-0 flex-1 basis-40">
-        <p className="font-semibold text-slate-900 dark:text-white">{pkg.label}</p>
-        <p className="truncate text-xs text-slate-500 dark:text-slate-400">{pkg.product_name}</p>
-      </div>
-      <label className="flex items-center gap-1 rounded-xl border-2 border-slate-200 bg-white px-2 focus-within:border-sky-400 dark:border-slate-700 dark:bg-slate-950">
-        <input
-          id={`price-${pkg.id}`}
-          type="number"
-          inputMode="numeric"
-          min="1"
-          step="1"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          aria-label={`Pri ${pkg.label}`}
-          className="w-20 bg-transparent py-2 text-right font-bold tabular-nums focus:outline-none"
-        />
-        <span className="text-xs font-semibold text-slate-400">HTG</span>
+    <div className="space-y-4">
+      <label className="flex items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 focus-within:border-sky-400 dark:border-slate-800 dark:bg-slate-900">
+        <Search className="h-5 w-5 shrink-0 text-slate-400" />
+        <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Kòd, Player ID, imèl…" className="w-full bg-transparent focus:outline-none" />
       </label>
-      <div className="flex w-full items-center gap-3">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={available}
-          onClick={() => setAvailable((v) => !v)}
-          className="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300"
-        >
-          <span className={`relative h-7 w-12 shrink-0 rounded-full transition ${available ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"}`}>
-            <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${available ? "left-6" : "left-1"}`} />
-          </span>
-          {available ? "Disponib" : "Pa disponib"}
-        </button>
-        <button type="button" disabled={!dirty || busy} onClick={save} className="ml-auto rounded-xl bg-sky-500 px-4 py-2 text-sm font-bold text-white disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sove"}
-        </button>
-      </div>
-    </li>
+      <Chips options={options} value={filter} onChange={setFilter} label="Filtè" />
+      <ul className="space-y-3">
+        {list.map((o) => (
+          <OrderCard key={`${o.id}-${o.status}-${o.updated_at}`} order={o} profile={profiles[o.user_id]} onToast={onToast} />
+        ))}
+      </ul>
+      {!loading && list.length === 0 && <Empty>Pa gen kòmand isit la.</Empty>}
+      {filter !== "open" && <p className="px-1 text-xs text-slate-400">Lis la montre kòmand 31 dènye jou yo.</p>}
+    </div>
   );
 }
 
-export default function AdminPage({ onBack, onToast }) {
-  const [tab, setTab] = useState("orders");
-  const [orderFilter, setOrderFilter] = useState("open");
+export default function AdminPage({ account, onBack, onToast }) {
+  const [tab, setTab] = useState("dashboard");
   const [orders, setOrders] = useState([]);
   const [deposits, setDeposits] = useState([]);
-  const [packages, setPackages] = useState([]);
   const [profiles, setProfiles] = useState({});
+  const [visits, setVisits] = useState({});
+  const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [epoch, setEpoch] = useState(0); // bouton 🔄: rekòmanse koute done yo
-  const [adding, setAdding] = useState(false);
 
-  // Nouvo kòmand ak depo parèt poukont yo, an dirèk
+  // Tout done yo an dirèk: nouvo kòmand ak depo parèt poukont yo
   useEffect(() => {
     setLoading(true);
     return backend.subscribeAdmin({
@@ -278,29 +231,21 @@ export default function AdminPage({ onBack, onToast }) {
         setLoading(false);
       },
       onDeposits: setDeposits,
-      onPackages: setPackages,
       onProfiles: setProfiles,
+      onVisits: setVisits,
+      onAnnouncements: setAnnouncements,
     });
   }, [epoch]);
 
-  const missing = CATALOG.filter((c) => !packages.some((p) => p.id === c.id));
-  const addMissing = async () => {
-    setAdding(true);
-    try {
-      await backend.adminAddPackages(missing);
-      onToast(`${missing.length} pake ajoute nan baz done a.`);
-    } catch (error) {
-      onToast(errorText(error));
-    } finally {
-      setAdding(false);
-    }
-  };
+  useEffect(() => { window.scrollTo({ top: 0 }); }, [tab]);
 
-  const openOrders = orders.filter(ORDER_FILTERS[0].test).length;
-  const pendingDeposits = deposits.filter((d) => d.status === "pending").length;
-  const filterTest = ORDER_FILTERS.find((f) => f.id === orderFilter).test;
+  const me = account.profile;
+  const owner = isOwner(me);
+  const badges = {
+    orders: orders.filter(ORDER_FILTERS[0].test).length,
+    deposits: deposits.filter((d) => d.status === "pending").length,
+  };
   const sortedDeposits = [...deposits].sort((a, b) => (a.status === "pending") === (b.status === "pending") ? 0 : a.status === "pending" ? -1 : 1);
-  const badges = { orders: openOrders, deposits: pendingDeposits };
 
   return (
     <div className="space-y-4">
@@ -308,49 +253,43 @@ export default function AdminPage({ onBack, onToast }) {
         <ArrowLeft className="h-5 w-5" /> Paramètres
       </button>
       <div className="flex items-center justify-between gap-3">
-        <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight"><ShieldCheck className="h-7 w-7 text-emerald-500" /> Panneau admin</h1>
-        <button type="button" onClick={() => setEpoch((e) => e + 1)} aria-label="Rechaje" className="grid h-10 w-10 place-items-center rounded-xl bg-white ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-extrabold tracking-tight">Panneau admin</h1>
+          <p className="mt-0.5 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+            {owner ? <Crown className="h-4 w-4 text-amber-500" /> : <ShieldCheck className="h-4 w-4 text-emerald-500" />}
+            {owner ? "Pwopriyetè" : "Admin"} · {me.full_name || me.email}
+          </p>
+        </div>
+        <button type="button" onClick={() => setEpoch((e) => e + 1)} aria-label="Rechaje" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
           <RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-1 rounded-2xl bg-slate-200/70 p-1 dark:bg-slate-800">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition ${tab === t.id ? "bg-white text-slate-900 shadow-sm dark:bg-slate-950 dark:text-white" : "text-slate-500"}`}
-          >
-            {t.label}
-            {badges[t.id] > 0 && <span className="rounded-full bg-red-500 px-1.5 text-[11px] leading-5 text-white">{badges[t.id]}</span>}
-          </button>
-        ))}
-      </div>
+      <nav className="grid grid-cols-4 gap-2" aria-label="Seksyon admin">
+        {TABS.map((t) => {
+          const active = t.id === tab;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              aria-current={active ? "page" : undefined}
+              className={`relative flex min-w-0 flex-col items-center gap-1 rounded-2xl px-1 py-2.5 text-xs font-bold transition ${
+                active ? "bg-sky-500 text-white shadow-md shadow-sky-500/25" : "bg-white text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800"
+              }`}
+            >
+              <t.Icon className="h-5 w-5" />
+              {t.label}
+              {badges[t.id] > 0 && (
+                <span className="absolute -right-1 -top-1 min-w-[20px] rounded-full bg-red-500 px-1 text-center text-[11px] leading-5 text-white ring-2 ring-slate-100 dark:ring-slate-950">{badges[t.id]}</span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
 
-      {tab === "orders" && (
-        <>
-          <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
-            {ORDER_FILTERS.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setOrderFilter(f.id)}
-                className={`shrink-0 rounded-xl px-4 py-2 text-sm font-semibold ${f.id === orderFilter ? "bg-sky-500 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800"}`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-          <ul className="space-y-3">
-            {orders.filter(filterTest).map((o) => (
-              <OrderCard key={`${o.id}-${o.status}-${o.updated_at}`} order={o} profile={profiles[o.user_id]} onToast={onToast} />
-            ))}
-          </ul>
-          {!loading && orders.filter(filterTest).length === 0 && <p className="py-8 text-center text-slate-500 dark:text-slate-400">Pa gen kòmand isit la.</p>}
-        </>
-      )}
-
+      {tab === "dashboard" && <AdminDashboard orders={orders} deposits={deposits} profiles={profiles} visits={visits} onGo={setTab} />}
+      {tab === "orders" && <OrdersTab orders={orders} profiles={profiles} loading={loading} onToast={onToast} />}
       {tab === "deposits" && (
         <>
           <ul className="space-y-3">
@@ -358,35 +297,13 @@ export default function AdminPage({ onBack, onToast }) {
               <DepositCard key={`${d.id}-${d.status}`} deposit={d} profile={profiles[d.user_id]} onToast={onToast} />
             ))}
           </ul>
-          {!loading && deposits.length === 0 && <p className="py-8 text-center text-slate-500 dark:text-slate-400">Pa gen depo ankò.</p>}
+          {!loading && deposits.length === 0 && <Empty>Pa gen depo ankò.</Empty>}
         </>
       )}
-
-      {tab === "prices" && (
-        <>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Chanje pri a oswa dezaktive yon pake, epi peze Sove. Sit la mete l ajou pou tout kliyan yo.</p>
-          {missing.length > 0 && (
-            <div className="rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:ring-amber-500/30">
-              <p className="text-sm text-amber-900 dark:text-amber-100">
-                <b>{missing.length} pake</b> nan sit la poko nan baz done a, kidonk kliyan yo pa ka achte yo ankò: {missing.map((m) => m.label).join(", ")}.
-              </p>
-              <button
-                type="button"
-                onClick={addMissing}
-                disabled={adding}
-                className="mt-3 flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
-              >
-                {adding ? <Loader2 className="h-4 w-4 animate-spin" /> : <PackagePlus className="h-4 w-4" />} Ajoute yo ak pri ki nan sit la
-              </button>
-            </div>
-          )}
-          <ul className="space-y-2">
-            {packages.map((p) => (
-              <PriceRow key={`${p.id}-${p.price}-${p.available}`} pkg={p} onToast={onToast} />
-            ))}
-          </ul>
-        </>
-      )}
+      {tab === "customers" && <AdminCustomers profiles={profiles} orders={orders} deposits={deposits} onToast={onToast} />}
+      {tab === "catalog" && <AdminCatalog account={account} onToast={onToast} />}
+      {tab === "messages" && <AdminMessages profiles={profiles} announcements={announcements} onToast={onToast} />}
+      {tab === "team" && <AdminTeam me={me} profiles={profiles} onToast={onToast} />}
     </div>
   );
 }

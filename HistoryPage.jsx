@@ -15,8 +15,8 @@ const FILTERS = [
   { id: "refused", label: "Refusé" },
 ];
 
-function productForPackage(packageId) {
-  return PRODUCTS.find((p) => p.groups?.some((g) => g.items.some((i) => i.id === packageId)));
+function productForPackage(packageId, catalog) {
+  return catalog.find((p) => p.groups?.some((g) => g.items.some((i) => i.id === packageId)));
 }
 
 function EmptyState({ title, text, onShop }) {
@@ -35,8 +35,8 @@ function EmptyState({ title, text, onShop }) {
 }
 
 // Detay yon kòmand, ak kòd PIN lan lè admin nan fin livre l
-export function OrderSheet({ order, onClose, onToast }) {
-  const product = productForPackage(order.package_id);
+export function OrderSheet({ order, catalog = PRODUCTS, onClose, onToast }) {
+  const product = productForPackage(order.package_id, catalog);
   const steps = order.status === "refused" ? ["pending", "refused"] : ["pending", "processing", "delivered"];
   const reached = steps.indexOf(order.status);
   const stepLabel = { pending: "Resevwa", processing: "An kou", delivered: "Livre", refused: "Refize" };

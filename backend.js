@@ -8,7 +8,9 @@ const enabled = Boolean(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId);
 const loading = enabled ? import("./firebase.js").then((m) => m.createBackend(FIREBASE_CONFIG)) : null;
 
 // Fonksyon ki retounen yon "stop" touswit, menm si Firebase poko fin chaje
-const SUBSCRIPTIONS = ["onAuth", "subscribePrices", "subscribeAccount", "subscribeAdmin"];
+const SUBSCRIPTIONS = [
+  "onAuth", "subscribePrices", "subscribeCatalog", "subscribeAnnouncements", "subscribeAccount", "subscribeAdmin",
+];
 
 // null lè Firebase poko konfigire: sit la mache an mòd WhatsApp sèlman
 export const backend = enabled

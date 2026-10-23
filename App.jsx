@@ -1,19 +1,23 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Moon, Sun, Bell, Settings, Search, Home, ShoppingCart, Tag, History, Wallet, ArrowRight } from "lucide-react";
-import { PRODUCTS, CATEGORIES, HOME_SECTIONS, SLIDES, NOTIFICATIONS, VIDEO_TUTORIAL_URL } from "./data.js";
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Moon, Sun, Bell, Settings, Search, Home, ShoppingCart, Tag, History, Wallet, ArrowRight, Loader2 } from "lucide-react";
+import { CATEGORIES, HOME_SECTIONS, SLIDES, NOTIFICATIONS, VIDEO_TUTORIAL_URL } from "./data.js";
 import { waLink, openExternal, Logo, WhatsAppIcon, IconButton, ProductCard, ProductTile } from "./ui.jsx";
 import { loadOrders, saveOrder } from "./orders.js";
 import { useAccount } from "./account.js";
+import { buildCatalog } from "./catalog.js";
+import { backend } from "./backend.js";
 import ProductPage from "./ProductPage.jsx";
 import PaymentPage from "./PaymentPage.jsx";
 import HistoryPage, { OrderSheet } from "./HistoryPage.jsx";
 import WalletPage from "./WalletPage.jsx";
 import SettingsPage from "./SettingsPage.jsx";
 import { initials } from "./ProfileWallet.jsx";
-import AdminPage from "./AdminPage.jsx";
 import AuthSheet from "./AuthSheet.jsx";
 import { DepositSheet, TransferSheet } from "./WalletSheets.jsx";
 import { NotificationsSheet, LiveToast } from "./Notifications.jsx";
+
+// Panneau admin lan chaje sèlman pou admin yo
+const AdminPage = lazy(() => import("./AdminPage.jsx"));
 
 /* ============ UTIL ============ */
 function useTheme() {
@@ -160,10 +164,10 @@ function useAutoScroll(ref, startDelay) {
 }
 
 // Yon seksyon paj akèy: tit nan mitan, "Voir tout", ak yon ranje ki defile sou kote
-function ProductRail({ section, index, prices, onOpen, onSeeAll }) {
+function ProductRail({ section, index, catalog, prices, onOpen, onSeeAll }) {
   const rowRef = useRef(null);
   useAutoScroll(rowRef, 1500 + index * 750);
-  const products = PRODUCTS.filter((p) => p.category === section.category);
+  const products = catalog.filter((p) => p.category === section.category);
   if (products.length === 0) return null;
   return (
     <section className="mt-9" aria-label={section.title}>
@@ -262,7 +266,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Tout");
   // Paj pwodwi a anrejistre nan istorik navigatè a pou bouton "retounen" telefòn nan mache
-  const [product, setProduct] = useState(() => PRODUCTS.find((p) => p.id === window.history.state?.product) || null);
+  const [productId, setProductId] = useState(() => window.history.state?.product || null);
   const [localOrders, setLocalOrders] = useState(loadOrders);
   const [panel, setPanel] = useState(null); // "notifications" | "deposit" | "transfer"
   const [auth, setAuth] = useState(null); // "login" | "signup"
@@ -274,6 +278,8 @@ export default function App() {
 
   const account = useAccount(useCallback((n) => setLive(n), []));
   const closeLive = useCallback(() => setLive(null), []);
+  const catalog = useMemo(() => buildCatalog(account.prices, account.catalog), [account.prices, account.catalog]);
+  const product = (productId && catalog.find((p) => p.id === productId)) || null;
   const signedIn = account.enabled && Boolean(account.user);
   const openOrder = account.orders.find((o) => o.id === openOrderId) || null;
 
@@ -284,7 +290,7 @@ export default function App() {
   }, [toast]);
 
   useEffect(() => {
-    const onPop = (e) => setProduct(PRODUCTS.find((p) => p.id === e.state?.product) || null);
+    const onPop = (e) => setProductId(e.state?.product || null);
     window.addEventListener("popstate", onPop);
     // Android Chrome: nou kenbe envitasyon "Installer l'application" an pou bouton nan Paramètres
     const onInstall = (e) => {
@@ -298,26 +304,29 @@ export default function App() {
     };
   }, []);
 
-  useEffect(() => { window.scrollTo({ top: 0 }); }, [tab, product]);
+  useEffect(() => { window.scrollTo({ top: 0 }); }, [tab, productId]);
+
+  // Kontè vizitè yo (yon fwa pa jou pou chak telefòn), pou estatistik admin nan
+  useEffect(() => { backend?.trackVisit().catch(() => {}); }, []);
 
   // Lè kliyan an konekte, nou fèmen fenèt koneksyon an
   useEffect(() => { if (signedIn) setAuth(null); }, [signedIn]);
 
   const q = query.trim().toLowerCase();
-  const filtered = PRODUCTS.filter((p) =>
+  const filtered = catalog.filter((p) =>
     (!q || p.name.toLowerCase().includes(q)) && (tab !== "shop" || category === "Tout" || p.category === category)
   );
 
   const openProduct = (p) => {
     try { window.history.pushState({ product: p.id }, ""); } catch {}
-    setProduct(p);
+    setProductId(p.id);
   };
   const closeProduct = () => {
     if (window.history.state?.product) window.history.back();
-    else setProduct(null);
+    else setProductId(null);
   };
   const goToTab = (id) => {
-    if (product) closeProduct();
+    if (productId) closeProduct();
     setTab(id);
   };
   const handleLocalOrder = (order) => {
@@ -334,6 +343,11 @@ export default function App() {
   // Ouvri sa yon notifikasyon pale de li: kòmand lan, oswa Wallet la
   const openNotification = (n) => {
     setLive(null);
+    // Mesaj admin yo: louvri lis la pou kliyan an li tout tèks la
+    if (n.kind === "message" || n.kind === "announcement") {
+      setPanel("notifications");
+      return;
+    }
     setPanel(null);
     if (n.kind === "order") {
       const order = account.orders.find((o) => o.code === n.ref);
@@ -353,15 +367,15 @@ export default function App() {
     } else if (action === "payment") {
       setTab("wallet");
     } else if (action.startsWith("product:")) {
-      const p = PRODUCTS.find((x) => x.id === action.slice(8));
+      const p = catalog.find((x) => x.id === action.slice(8));
       if (p) openProduct(p);
     }
   };
 
-  const unread = signedIn ? account.unread : staticUnread;
+  const unread = account.enabled ? account.unread : staticUnread;
   const openNotifications = () => {
     setPanel("notifications");
-    if (!signedIn) setStaticUnread(0);
+    if (!account.enabled) setStaticUnread(0);
   };
   const currentTab = TABS.find((t) => t.id === tab);
 
@@ -432,7 +446,7 @@ export default function App() {
               <>
                 <div className="mt-5"><Carousel onAction={handleSlideAction} /></div>
                 {HOME_SECTIONS.map((s, i) => (
-                  <ProductRail key={s.category} section={s} index={i} prices={account.prices} onOpen={openProduct} onSeeAll={seeAll} />
+                  <ProductRail key={s.category} section={s} index={i} catalog={catalog} prices={account.prices} onOpen={openProduct} onSeeAll={seeAll} />
                 ))}
               </>
             )}
@@ -497,21 +511,28 @@ export default function App() {
             onSeeWallet={() => setTab("wallet")}
           />
         )}
-        {!product && tab === "admin" && account.profile?.is_admin && <AdminPage onBack={() => setTab("settings")} onToast={setToast} />}
+        {!product && tab === "admin" && account.profile?.is_admin && (
+          <Suspense fallback={<Loader2 className="mx-auto mt-16 h-8 w-8 animate-spin text-sky-500" />}>
+            <AdminPage account={account} onBack={() => setTab("settings")} onToast={setToast} />
+          </Suspense>
+        )}
       </main>
 
       {!product && (
         <>
-          <a
-            href={waLink("Bonjou Aswer Top Up!")}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Ekri nou sou WhatsApp"
-            className="fixed right-4 z-40 grid h-16 w-16 place-items-center rounded-full bg-[#25D366] text-white shadow-lg shadow-emerald-600/30 ring-4 ring-white/60 transition hover:scale-105 dark:ring-slate-950/60"
-            style={{ bottom: "calc(env(safe-area-inset-bottom) + 108px)" }}
-          >
-            <WhatsAppIcon className="h-9 w-9" />
-          </a>
+          {/* Bouton WhatsApp la pa kouvri estatistik yo nan Panneau admin */}
+          {tab !== "admin" && (
+            <a
+              href={waLink("Bonjou Aswer Top Up!")}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Ekri nou sou WhatsApp"
+              className="fixed right-4 z-40 grid h-16 w-16 place-items-center rounded-full bg-[#25D366] text-white shadow-lg shadow-emerald-600/30 ring-4 ring-white/60 transition hover:scale-105 dark:ring-slate-950/60"
+              style={{ bottom: "calc(env(safe-area-inset-bottom) + 108px)" }}
+            >
+              <WhatsAppIcon className="h-9 w-9" />
+            </a>
+          )}
 
           <BottomNav tab={tab} onChange={setTab} />
         </>
@@ -522,7 +543,7 @@ export default function App() {
       )}
       {panel === "deposit" && signedIn && <DepositSheet onClose={() => setPanel(null)} onToast={setToast} />}
       {panel === "transfer" && signedIn && <TransferSheet profile={account.profile} onClose={() => setPanel(null)} />}
-      {openOrder && <OrderSheet order={openOrder} onClose={() => setOpenOrderId(null)} onToast={setToast} />}
+      {openOrder && <OrderSheet order={openOrder} catalog={catalog} onClose={() => setOpenOrderId(null)} onToast={setToast} />}
       {auth && account.enabled && !signedIn && <AuthSheet initialMode={auth} onClose={() => setAuth(null)} />}
 
       {live && <LiveToast notification={live} onOpen={() => openNotification(live)} onClose={closeLive} />}

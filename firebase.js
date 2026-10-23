@@ -8,9 +8,10 @@ import {
 } from "firebase/auth";
 import {
   getFirestore, connectFirestoreEmulator, doc, collection, query, where, orderBy, limit, onSnapshot,
-  getDoc, runTransaction, writeBatch, updateDoc, increment, serverTimestamp,
+  getDoc, setDoc, addDoc, deleteDoc, runTransaction, writeBatch, updateDoc, increment, serverTimestamp, documentId,
 } from "firebase/firestore";
 import { UserError } from "./errors.js";
+import { dayKey } from "./days.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // san 0/O/1/I pou kliyan yo pa konfonn yo
 const METHOD_NAMES = { moncash: "MonCash", natcash: "NatCash" };
@@ -42,6 +43,15 @@ const newestFirst = (list) => list.sort((a, b) => String(b.created_at).localeCom
 const notification = (kind, title, body, ref) => ({
   kind, title, body: body ?? null, ref: ref ?? null, read_at: null, created_at: serverTimestamp(),
 });
+
+// Tit ak tèks yon mesaj admin, netwaye
+function messageText(title, body) {
+  const t = String(title || "").trim().slice(0, 120);
+  if (!t) throw new UserError("Mete yon tit pou mesaj la.");
+  return [t, String(body || "").trim().slice(0, 1000) || null];
+}
+
+const CATEGORY_NAMES = ["Jwèt", "Abònman", "Gift Card", "Finans"];
 
 export function createBackend(config, options = {}) {
   const app = initializeApp(config, options.appName);
@@ -121,12 +131,55 @@ export function createBackend(config, options = {}) {
     googleSignIn: () => signInWithPopup(auth, new GoogleAuthProvider()),
     signOut: () => signOut(auth),
 
-    /* ---------- Done kliyan an, an dirèk ---------- */
+    /* ---------- Katalòg ak vizit (tout moun) ---------- */
+    // Tout pake yo: pri, disponiblite, ak pake admin nan ajoute sou yon pwodwi (product_id)
     subscribePrices(callback) {
       return onSnapshot(collection(db, "packages"), (snap) => {
-        callback(Object.fromEntries(snap.docs.map((d) => [d.id, { price: d.data().price, available: d.data().available }])));
+        callback(Object.fromEntries(snap.docs.map((d) => [d.id, toPlain(d)])));
       }, (error) => console.error("packages", error));
     },
+
+    // Pwodwi admin nan kreye ak lis pwodwi ki kache yo
+    subscribeCatalog(callback) {
+      let products = [];
+      let hidden = [];
+      const emit = () => callback({ products, hidden });
+      const stops = [
+        onSnapshot(collection(db, "products"), (snap) => {
+          products = snap.docs.map(toPlain).sort((a, b) => a.sort - b.sort);
+          emit();
+        }, (error) => console.error("products", error)),
+        onSnapshot(doc(db, "settings", "catalog"), (snap) => {
+          hidden = snap.data()?.hidden || [];
+          emit();
+        }, (error) => console.error("catalog", error)),
+      ];
+      return () => stops.forEach((stop) => stop());
+    },
+
+    // Mesaj admin nan voye bay tout moun (premye lis la pa konte kòm "nouvo")
+    subscribeAnnouncements(callback) {
+      let first = true;
+      return onSnapshot(query(collection(db, "announcements"), orderBy("created_at", "desc"), limit(10)), (snap) => {
+        const added = first ? [] : snap.docChanges().filter((c) => c.type === "added").map((c) => toPlain(c.doc));
+        first = false;
+        callback(snap.docs.map(toPlain), added);
+      }, (error) => console.error("announcements", error));
+    },
+
+    // Konte vizitè a yon sèl fwa pa jou (navigatè sa a)
+    async trackVisit() {
+      const day = dayKey(Date.now());
+      try {
+        if (localStorage.getItem("aswer-visit") === day) return;
+      } catch {}
+      await setDoc(doc(db, "visits", day), { count: increment(1) }, { merge: true });
+      try {
+        localStorage.setItem("aswer-visit", day);
+      } catch {}
+    },
+
+    /* ---------- Done kliyan an, an dirèk ---------- */
 
     subscribeAccount(uid, handlers) {
       const report = (name) => (error) => console.error(name, error);
@@ -264,16 +317,35 @@ export function createBackend(config, options = {}) {
     },
 
     /* ---------- Admin ---------- */
+    // Kòmand 31 dènye jou yo (pou estatistik yo) + tout kòmand ki poko fini, nenpòt ki dat
     subscribeAdmin(handlers) {
       const report = (name) => (error) => console.error(name, error);
-      const recent = (name) => query(collection(db, name), orderBy("created_at", "desc"), limit(200));
+      const since = new Date(Date.now() - 31 * 86400000);
+      let recentOrders = [];
+      let openOrders = [];
+      const emitOrders = () => {
+        const byId = new Map([...openOrders, ...recentOrders].map((o) => [o.id, o]));
+        handlers.onOrders(newestFirst([...byId.values()]));
+      };
       const unsubscribers = [
-        onSnapshot(recent("orders"), (s) => handlers.onOrders(s.docs.map(toPlain)), report("admin orders")),
-        onSnapshot(recent("deposits"), (s) => handlers.onDeposits(s.docs.map(toPlain)), report("admin deposits")),
-        onSnapshot(query(collection(db, "packages"), orderBy("sort")), (s) => handlers.onPackages(s.docs.map(toPlain)), report("admin packages")),
-        onSnapshot(query(collection(db, "users"), limit(2000)), (s) => {
+        onSnapshot(query(collection(db, "orders"), where("created_at", ">=", since), orderBy("created_at", "desc"), limit(3000)), (s) => {
+          recentOrders = s.docs.map(toPlain);
+          emitOrders();
+        }, report("admin orders")),
+        onSnapshot(query(collection(db, "orders"), where("status", "in", ["pending", "processing"])), (s) => {
+          openOrders = s.docs.map(toPlain);
+          emitOrders();
+        }, report("admin open orders")),
+        onSnapshot(query(collection(db, "deposits"), orderBy("created_at", "desc"), limit(300)), (s) => handlers.onDeposits(s.docs.map(toPlain)), report("admin deposits")),
+        onSnapshot(query(collection(db, "users"), limit(3000)), (s) => {
           handlers.onProfiles(Object.fromEntries(s.docs.map((d) => [d.id, toPlain(d)])));
         }, report("admin users")),
+        onSnapshot(query(collection(db, "visits"), where(documentId(), ">=", dayKey(since))), (s) => {
+          handlers.onVisits?.(Object.fromEntries(s.docs.map((d) => [d.id, d.data().count])));
+        }, report("admin visits")),
+        onSnapshot(query(collection(db, "announcements"), orderBy("created_at", "desc"), limit(30)), (s) => {
+          handlers.onAnnouncements?.(s.docs.map(toPlain));
+        }, report("admin announcements")),
       ];
       return () => unsubscribers.forEach((stop) => stop());
     },
@@ -329,6 +401,78 @@ export function createBackend(config, options = {}) {
       list.forEach((p) => batch.set(doc(db, "packages", p.id), {
         product_name: p.product_name, label: p.label, price: p.price, needs_id: p.needs_id, available: true, sort: p.sort,
       }));
+      await batch.commit();
+    },
+
+    // Nouvo pake sou yon pwodwi (pa egzanp yon nouvo kantite dyaman, oswa "Netflix 1 mwa")
+    async adminAddPackage({ productId, productName, group, label, price, needsId, sort }) {
+      const value = Number(price);
+      const name = String(label || "").trim().slice(0, 60);
+      if (!name) throw new UserError("Mete non pake a.");
+      if (!Number.isInteger(value) || value <= 0) throw new UserError("Pri a dwe yon chif san vigil, pi gran pase 0.");
+      await addDoc(collection(db, "packages"), {
+        product_id: productId, product_name: productName, group: String(group || "").trim().slice(0, 40) || "Offres",
+        label: name, price: value, needs_id: Boolean(needsId), available: true, sort,
+      });
+    },
+
+    adminDeletePackage: (id) => deleteDoc(doc(db, "packages", id)),
+
+    // Kreye oswa modifye yon pwodwi. Si non an chanje, pake li yo pran nouvo non an tou.
+    async adminSaveProduct(product, packageIds = []) {
+      const name = String(product.name || "").trim().slice(0, 60);
+      if (name.length < 2) throw new UserError("Mete non pwodwi a.");
+      if (!CATEGORY_NAMES.includes(product.category)) throw new UserError("Chwazi yon kategori.");
+      const data = {
+        name, category: product.category, image: product.image || null,
+        is_new: Boolean(product.is_new), player_id: Boolean(product.player_id), sort: Number(product.sort) || 0,
+      };
+      if (data.image && data.image.length > 350000) throw new UserError("Foto a twò lou. Chwazi yon lòt.");
+      if (!product.id) {
+        const ref = await addDoc(collection(db, "products"), { ...data, created_at: serverTimestamp() });
+        return ref.id;
+      }
+      const batch = writeBatch(db);
+      batch.update(doc(db, "products", product.id), data);
+      packageIds.forEach((id) => batch.update(doc(db, "packages", id), { product_name: name }));
+      await batch.commit();
+      return product.id;
+    },
+
+    async adminDeleteProduct(id, packageIds = []) {
+      const batch = writeBatch(db);
+      batch.delete(doc(db, "products", id));
+      packageIds.forEach((pid) => batch.delete(doc(db, "packages", pid)));
+      await batch.commit();
+    },
+
+    // Pwodwi ki pa parèt sou sit la (ni sa ki nan data.js, ni sa admin nan kreye)
+    adminSetHidden: (hidden) => setDoc(doc(db, "settings", "catalog"), { hidden: [...new Set(hidden)] }),
+
+    /* ---------- Mesaj ---------- */
+    async adminSendMessage(uid, title, body) {
+      const [t, b] = messageText(title, body);
+      await setDoc(newNotificationRef(uid), notification("message", t, b));
+    },
+
+    async adminBroadcast(title, body) {
+      const [t, b] = messageText(title, body);
+      await addDoc(collection(db, "announcements"), { title: t, body: b, by: currentUid(), created_at: serverTimestamp() });
+    },
+
+    adminDeleteAnnouncement: (id) => deleteDoc(doc(db, "announcements", id)),
+
+    /* ---------- Ekip la ---------- */
+    // Sèlman pwopriyetè a (admin san admin_by) ka fè sa; règ yo verifye l
+    async adminSetAdmin(uid, makeAdmin) {
+      const me = currentUid();
+      if (uid === me) throw new UserError("Ou pa ka chanje pwòp wòl ou.");
+      const batch = writeBatch(db);
+      batch.update(userRef(uid), makeAdmin ? { is_admin: true, admin_by: me } : { is_admin: false, admin_by: null });
+      if (makeAdmin) {
+        batch.set(newNotificationRef(uid), notification("info", "Ou se admin sou Aswer Top Up",
+          "Ou ka jere kòmand yo, depo yo, pwodwi yo ak kliyan yo nan Profil → Panneau admin."));
+      }
       await batch.commit();
     },
   };

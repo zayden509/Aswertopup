@@ -21,7 +21,7 @@ function GroupTitle({ group }) {
   }
   return (
     <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-      <GemIcon className="h-4 w-4" /> {group.title}
+      {group.style === "offer" ? <Package className="h-4 w-4 text-sky-500" /> : <GemIcon className="h-4 w-4" />} {group.title}
     </h3>
   );
 }
@@ -51,6 +51,29 @@ function GemOption({ item, active, onSelect }) {
     </button>
   );
 }
+
+// Pake admin nan ajoute nan Panneau admin: non an ak pri a
+function OfferOption({ item, active, onSelect }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      onClick={onSelect}
+      className={`relative flex min-h-[104px] flex-col justify-between gap-3 rounded-2xl border-2 p-4 text-left transition active:scale-[.98] ${
+        active ? "border-sky-500 bg-sky-50 dark:bg-sky-500/10" : "border-slate-200 bg-white hover:border-sky-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-sky-500/40"
+      }`}
+    >
+      <span className="pr-6 font-bold leading-tight text-slate-900 [overflow-wrap:anywhere] dark:text-white">{item.label}</span>
+      <span className="rounded-lg bg-sky-50 py-1.5 text-center text-sm font-bold tracking-wide text-sky-600 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/20">
+        {formatPrice(item.price)}
+      </span>
+      {active && <CheckCircle2 className="absolute right-2.5 top-2.5 h-5 w-5 text-sky-500" />}
+    </button>
+  );
+}
+
+const OPTIONS = { gem: GemOption, deal: DealOption, offer: OfferOption };
 
 function DealOption({ item, active, onSelect }) {
   return (
@@ -117,6 +140,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
   const idError = id !== "" && !idValid;
   const idMissing = Boolean(item?.needsId) && id === "";
   const someNeedId = groups.some((g) => g.items.some((i) => i.needsId));
+  const allNeedId = groups.every((g) => g.items.every((i) => i.needsId));
   const loggedIn = Boolean(account.user);
   const balance = Number(account.profile?.balance ?? 0);
   const missing = item ? Math.max(0, item.price - balance) : 0;
@@ -281,9 +305,11 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                   ? "UID a dwe gen ant 6 ak 15 chif."
                   : idMissing
                     ? `Mete Player ID ou: li obligatwa pou ${item.label}.`
-                    : someNeedId
-                      ? "Obligatwa pou abònman ak pas yo."
-                      : "Nou sèvi ak li pou n voye kòmand lan sou bon kont lan."}
+                    : allNeedId
+                      ? "Obligatwa: nou voye kòmand lan sou kont sa a."
+                      : someNeedId
+                        ? "Obligatwa pou abònman ak pas yo."
+                        : "Nou sèvi ak li pou n voye kòmand lan sou bon kont lan."}
               </p>
             </StepCard>
           )}
@@ -291,11 +317,11 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
           <StepCard step={product.playerId ? 2 : 1} title="Choisir votre produit">
             <div className="space-y-6" role="radiogroup" aria-label="Pake">
               {groups.map((g) => (
-                <div key={g.title}>
+                <div key={`${g.style}-${g.title}`}>
                   <GroupTitle group={g} />
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {g.items.map((it) => {
-                      const Option = g.style === "deal" ? DealOption : GemOption;
+                      const Option = OPTIONS[g.style] || GemOption;
                       return <Option key={it.id} item={it} active={it.id === selectedId} onSelect={() => setSelectedId(it.id)} />;
                     })}
                   </div>
@@ -413,6 +439,8 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                     <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-orange-500/15 ring-1 ring-orange-400/30">
                       <item.Icon className="h-7 w-7 text-orange-500" strokeWidth={1.75} />
                     </span>
+                  ) : group.style === "offer" ? (
+                    <ProductArt product={product} className="relative h-14 w-14 shrink-0 rounded-2xl" />
                   ) : (
                     <GemIcon className="h-14 w-14 shrink-0" />
                   )}

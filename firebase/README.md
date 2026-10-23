@@ -39,6 +39,28 @@ Oubyen voye blòk la ban mwen, epi m ap mete l pou ou.
 5. Nan Panneau admin → **Pri**, peze **Ajoute yo ak pri ki nan sit la**. San etap sa a,
    kliyan yo pa ka achte.
 
+## Lè sit la jwenn nouvo fonksyon: mete règ yo ajou
+Chak fwa fichye [`firestore.rules`](firestore.rules) a chanje, ou dwe pibliye l ankò:
+1. Louvri fichye a sou GitHub, peze **Raw**, epi kopye tout tèks la.
+2. **Firestore Database → Règles**, efase sa ki la a, kole nouvo tèks la, epi peze **Publier**.
+
+San sa, nouvo bagay yo (estatistik, pwodwi ou kreye, mesaj) p ap mache, men rès sit la ap
+kontinye mache.
+
+## Panneau admin
+- **Tablo**: lavant, kòmand, vizitè, nouvo kliyan, depo, pwodwi ki vann plis, pou jodi a,
+  7 jou oswa 30 jou (lè Ayiti). Vizitè yo konte yon fwa pa telefòn pa jou.
+- **Kòmand / Depo**: trete kòmand yo ak depo yo (gade anba a).
+- **Kliyan**: tout kont ki anrejistre yo, solde yo, sa yo depanse, kòmand yo. Ou ka ekri
+  yon kliyan dirèkteman: mesaj la parèt nan 🔔 li.
+- **Pwodwi**: kreye yon pwodwi (non, foto, kategori), ajoute pake ak pri, kache oswa remete
+  nenpòt pwodwi, efase pwodwi ou te kreye yo.
+- **Mesaj**: voye yon mesaj bay tout moun (menm vizitè ki pa gen kont wè l nan 🔔) oswa bay
+  yon sèl kliyan.
+- **Ekip**: ajoute yon admin ak imèl li (li dwe gen yon kont sou sit la deja), oswa retire l.
+  Se sèlman **pwopriyetè** a (admin ou te mete alamen nan Firebase la) ki ka fè sa.
+  Lòt admin yo ka fè tout rès bagay yo.
+
 ## Kijan sa mache
 - **Déposer**: kliyan an voye kòb sou MonCash/NatCash ou, epi li mete montan an ak ID
   tranzaksyon an. Ou verifye l nan MonCash ou, epi ou peze **Konfime** nan
