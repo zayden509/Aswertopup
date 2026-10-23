@@ -10,12 +10,12 @@ export const VIDEO_TUTORIAL_URL = "";
 // SDK setup and configuration → Config. Kopye valè yo isit la.
 // Si apiKey vid, sit la mache an mòd WhatsApp sèlman: pa gen kont, pa gen Wallet.
 export const FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: "",
+  apiKey: "AIzaSyAksNWKZDun44d4VtILSQYDxNjmVkyxMwM",
+  authDomain: "aswer-topup.firebaseapp.com",
+  projectId: "aswer-topup",
+  storageBucket: "aswer-topup.firebasestorage.app",
+  messagingSenderId: "262999101303",
+  appId: "1:262999101303:web:ca0407bb2940a5f560db72",
 };
 
 // Mete true lè w fin aktive Google nan Firebase (Authentication → Sign-in method → Google)
