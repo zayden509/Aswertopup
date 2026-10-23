@@ -158,7 +158,11 @@ export function ProductCard({ product: p, prices, onOpen }) {
       )}
       <span className="absolute inset-x-3 bottom-3">
         <span className="block text-[15px] font-bold leading-tight text-white drop-shadow">{p.name}</span>
-        {from != null && <span className="mt-0.5 block text-[13px] font-semibold text-sky-300">Dès {formatPrice(from)}</span>}
+        {from != null ? (
+          <span className="mt-0.5 block text-[13px] font-semibold text-sky-300">Dès {formatPrice(from)}</span>
+        ) : p.exchange && p.tagline ? (
+          <span className="mt-0.5 block text-[13px] font-semibold text-sky-300">{p.tagline}</span>
+        ) : null}
       </span>
     </button>
   );

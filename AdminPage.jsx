@@ -63,8 +63,14 @@ function OrderCard({ order, profile, onToast }) {
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <CopyChip label="#" value={order.code} onToast={onToast} />
         {order.player_id && <CopyChip label="ID" value={order.player_id} onToast={onToast} />}
+        {order.recipient && <CopyChip label="Kont" value={order.recipient.account} onToast={onToast} />}
         <span className="ml-auto text-lg font-extrabold tabular-nums text-sky-500">{formatPrice(Number(order.price))}</span>
       </div>
+      {order.kind === "exchange" && (
+        <p className="mt-2 rounded-xl bg-sky-50 px-3 py-2 text-sm text-sky-900 dark:bg-sky-500/10 dark:text-sky-100">
+          Voye <b>{order.amount} {order.currency}</b> bay <b>{order.recipient.name}</b> · frè {order.fee} {order.currency} · to {order.rate} HTG
+        </p>
+      )}
       <p className="mt-1 text-xs text-slate-400">{formatDateTime(order.created_at)}</p>
       {order.delivery_code && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Kòd: <span className="font-mono font-semibold">{order.delivery_code}</span></p>}
 

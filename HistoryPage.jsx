@@ -15,8 +15,9 @@ const FILTERS = [
   { id: "refused", label: "Refusé" },
 ];
 
+// Konvèsyon yo (Meru…) sèvi ak id pwodwi a kòm package_id
 function productForPackage(packageId, catalog) {
-  return catalog.find((p) => p.groups?.some((g) => g.items.some((i) => i.id === packageId)));
+  return catalog.find((p) => p.id === packageId || p.groups?.some((g) => g.items.some((i) => i.id === packageId)));
 }
 
 function EmptyState({ title, text, onShop }) {
@@ -102,6 +103,8 @@ export function OrderSheet({ order, catalog = PRODUCTS, onClose, onToast }) {
           [CalendarDays, "Dat", formatDateTime(order.created_at)],
           [Banknote, "Pri", formatPrice(Number(order.price))],
           order.player_id && [User, "Player ID", order.player_id],
+          order.recipient && [User, "Kont", `${order.recipient.account} (${order.recipient.name})`],
+          order.kind === "exchange" && [Banknote, "Frè", `${order.fee} ${order.currency} · 1 ${order.currency} = ${order.rate} HTG`],
           order.admin_note && [StickyNote, "Nòt", order.admin_note],
         ]
           .filter(Boolean)

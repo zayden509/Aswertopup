@@ -5,6 +5,7 @@ import { PRODUCTS } from "./data.js";
 // san sa ki kache yo. Pake admin nan ajoute sou yon pwodwi (product_id) parèt
 // kòm yon seksyon anplis sou paj pwodwi a.
 
+const rate = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
 const DEFAULT_ID_HELP = "Louvri jwèt la epi gade nan pwofil ou: ID (UID) ou se yon nimewo ki anba non ou.";
 const GRADIENTS = [
   "from-sky-500 via-indigo-600 to-violet-800",
@@ -36,6 +37,9 @@ function withIdField(product) {
 export function allProducts(packages, custom) {
   const hidden = new Set(custom.hidden);
   const builtIn = PRODUCTS.map((p) => {
+    // Pwodwi Finans: kat la montre to du jou a lè admin nan aktive l
+    const ex = p.exchange && custom.exchange?.[p.id];
+    if (p.exchange) return ex?.available ? { ...p, tagline: `1 ${ex.currency} = ${rate.format(ex.rate)} HTG` } : p;
     const extra = extraGroups(p.id, packages);
     return extra.length ? withIdField({ ...p, groups: [...(p.groups || []), ...extra] }) : p;
   });

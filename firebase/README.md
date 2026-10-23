@@ -55,6 +55,11 @@ kontinye mache.
   yon kliyan dirèkteman: mesaj la parèt nan 🔔 li.
 - **Pwodwi**: kreye yon pwodwi (non, foto, kategori), ajoute pake ak pri, kache oswa remete
   nenpòt pwodwi, efase pwodwi ou te kreye yo.
+- **Pwodwi Finans** (Meru, PayPal, Cash App, Binance Pay, Wise): yo mache ak yon konvèsyon.
+  Kliyan an mete konbyen li vle resevwa (oswa konbyen li vle peye), sit la ajoute frè palye a
+  epi miltipliye pa to du jou a. Nan **Pwodwi → Finans**, louvri chak pwodwi, mete to a
+  (egzanp 145 HTG pou 1 MERU), minimòm, maksimòm ak frè yo, epi peze **Sove**. Tank ou pa
+  sove, kliyan yo pa ka achte pwodwi sa a. Kòmand lan montre ou kont kliyan an ak non an.
 - **Mesaj**: voye yon mesaj bay tout moun (menm vizitè ki pa gen kont wè l nan 🔔) oswa bay
   yon sèl kliyan.
 - **Ekip**: ajoute yon admin ak imèl li (li dwe gen yon kont sou sit la deja), oswa retire l.

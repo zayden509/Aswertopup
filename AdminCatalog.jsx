@@ -6,6 +6,9 @@ import { allProducts } from "./catalog.js";
 import { Sheet, ProductArt, ErrorNote, formatPrice, minPrice, packageName } from "./ui.jsx";
 import { Chips, Empty, Field, Toggle, inputClass, normalize } from "./adminUi.jsx";
 import { squarePhoto } from "./image.js";
+import { quote } from "./exchange.js";
+
+const rateFormat = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
 
 const PRODUCT_CATEGORIES = CATEGORIES.filter((c) => c !== "Tout");
 
@@ -257,7 +260,100 @@ function ProductForm({ product, nextSort, packageIds, onClose, onSaved, onToast 
   );
 }
 
-function ProductSheet({ product, prices, hidden, nextSort, onEdit, onClose, onToast }) {
+// To, limit ak frè palye yon pwodwi Finans (Meru, PayPal…). San dokiman nan baz done a,
+// fòm nan ranpli ak valè pa defo ki nan data.js, epi pwodwi a pa disponib pou kliyan yo.
+function ExchangeEditor({ product, live, onToast }) {
+  const base = { ...product.exchange, ...live };
+  const [rate, setRate] = useState(String(base.rate));
+  const [currency, setCurrency] = useState(base.currency);
+  const [min, setMin] = useState(String(base.min));
+  const [max, setMax] = useState(String(base.max));
+  const [tiers, setTiers] = useState(base.tiers.map((t) => ({ max: String(t.max), fee: String(t.fee) })));
+  const [available, setAvailable] = useState(live ? live.available : true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const setTier = (i, field, value) => setTiers((list) => list.map((t, j) => (j === i ? { ...t, [field]: value.replace(/[^\d]/g, "") } : t)));
+  const preview = (() => {
+    const config = { rate: Number(rate), min: Number(min), max: Number(max), tiers: tiers.map((t) => ({ max: Number(t.max), fee: Number(t.fee) })).sort((a, b) => a.max - b.max) };
+    if (!(config.rate > 0) || config.tiers.some((t) => !t.max)) return null;
+    return [10, 25, 100].map((a) => ({ a, ...quote(config, a) }));
+  })();
+
+  const save = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await backend.adminSetExchange(product.id, { productName: product.name, currency, rate: rate.replace(",", "."), min, max, tiers, available });
+      onToast(available ? `${product.name}: 1 ${currency.toUpperCase()} = ${rate} HTG.` : `${product.name} dezaktive.`);
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const small = "w-full rounded-xl border-2 border-slate-200 bg-white px-2.5 py-2 text-right font-bold tabular-nums focus:border-sky-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950";
+  return (
+    <section className="space-y-4">
+      {!live && (
+        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-100">
+          Konvèsyon an poko aktive: kliyan yo wè pwodwi a men yo pa ka achte. Verifye to a ak frè yo, epi peze <b>Sove</b>.
+        </p>
+      )}
+      <Toggle on={available} onChange={setAvailable} label={available ? "Kliyan yo ka achte" : "Pa disponib"} />
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={`To: HTG pou 1 ${currency || "?"}`}>
+          <input inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value.replace(/[^\d.,]/g, ""))} className={inputClass} />
+        </Field>
+        <Field label="Lajan">
+          <input value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase().slice(0, 10))} className={inputClass} />
+        </Field>
+        <Field label="Minimòm">
+          <input inputMode="numeric" value={min} onChange={(e) => setMin(e.target.value.replace(/\D/g, ""))} className={inputClass} />
+        </Field>
+        <Field label="Maksimòm">
+          <input inputMode="numeric" value={max} onChange={(e) => setMax(e.target.value.replace(/\D/g, ""))} className={inputClass} />
+        </Field>
+      </div>
+
+      <div>
+        <div className="mb-2 grid grid-cols-[1fr_1fr_2.25rem] gap-2 px-1 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <span>Jiska ({currency})</span><span>Frè ({currency})</span><span />
+        </div>
+        <ul className="space-y-2">
+          {tiers.map((t, i) => (
+            <li key={i} className="grid grid-cols-[1fr_1fr_2.25rem] items-center gap-2">
+              <input inputMode="numeric" aria-label={`Palye ${i + 1}: jiska`} value={t.max} onChange={(e) => setTier(i, "max", e.target.value)} className={small} />
+              <input inputMode="numeric" aria-label={`Palye ${i + 1}: frè`} value={t.fee} onChange={(e) => setTier(i, "fee", e.target.value)} className={small} />
+              <button type="button" onClick={() => setTiers((list) => list.filter((_, j) => j !== i))} disabled={tiers.length === 1} aria-label={`Retire palye ${i + 1}`} className="grid h-9 w-9 place-items-center rounded-xl text-red-500 hover:bg-red-50 disabled:opacity-30 dark:hover:bg-red-500/10">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+        <button type="button" onClick={() => setTiers((list) => [...list, { max: "", fee: "" }])} className="mt-2 flex items-center gap-1.5 text-sm font-bold text-sky-600 dark:text-sky-400">
+          <Plus className="h-4 w-4" /> Ajoute yon palye
+        </button>
+      </div>
+
+      {preview && (
+        <div className="rounded-2xl bg-slate-50 p-3 text-sm ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
+          <p className="mb-1 font-semibold text-slate-700 dark:text-slate-200">Egzanp</p>
+          {preview.map((p) => (
+            <p key={p.a} className="tabular-nums text-slate-600 dark:text-slate-300">{p.a} {currency} + {p.fee} frè → <b className="text-slate-900 dark:text-white">{formatPrice(p.price)}</b></p>
+          ))}
+        </div>
+      )}
+      <ErrorNote>{error}</ErrorNote>
+      <button type="button" onClick={save} disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3 font-bold text-white disabled:opacity-60">
+        {busy && <Loader2 className="h-5 w-5 animate-spin" />} Sove
+      </button>
+    </section>
+  );
+}
+
+function ProductSheet({ product, prices, exchange, hidden, nextSort, onEdit, onClose, onToast }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const builtInIds = (PRODUCTS.find((p) => p.id === product.id)?.groups || []).flatMap((g) => g.items.map((i) => i.id));
@@ -302,33 +398,42 @@ function ProductSheet({ product, prices, hidden, nextSort, onEdit, onClose, onTo
           </button>
         )}
 
-        <section>
-          <h3 className="mb-2 font-bold text-slate-900 dark:text-white">Pake ak pri</h3>
-          {notInDb.length > 0 && (
-            <p className="mb-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-100">
-              {notInDb.length} pake poko nan baz done a. Peze <b>Ajoute yo ak pri ki nan sit la</b> nan lis pwodwi yo.
-            </p>
-          )}
-          {builtInIds.length + added.length === 0 ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">Pwodwi sa a poko gen pake. Kliyan yo wè yon bouton pou mande pri sou WhatsApp.</p>
-          ) : (
-            <ul className="space-y-2">
-              {[...builtInIds, ...added].filter((id) => prices[id]).map((id) => {
-                const pkg = prices[id];
-                return (
-                  <PriceRow
-                    key={`${id}-${pkg.price}-${pkg.available}`}
-                    pkg={pkg}
-                    onToast={onToast}
-                    onDelete={added.includes(id) ? () => backend.adminDeletePackage(id) : undefined}
-                  />
-                );
-              })}
-            </ul>
-          )}
-        </section>
+        {product.exchange ? (
+          <>
+            <h3 className="font-bold text-slate-900 dark:text-white">To ak frè</h3>
+            <ExchangeEditor key={JSON.stringify(exchange[product.id] || null)} product={product} live={exchange[product.id]} onToast={onToast} />
+          </>
+        ) : (
+          <>
+            <section>
+              <h3 className="mb-2 font-bold text-slate-900 dark:text-white">Pake ak pri</h3>
+              {notInDb.length > 0 && (
+                <p className="mb-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-100">
+                  {notInDb.length} pake poko nan baz done a. Peze <b>Ajoute yo ak pri ki nan sit la</b> nan lis pwodwi yo.
+                </p>
+              )}
+              {builtInIds.length + added.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">Pwodwi sa a poko gen pake. Kliyan yo wè yon bouton pou mande pri sou WhatsApp.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {[...builtInIds, ...added].filter((id) => prices[id]).map((id) => {
+                    const pkg = prices[id];
+                    return (
+                      <PriceRow
+                        key={`${id}-${pkg.price}-${pkg.available}`}
+                        pkg={pkg}
+                        onToast={onToast}
+                        onDelete={added.includes(id) ? () => backend.adminDeletePackage(id) : undefined}
+                      />
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
 
-        <AddPackageForm product={product} groups={groupTitles} nextSort={nextSort} onToast={onToast} />
+            <AddPackageForm product={product} groups={groupTitles} nextSort={nextSort} onToast={onToast} />
+          </>
+        )}
 
         {product.custom && (
           <div className="border-t border-slate-100 pt-4 dark:border-slate-800">
@@ -370,6 +475,8 @@ export default function AdminCatalog({ account, onToast }) {
   const nextProductSort = Math.max(0, ...account.catalog.products.map((p) => p.sort || 0)) + 1;
 
   const missing = BUILT_IN_PACKAGES.filter((c) => !prices[c.id]);
+  const exchange = account.catalog.exchange || {};
+  const inactive = PRODUCTS.filter((p) => p.exchange && !exchange[p.id]);
   const addMissing = async () => {
     setAdding(true);
     try {
@@ -400,6 +507,12 @@ export default function AdminCatalog({ account, onToast }) {
         </div>
       )}
 
+      {inactive.length > 0 && (
+        <p className="rounded-2xl bg-sky-50 p-4 text-sm text-sky-900 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:text-sky-100 dark:ring-sky-500/20">
+          <b>{inactive.map((p) => p.name).join(", ")}</b> poko aktive. Louvri yo youn pa youn (kategori <b>Finans</b>), verifye to a ak frè yo, epi peze <b>Sove</b>.
+        </p>
+      )}
+
       <button type="button" onClick={() => setForm({})} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3.5 font-bold text-white shadow-lg shadow-sky-500/25 hover:bg-sky-600">
         <Plus className="h-5 w-5" /> Nouvo pwodwi
       </button>
@@ -417,6 +530,7 @@ export default function AdminCatalog({ account, onToast }) {
           {list.map((p) => {
             const count = (p.groups || []).reduce((n, g) => n + g.items.filter((i) => prices[i.id]?.available).length, 0);
             const from = minPrice(p, prices);
+            const ex = p.exchange && exchange[p.id];
             return (
               <li key={p.id} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
                 <button type="button" onClick={() => setOpenId(p.id)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/60">
@@ -427,7 +541,9 @@ export default function AdminCatalog({ account, onToast }) {
                       {p.hidden && <EyeOff className="h-4 w-4 shrink-0 text-slate-400" aria-label="Kache" />}
                     </span>
                     <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
-                      {p.category} · {count ? `${count} pake · Dès ${formatPrice(from)}` : "Pa gen pri"}
+                      {p.category} · {p.exchange
+                        ? ex?.available ? `1 ${ex.currency} = ${rateFormat.format(ex.rate)} HTG` : "Konvèsyon poko aktive"
+                        : count ? `${count} pake · Dès ${formatPrice(from)}` : "Pa gen pri"}
                     </span>
                   </span>
                   {p.custom && <span className="shrink-0 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">OU KREYE L</span>}
@@ -441,7 +557,7 @@ export default function AdminCatalog({ account, onToast }) {
       <p className="flex items-center gap-1.5 px-1 text-xs text-slate-400"><Eye className="h-3.5 w-3.5" /> Yon pwodwi kache pa parèt sou sit la, men ou ka remete l nenpòt lè.</p>
 
       {open && !form && (
-        <ProductSheet product={open} prices={prices} hidden={hidden} nextSort={nextSort} onEdit={() => setForm({ product: open })} onClose={() => setOpenId(null)} onToast={onToast} />
+        <ProductSheet product={open} prices={prices} exchange={exchange} hidden={hidden} nextSort={nextSort} onEdit={() => setForm({ product: open })} onClose={() => setOpenId(null)} onToast={onToast} />
       )}
       {form && (
         <ProductForm

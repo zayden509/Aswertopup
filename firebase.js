@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { UserError } from "./errors.js";
 import { dayKey } from "./days.js";
+import { quote } from "./exchange.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // san 0/O/1/I pou kliyan yo pa konfonn yo
 const METHOD_NAMES = { moncash: "MonCash", natcash: "NatCash" };
@@ -155,11 +156,12 @@ export function createBackend(config, options = {}) {
       }, (error) => console.error("packages", error));
     },
 
-    // Pwodwi admin nan kreye ak lis pwodwi ki kache yo
+    // Pwodwi admin nan kreye, lis pwodwi ki kache yo, ak to/frè konvèsyon pwodwi Finans yo
     subscribeCatalog(callback) {
       let products = [];
       let hidden = [];
-      const emit = () => callback({ products, hidden });
+      let exchange = {};
+      const emit = () => callback({ products, hidden, exchange });
       const stops = [
         onSnapshot(collection(db, "products"), (snap) => {
           products = snap.docs.map(toPlain).sort((a, b) => a.sort - b.sort);
@@ -169,6 +171,10 @@ export function createBackend(config, options = {}) {
           hidden = snap.data()?.hidden || [];
           emit();
         }, (error) => console.error("catalog", error)),
+        onSnapshot(collection(db, "exchange"), (snap) => {
+          exchange = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()]));
+          emit();
+        }, (error) => console.error("exchange", error)),
       ];
       return () => stops.forEach((stop) => stop());
     },
@@ -272,6 +278,46 @@ export function createBackend(config, options = {}) {
         tx.set(orderRef, order);
         tx.set(newNotificationRef(uid), notification("order", `Kòmand ${code} resevwa`,
           `${pkg.product_name} · ${pkg.label} (${formatHtg(pkg.price)}). N ap trete l kounye a.`, code));
+        return { ...order, id: orderRef.id, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      });
+    },
+
+    // Konvèsyon (Meru, PayPal…): règ yo verifye frè a ak pri a menm jan ak exchange.js
+    async placeExchangeOrder(productId, amount, recipient) {
+      const uid = currentUid();
+      const value = Number(amount);
+      const account = String(recipient?.account || "").trim().slice(0, 120);
+      const name = String(recipient?.name || "").trim().slice(0, 80);
+      if (account.length < 3) throw new UserError("Mete kont kote pou n voye kòb la.");
+      if (name.length < 2) throw new UserError("Mete non ki sou kont lan.");
+      const orderRef = doc(collection(db, "orders"));
+      const code = `AS-${randomCode(6)}`;
+      return runTransaction(db, async (tx) => {
+        const exSnap = await tx.get(doc(db, "exchange", productId));
+        const ex = exSnap.data();
+        if (!exSnap.exists() || !ex.available) throw new UserError("Sèvis sa a pa disponib kounye a.");
+        if (!Number.isInteger(value) || value < ex.min || value > ex.max) {
+          throw new UserError(`Montan an dwe yon chif san vigil ant ${ex.min} ak ${ex.max} ${ex.currency}.`);
+        }
+        const q = quote(ex, value);
+        const me = (await tx.get(userRef(uid))).data();
+        if (!me) throw new UserError("Konekte anvan ou achte.");
+        if (me.balance < q.price) throw new UserError("Solde ou pa ase. Ajoute kòb nan Wallet ou.");
+
+        const label = `${value} ${ex.currency}`;
+        const order = {
+          code, user_id: uid, package_id: productId, product_name: ex.product_name, package_label: label,
+          price: q.price, player_id: null, status: "pending", delivery_code: null, admin_note: null,
+          created_at: serverTimestamp(), updated_at: serverTimestamp(),
+          kind: "exchange", amount: value, fee: q.fee, tier: q.tier, rate: ex.rate, currency: ex.currency,
+          recipient: { account, name },
+        };
+        tx.update(userRef(uid), {
+          balance: me.balance - q.price, total_spent: me.total_spent + q.price, last_op: { kind: "order", id: orderRef.id },
+        });
+        tx.set(orderRef, order);
+        tx.set(newNotificationRef(uid), notification("order", `Kòmand ${code} resevwa`,
+          `${ex.product_name} · ${label} (${formatHtg(q.price)}). N ap voye l sou ${account}.`, code));
         return { ...order, id: orderRef.id, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
       });
     },
@@ -433,6 +479,25 @@ export function createBackend(config, options = {}) {
     },
 
     adminDeletePackage: (id) => deleteDoc(doc(db, "packages", id)),
+
+    // To, limit ak frè palye yon pwodwi Finans
+    async adminSetExchange(productId, { productName, currency, rate, min, max, tiers, available }) {
+      const r = Number(rate);
+      if (!(r > 0)) throw new UserError("To a dwe yon chif pi gran pase 0 (egzanp 145).");
+      const lo = Number(min);
+      const hi = Number(max);
+      if (!Number.isInteger(lo) || !Number.isInteger(hi) || lo < 1 || hi < lo) throw new UserError("Minimòm ak maksimòm yo dwe chif san vigil, minimòm ≤ maksimòm.");
+      const clean = tiers.map((t) => ({ max: Number(t.max), fee: Number(t.fee) }));
+      if (clean.length === 0 || clean.some((t) => !Number.isInteger(t.max) || !Number.isInteger(t.fee) || t.max < 1 || t.fee < 0)) {
+        throw new UserError("Chak palye bezwen yon montan maksimòm ak yon frè (chif san vigil).");
+      }
+      clean.sort((a, b) => a.max - b.max);
+      if (clean.some((t, i) => i > 0 && t.max === clean[i - 1].max)) throw new UserError("De palye pa ka gen menm maksimòm.");
+      await setDoc(doc(db, "exchange", productId), {
+        product_name: productName, currency: String(currency).trim().toUpperCase().slice(0, 10), rate: r,
+        min: lo, max: hi, tiers: clean, available: Boolean(available),
+      });
+    },
 
     // Kreye oswa modifye yon pwodwi. Si non an chanje, pake li yo pran nouvo non an tou.
     async adminSaveProduct(product, packageIds = []) {

@@ -29,6 +29,8 @@ swiv gid [`firebase/README.md`](firebase/README.md) (Firebase, plan gratis la).
 - `AdminPage.jsx` ak `Admin*.jsx`, `adminUi.jsx`: Panneau admin nan (estatistik, kòmand, depo,
   kliyan, pwodwi, mesaj, ekip). Li chaje sèlman pou admin yo.
 - `catalog.js`: mete pwodwi ki nan `data.js` ansanm ak sa admin nan kreye yo.
+- `ExchangePage.jsx`, `exchange.js`: paj konvèsyon pwodwi Finans yo (to du jou, frè pa palye).
+  Kalkil la menm jan nan `firebase/firestore.rules`.
 - `days.js`: jou yo ak lè Ayiti, pou estatistik yo.
 - `AuthSheet.jsx`, `Notifications.jsx`: koneksyon ak notifikasyon yo.
 - `ProfileWallet.jsx`: kat Wallet la nan pwofil la.

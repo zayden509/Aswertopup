@@ -29,7 +29,7 @@ export function useAccount(onNotification) {
   const [transfers, setTransfers] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [prices, setPrices] = useState({});
-  const [catalog, setCatalog] = useState({ products: [], hidden: [] });
+  const [catalog, setCatalog] = useState({ products: [], hidden: [], exchange: {} });
   const [announcements, setAnnouncements] = useState([]);
   const [seen, setSeen] = useState(loadSeen);
   const [epoch, setEpoch] = useState(0); // chanje l pou rekòmanse koute done yo (bouton 🔄)

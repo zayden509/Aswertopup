@@ -38,6 +38,7 @@ export function orderMessage(order) {
     `Pri: ${order.priceText}`,
   ];
   if (order.playerId) lines.push(`Player ID: ${order.playerId}`);
+  if (order.account) lines.push(`Kont: ${order.account}`, `Non sou kont lan: ${order.accountName}`);
   lines.push(`Peman: ${order.payment}`);
   return lines.join("\n");
 }

@@ -1,7 +1,8 @@
 import {
   Flame, Satellite, Target, Shield, Music, Play, Coins,
-  PlayCircle, CreditCard, MessageCircle, CalendarDays, CalendarRange, Ticket, TrendingUp,
+  PlayCircle, CreditCard, MessageCircle, CalendarDays, CalendarRange, Ticket, TrendingUp, CircleDollarSign,
 } from "lucide-react";
+import { DEFAULT_TIERS } from "./exchange.js";
 import freeFireImg from "./img/free-fire.jpg";
 import pubgImg from "./img/pubg.jpg";
 import robloxImg from "./img/roblox.jpg";
@@ -97,6 +98,13 @@ const FREE_FIRE_ABONNEMENT = {
   ],
 };
 
+// Pwodwi Finans yo mache ak yon konvèsyon (to du jou + frè pa palye) olye pake.
+// `account` se sa nou mande kliyan an pou n voye kòb la. To a ak frè yo sa a se valè pa
+// defo: admin nan chanje yo epi aktive yo nan Panneau admin → Pwodwi.
+function exchangeConfig(currency, account, rate = 145) {
+  return { currency, account, rate, min: 1, max: 1000, tiers: DEFAULT_TIERS };
+}
+
 export const PRODUCTS = [
   {
     id: "free-fire",
@@ -139,10 +147,27 @@ export const PRODUCTS = [
   { id: "nintendo", name: "Nintendo Gift Card", category: "Gift Card", image: nintendoImg, bg: "#e70012" },
   { id: "playstation", name: "PlayStation Gift Card", category: "Gift Card", image: playstationImg, bg: "#094591" },
   { id: "xbox", name: "Xbox Gift Card", category: "Gift Card", image: xboxImg, bg: "#107b10" },
-  { id: "cash-app", name: "Cash App", category: "Finans", tagline: "Recharge", image: cashAppImg, bg: "#ffffff" },
-  { id: "binance", name: "Binance Pay", category: "Finans", tagline: "Recharge", image: binanceImg, bg: "#151a1d" },
-  { id: "wise", name: "Wise", category: "Finans", tagline: "Transfert", image: wiseImg, bg: "#9ee86f" },
-  { id: "meru", name: "Meru", category: "Finans", tagline: "Transfert", image: meruImg, bg: "#ffffff" },
+  {
+    id: "meru", name: "Meru", category: "Finans", tagline: "Transfert", image: meruImg, bg: "#ffffff", isNew: true,
+    exchange: exchangeConfig("MERU", { label: "Imèl oswa telefòn kont Meru ou", placeholder: "ou@gmail.com" }),
+  },
+  {
+    id: "paypal", name: "PayPal", category: "Finans", tagline: "Transfert", isNew: true,
+    Icon: CircleDollarSign, gradient: "from-[#003087] via-[#0070e0] to-[#00a2ff]",
+    exchange: exchangeConfig("USD", { label: "Imèl kont PayPal ou", placeholder: "ou@gmail.com" }),
+  },
+  {
+    id: "cash-app", name: "Cash App", category: "Finans", tagline: "Recharge", image: cashAppImg, bg: "#ffffff",
+    exchange: exchangeConfig("USD", { label: "$Cashtag ou", placeholder: "$jeanbaptiste" }),
+  },
+  {
+    id: "binance", name: "Binance Pay", category: "Finans", tagline: "Recharge", image: binanceImg, bg: "#151a1d",
+    exchange: exchangeConfig("USDT", { label: "Binance Pay ID oswa imèl ou", placeholder: "123456789" }),
+  },
+  {
+    id: "wise", name: "Wise", category: "Finans", tagline: "Transfert", image: wiseImg, bg: "#9ee86f",
+    exchange: exchangeConfig("USD", { label: "Imèl kont Wise ou", placeholder: "ou@gmail.com" }),
+  },
 ];
 
 /* ============ BANYE (KAROUSÈL) ============ */

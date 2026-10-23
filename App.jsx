@@ -7,6 +7,7 @@ import { useAccount } from "./account.js";
 import { buildCatalog } from "./catalog.js";
 import { backend } from "./backend.js";
 import ProductPage from "./ProductPage.jsx";
+import ExchangePage from "./ExchangePage.jsx";
 import PaymentPage from "./PaymentPage.jsx";
 import HistoryPage, { OrderSheet } from "./HistoryPage.jsx";
 import WalletPage from "./WalletPage.jsx";
@@ -448,7 +449,19 @@ export default function App() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 pb-36 pt-2">
-        {product && (
+        {product?.exchange && (
+          <ExchangePage
+            key={product.id}
+            product={product}
+            account={account}
+            onBack={closeProduct}
+            onOrder={handleLocalOrder}
+            onLogin={needLogin}
+            onDeposit={startDeposit}
+            onViewOrders={() => goToTab("history")}
+          />
+        )}
+        {product && !product.exchange && (
           <ProductPage
             key={product.id}
             product={product}
