@@ -71,7 +71,7 @@ export function createBackend(config, options = {}) {
   };
   let signupInFlight = null;
 
-  // Kreye pwofil kliyan an (ak ASWER-ID li) premye fwa li konekte
+  // Kreye pwofil kliyan an (ak AWENS-ID li) premye fwa li konekte
   async function ensureProfile(user, fullName) {
     const ref = userRef(user.uid);
     if ((await getDoc(ref)).exists()) return;
@@ -79,19 +79,21 @@ export function createBackend(config, options = {}) {
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = randomCode(8);
       const codeRef = doc(db, "walletCodes", code);
-      const created = await runTransaction(db, async (tx) => {
-        if ((await tx.get(ref)).exists()) return true;
-        if ((await tx.get(codeRef)).exists()) return false; // kòd la pran deja: eseye yon lòt
+      const result = await runTransaction(db, async (tx) => {
+        if ((await tx.get(ref)).exists()) return "exists";
+        if ((await tx.get(codeRef)).exists()) return "taken"; // kòd la pran deja: eseye yon lòt
         tx.set(ref, {
           email: user.email, full_name: name, wallet_code: code, balance: 0, total_spent: 0, is_admin: false,
           created_at: serverTimestamp(), last_op: null, last_credit: null, last_admin_op: null,
         });
         tx.set(codeRef, { uid: user.uid, name: publicName(name, user.email) });
-        tx.set(newNotificationRef(user.uid), notification("info", "Byenvini sou Aswer Top Up 🎉",
+        tx.set(newNotificationRef(user.uid), notification("info", "Byenvini sou Awens Topup 🎉",
           "Ajoute kòb nan Wallet ou ak MonCash oswa NatCash, epi achte an kèk segonn."));
-        return true;
+        return "created";
       });
-      if (created) return;
+      // Kont Google: foto kont lan vin foto pwofil la
+      if (result === "created" && user.photoURL) await updateDoc(ref, { photo: user.photoURL }).catch(() => {});
+      if (result !== "taken") return;
     }
     throw new UserError("Nou pa rive kreye kont ou. Eseye ankò.");
   }
@@ -108,7 +110,7 @@ export function createBackend(config, options = {}) {
             console.error("ensureProfile", error);
           }
         }
-        callback(user ? { id: user.uid, email: user.email } : null);
+        callback(user ? { id: user.uid, email: user.email, photoURL: user.photoURL || null } : null);
       });
     },
 
@@ -128,7 +130,21 @@ export function createBackend(config, options = {}) {
     },
 
     resetPassword: (email) => sendPasswordResetEmail(auth, email.trim()),
-    googleSignIn: () => signInWithPopup(auth, new GoogleAuthProvider()),
+
+    // Non ak foto pwofil kliyan an (foto a deja redimansyone an yon ti imaj)
+    async saveProfile({ fullName, photo }) {
+      const uid = currentUid();
+      const changes = {};
+      if (fullName !== undefined) changes.full_name = String(fullName).trim().slice(0, 60) || null;
+      if (photo !== undefined) changes.photo = photo || null;
+      if (changes.photo && changes.photo.length > 60000) throw new UserError("Foto a twò lou. Chwazi yon lòt.");
+      await updateDoc(userRef(uid), changes);
+    },
+    googleSignIn() {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      return signInWithPopup(auth, provider);
+    },
     signOut: () => signOut(auth),
 
     /* ---------- Katalòg ak vizit (tout moun) ---------- */
@@ -298,7 +314,7 @@ export function createBackend(config, options = {}) {
       if (value < 10) throw new UserError("Montan minimòm lan se 10 HTG.");
       const toCode = String(code).toUpperCase();
       const codeSnap = await getDoc(doc(db, "walletCodes", toCode));
-      if (!codeSnap.exists()) throw new UserError("Nou pa jwenn ASWER-ID sa a.");
+      if (!codeSnap.exists()) throw new UserError("Nou pa jwenn AWENS-ID sa a.");
       const { uid: to, name: toName } = codeSnap.data();
       if (to === uid) throw new UserError("Ou pa ka voye kòb ba tèt ou.");
 
@@ -470,7 +486,7 @@ export function createBackend(config, options = {}) {
       const batch = writeBatch(db);
       batch.update(userRef(uid), makeAdmin ? { is_admin: true, admin_by: me } : { is_admin: false, admin_by: null });
       if (makeAdmin) {
-        batch.set(newNotificationRef(uid), notification("info", "Ou se admin sou Aswer Top Up",
+        batch.set(newNotificationRef(uid), notification("info", "Ou se admin sou Awens Topup",
           "Ou ka jere kòmand yo, depo yo, pwodwi yo ak kliyan yo nan Profil → Panneau admin."));
       }
       await batch.commit();

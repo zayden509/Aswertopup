@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Moon, Sun, Bell, Settings, Search, Home, ShoppingCart, Tag, History, Wallet, ArrowRight, Loader2 } from "lucide-react";
+import { Bell, Menu, UserRound, Search, Home, ShoppingCart, Tag, History, Wallet, ArrowRight, Loader2, Share, MoreVertical } from "lucide-react";
 import { CATEGORIES, HOME_SECTIONS, SLIDES, NOTIFICATIONS, VIDEO_TUTORIAL_URL } from "./data.js";
-import { waLink, openExternal, Logo, WhatsAppIcon, IconButton, ProductCard, ProductTile } from "./ui.jsx";
+import { waLink, openExternal, Logo, WhatsAppIcon, IconButton, ProductCard, ProductTile, Sheet } from "./ui.jsx";
 import { loadOrders, saveOrder } from "./orders.js";
 import { useAccount } from "./account.js";
 import { buildCatalog } from "./catalog.js";
@@ -11,7 +11,9 @@ import PaymentPage from "./PaymentPage.jsx";
 import HistoryPage, { OrderSheet } from "./HistoryPage.jsx";
 import WalletPage from "./WalletPage.jsx";
 import SettingsPage from "./SettingsPage.jsx";
-import { initials } from "./ProfileWallet.jsx";
+import { UserAvatar } from "./ProfileWallet.jsx";
+import SideMenu from "./SideMenu.jsx";
+import Footer from "./Footer.jsx";
 import AuthSheet from "./AuthSheet.jsx";
 import { DepositSheet, TransferSheet } from "./WalletSheets.jsx";
 import { NotificationsSheet, LiveToast } from "./Notifications.jsx";
@@ -64,7 +66,7 @@ function Carousel({ onAction }) {
         // Bloke navigatè a pou l pa woule kad la poukont li (focus, rechèch nan paj la)
         onScroll={(e) => { e.currentTarget.scrollLeft = 0; }}
       >
-        <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${index * 100}%)` }}>
+        <div className="flex transition-transform duration-500 ease-out will-change-transform" style={{ transform: `translate3d(-${index * 100}%, 0, 0)` }}>
           {SLIDES.map((s, i) => s.image ? (
             // Banye ak foto: tout imaj la se yon bouton
             <button
@@ -97,7 +99,7 @@ function Carousel({ onAction }) {
             </div>
           ))}
         </div>
-        <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-sm font-semibold text-slate-600 ring-1 ring-slate-200 backdrop-blur dark:bg-slate-900/80 dark:text-slate-300 dark:ring-slate-700">
+        <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-sm font-semibold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900/90 dark:text-slate-300 dark:ring-slate-700">
           <span className="text-sky-500">{index + 1}</span> / {total}
         </span>
       </div>
@@ -170,7 +172,7 @@ function ProductRail({ section, index, catalog, prices, onOpen, onSeeAll }) {
   const products = catalog.filter((p) => p.category === section.category);
   if (products.length === 0) return null;
   return (
-    <section className="mt-9" aria-label={section.title}>
+    <section className="mt-9 [contain-intrinsic-size:auto_330px] [content-visibility:auto]" aria-label={section.title}>
       <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         <span />
         <div className="text-center">
@@ -231,7 +233,7 @@ const TABS = [
 function BottomNav({ tab, onChange }) {
   return (
     <nav
-      className="fixed inset-x-3 z-40 mx-auto max-w-xl rounded-[28px] bg-white/90 p-2 shadow-xl shadow-slate-900/10 ring-1 ring-slate-200 backdrop-blur dark:bg-slate-900/90 dark:ring-slate-800"
+      className="fixed inset-x-3 z-40 mx-auto max-w-xl rounded-[28px] bg-white/[.97] p-2 shadow-xl shadow-slate-900/10 ring-1 ring-slate-200 dark:bg-slate-900/[.97] dark:ring-slate-800"
       style={{ bottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
     >
       <ul className="grid grid-cols-5 gap-1">
@@ -268,7 +270,13 @@ export default function App() {
   // Paj pwodwi a anrejistre nan istorik navigatè a pou bouton "retounen" telefòn nan mache
   const [productId, setProductId] = useState(() => window.history.state?.product || null);
   const [localOrders, setLocalOrders] = useState(loadOrders);
-  const [panel, setPanel] = useState(null); // "notifications" | "deposit" | "transfer"
+  const [panel, setPanel] = useState(null); // "notifications" | "deposit" | "transfer" | "install"
+  const [menuOpen, setMenuOpen] = useState(false);
+  // AWENS-ID ki soti nan yon kòd QR (?pay=XXXXXXXX): nou louvri "Envoyer" ak ID a deja ekri
+  const [payCode, setPayCode] = useState(() => {
+    const code = new URLSearchParams(window.location.search).get("pay")?.toUpperCase() || "";
+    return /^[A-HJ-NP-Z2-9]{8}$/.test(code) ? code : null;
+  });
   const [auth, setAuth] = useState(null); // "login" | "signup"
   const [openOrderId, setOpenOrderId] = useState(null);
   const [staticUnread, setStaticUnread] = useState(NOTIFICATIONS.length);
@@ -311,6 +319,17 @@ export default function App() {
 
   // Lè kliyan an konekte, nou fèmen fenèt koneksyon an
   useEffect(() => { if (signedIn) setAuth(null); }, [signedIn]);
+
+  // Lyen kòd QR la: retire ?pay= nan adrès la, epi louvri transfè a (oswa koneksyon an anvan)
+  useEffect(() => {
+    if (!payCode || !account.ready) return;
+    if (window.location.search) {
+      try { window.history.replaceState(window.history.state, "", window.location.pathname); } catch {}
+    }
+    if (!account.enabled) setPayCode(null);
+    else if (!signedIn) setAuth("login");
+    else if (account.profile) setPanel("transfer");
+  }, [payCode, account.ready, account.enabled, signedIn, account.profile]);
 
   const q = query.trim().toLowerCase();
   const filtered = catalog.filter((p) =>
@@ -358,12 +377,22 @@ export default function App() {
     }
   };
 
+  const openTutorial = () => {
+    if (VIDEO_TUTORIAL_URL) openExternal(VIDEO_TUTORIAL_URL);
+    else setToast("Videyo a poko disponib, li ap vini byento.");
+  };
+  const install = () => (installPrompt ? installPrompt.prompt() : setPanel("install"));
+  // Ale nan rang lan (Pwogram fidelite) sou paj pwofil la
+  const showRank = () => {
+    goToTab("settings");
+    setTimeout(() => document.getElementById("rank")?.scrollIntoView({ behavior: "smooth" }), 120);
+  };
+
   const handleSlideAction = (action) => {
     if (action === "video") {
-      if (VIDEO_TUTORIAL_URL) openExternal(VIDEO_TUTORIAL_URL);
-      else setToast("Videyo a poko disponib, li ap vini byento.");
+      openTutorial();
     } else if (action === "whatsapp") {
-      openExternal(waLink("Bonjou Aswer Top Up, mwen bezwen èd."));
+      openExternal(waLink("Bonjou Awens Topup, mwen bezwen èd."));
     } else if (action === "payment") {
       setTab("wallet");
     } else if (action.startsWith("product:")) {
@@ -381,19 +410,22 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-white">
-      <header className="sticky top-0 z-30 bg-slate-100/85 backdrop-blur-md dark:bg-slate-950/85">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-          <button type="button" onClick={() => goToTab("home")} className="flex items-center gap-3" aria-label="Aswer Top Up, lakay">
-            <Logo className="h-11 w-11 drop-shadow" />
-            <span className="flex items-baseline gap-1">
-              <span className="text-[28px] font-black leading-none tracking-tight">ASWER</span>
-              <span className="text-[11px] font-extrabold tracking-wide text-slate-700 dark:text-slate-300">TOPUP HT</span>
-            </span>
-          </button>
-          <div className="flex items-center">
-            <IconButton label={dark ? "Mòd klè" : "Mòd fonse"} onClick={toggleTheme}>
-              {dark ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+      {/* Pa gen flou (backdrop-blur) sou ba ki rete fiks yo: sa fè paj la woule pi lis sou telefòn */}
+      <header className="sticky top-0 z-30 bg-slate-100/95 dark:bg-slate-950/95">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-3 py-3">
+          <div className="flex min-w-0 items-center gap-1">
+            <IconButton label="Meni" onClick={() => setMenuOpen(true)}>
+              <Menu className="h-6 w-6" />
             </IconButton>
+            <button type="button" onClick={() => goToTab("home")} className="flex min-w-0 items-center gap-2" aria-label="Awens Topup, lakay">
+              <Logo className="h-10 w-10 shrink-0 drop-shadow" />
+              <span className="flex items-baseline gap-1.5 leading-none">
+                <span className="text-[26px] font-black tracking-tight">AWENS</span>
+                <span className="text-[12px] font-extrabold tracking-[.2em] text-sky-500">TOPUP</span>
+              </span>
+            </button>
+          </div>
+          <div className="flex shrink-0 items-center">
             <IconButton label="Notifikasyon" onClick={openNotifications}>
               <Bell className="h-6 w-6" />
               {unread > 0 && (
@@ -403,17 +435,12 @@ export default function App() {
               )}
             </IconButton>
             {account.profile ? (
-              <button
-                type="button"
-                onClick={() => goToTab("settings")}
-                aria-label="Mon profil"
-                className="ml-1 grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 text-sm font-extrabold text-white ring-2 ring-white transition active:scale-95 dark:ring-slate-800"
-              >
-                {initials(account.profile)}
+              <button type="button" onClick={() => goToTab("settings")} aria-label="Mon profil" className="ml-1 rounded-full transition active:scale-95">
+                <UserAvatar profile={account.profile} photo={account.photo} className="h-10 w-10 text-sm ring-2 ring-white dark:ring-slate-800" />
               </button>
             ) : (
-              <IconButton label="Paramèt" onClick={() => goToTab("settings")}>
-                <Settings className="h-6 w-6" />
+              <IconButton label="Profil" onClick={() => goToTab("settings")}>
+                <UserRound className="h-6 w-6" />
               </IconButton>
             )}
           </div>
@@ -448,6 +475,7 @@ export default function App() {
                 {HOME_SECTIONS.map((s, i) => (
                   <ProductRail key={s.category} section={s} index={i} catalog={catalog} prices={account.prices} onOpen={openProduct} onSeeAll={seeAll} />
                 ))}
+                <Footer email={account.profile?.email} onGo={goToTab} onTutorial={openTutorial} onRank={showRank} />
               </>
             )}
           </>
@@ -509,6 +537,9 @@ export default function App() {
             onTransfer={() => setPanel("transfer")}
             onOpenOrder={(o) => setOpenOrderId(o.id)}
             onSeeWallet={() => setTab("wallet")}
+            onGo={goToTab}
+            onNotifications={openNotifications}
+            onTutorial={openTutorial}
           />
         )}
         {!product && tab === "admin" && account.profile?.is_admin && (
@@ -520,10 +551,10 @@ export default function App() {
 
       {!product && (
         <>
-          {/* Bouton WhatsApp la pa kouvri estatistik yo nan Panneau admin */}
-          {tab !== "admin" && (
+          {/* Bouton WhatsApp la pa kouvri Pwofil la (li gen pwòp bouton Sipò) ni Panneau admin lan */}
+          {tab !== "admin" && tab !== "settings" && (
             <a
-              href={waLink("Bonjou Aswer Top Up!")}
+              href={waLink("Bonjou Awens Topup!")}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Ekri nou sou WhatsApp"
@@ -542,7 +573,31 @@ export default function App() {
         <NotificationsSheet account={account} onClose={() => setPanel(null)} onLogin={(m) => { setPanel(null); needLogin(m); }} onOpen={openNotification} />
       )}
       {panel === "deposit" && signedIn && <DepositSheet onClose={() => setPanel(null)} onToast={setToast} />}
-      {panel === "transfer" && signedIn && <TransferSheet profile={account.profile} onClose={() => setPanel(null)} />}
+      {panel === "transfer" && signedIn && (
+        <TransferSheet profile={account.profile} initialCode={payCode || ""} onClose={() => { setPanel(null); setPayCode(null); }} />
+      )}
+      {panel === "install" && (
+        <Sheet open onClose={() => setPanel(null)} title="Installer l'app">
+          <div className="space-y-3 text-[15px] text-slate-700 dark:text-slate-200">
+            <p className="flex gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60"><Share className="h-5 w-5 shrink-0 text-sky-500" /> <span><b>iPhone:</b> nan Safari, peze bouton pataje a anba ekran an, epi <b>Sur l'écran d'accueil</b>.</span></p>
+            <p className="flex gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60"><MoreVertical className="h-5 w-5 shrink-0 text-sky-500" /> <span><b>Android:</b> nan Chrome, peze ⋮ anlè adwat, epi <b>Installer l'application</b>.</span></p>
+          </div>
+        </Sheet>
+      )}
+      {menuOpen && (
+        <SideMenu
+          account={account}
+          tab={tab}
+          dark={dark}
+          onToggleTheme={toggleTheme}
+          onClose={() => setMenuOpen(false)}
+          onGo={goToTab}
+          onNotifications={openNotifications}
+          onTutorial={openTutorial}
+          onLogin={needLogin}
+          onInstall={install}
+        />
+      )}
       {openOrder && <OrderSheet order={openOrder} catalog={catalog} onClose={() => setOpenOrderId(null)} onToast={setToast} />}
       {auth && account.enabled && !signedIn && <AuthSheet initialMode={auth} onClose={() => setAuth(null)} />}
 

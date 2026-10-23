@@ -26,7 +26,7 @@ function MethodSheet({ method, onClose, onToast }) {
       icon={<img src={method.logo} alt="" className="h-11 w-11 rounded-2xl object-cover" />}
       footer={
         <a
-          href={waLink(`Bonjou Aswer Top Up, men resi peman ${method.name} mwen an. Nimewo kòmand mwen: `)}
+          href={waLink(`Bonjou Awens Topup, men resi peman ${method.name} mwen an. Nimewo kòmand mwen: `)}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] py-3.5 font-bold text-white hover:brightness-95"
@@ -116,7 +116,7 @@ export default function PaymentPage({ onToast }) {
         </button>
 
         <a
-          href={waLink("Bonjou Aswer Top Up, mwen gen yon pwoblèm ak peman mwen.")}
+          href={waLink("Bonjou Awens Topup, mwen gen yon pwoblèm ak peman mwen.")}
           target="_blank"
           rel="noopener noreferrer"
           className="block py-2 text-center text-sm font-medium text-slate-500 underline underline-offset-4 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"

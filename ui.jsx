@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { WHATSAPP_NUMBER } from "./data.js";
 
@@ -90,10 +91,12 @@ export function Sheet({ open, onClose, title, icon, footer, children }) {
   }, [open, onClose]);
 
   if (!open) return null;
-  return (
+  // Rann fenèt la dirèkteman nan <body>: konsa yon paran ki gen transform oswa
+  // content-visibility pa ka fèmen l andedan l
+  return createPortal(
     <div className="fixed inset-0 z-50 !mt-0 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex max-h-[90vh] w-full max-w-md flex-col rounded-t-3xl bg-white shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
+      <div className="absolute inset-0 animate-fade-in bg-slate-950/60" onClick={onClose} />
+      <div className="relative flex max-h-[90vh] w-full max-w-md animate-sheet-up flex-col rounded-t-3xl bg-white shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
         <div className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-slate-200 dark:bg-slate-700 sm:hidden" />
         <div className="flex items-center justify-between gap-3 px-5 pb-4 pt-4">
           <div className="flex min-w-0 items-center gap-3">
@@ -113,7 +116,8 @@ export function Sheet({ open, onClose, title, icon, footer, children }) {
         {/* Footer la rete anba fenèt la menm lè lis la long */}
         {footer && <div className="border-t border-slate-100 px-5 pb-8 pt-3 dark:border-slate-800 sm:pb-5">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -123,10 +127,10 @@ export function ProductArt({ product: p, className = "" }) {
     <div className={`overflow-hidden ${className}`}>
       {p.image && p.bg ? (
         <div className="absolute inset-0" style={{ background: p.bg }}>
-          <img src={p.image} alt="" loading="lazy" className="absolute inset-x-0 top-0 aspect-square w-full object-contain transition duration-300 group-hover:scale-105" />
+          <img src={p.image} alt="" loading="lazy" decoding="async" className="absolute inset-x-0 top-0 aspect-square w-full object-contain transition duration-300 group-hover:scale-105" />
         </div>
       ) : p.image ? (
-        <img src={p.image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+        <img src={p.image} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105" />
       ) : (
         <div className={`absolute inset-0 bg-gradient-to-br ${p.gradient}`}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,.25),transparent_55%)]" />

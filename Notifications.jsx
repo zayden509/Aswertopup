@@ -25,7 +25,7 @@ function NotificationRow({ n, fresh, onOpen }) {
           <span className="font-semibold text-slate-900 dark:text-white">{n.title}</span>
           <span className="shrink-0 text-xs text-slate-400">{timeAgo(n.created_at)}</span>
         </span>
-        {n.kind === "announcement" && <span className="mt-0.5 block text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Aswer Top Up</span>}
+        {n.kind === "announcement" && <span className="mt-0.5 block text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Awens Topup</span>}
         {n.body && <span className="mt-0.5 block whitespace-pre-line text-sm text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400">{n.body}</span>}
       </span>
       {fresh && <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-sky-500" aria-label="Nouvo" />}
@@ -96,7 +96,7 @@ export function LiveToast({ notification, onOpen, onClose }) {
 
   return (
     <div className="fixed inset-x-3 z-[70] mx-auto max-w-md animate-slide-down" style={{ top: "calc(env(safe-area-inset-top) + 10px)" }} role="status">
-      <div className="flex items-start gap-3 rounded-3xl bg-white/95 p-3 pr-2 shadow-2xl shadow-slate-900/20 ring-1 ring-slate-200 backdrop-blur dark:bg-slate-900/95 dark:ring-slate-700">
+      <div className="flex items-start gap-3 rounded-3xl bg-white/95 p-3 pr-2 shadow-2xl shadow-slate-900/20 ring-1 ring-slate-200 dark:bg-slate-900/[.98] dark:ring-slate-700">
         <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-start gap-3 text-left">
           <KindIcon kind={notification.kind} />
           <span className="min-w-0 flex-1 pt-0.5">

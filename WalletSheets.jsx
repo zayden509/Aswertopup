@@ -65,7 +65,7 @@ export function MethodList({ onPick, onToast }) {
         <ChevronRight className="h-6 w-6 shrink-0 text-sky-500" />
       </button>
       <a
-        href={waLink("Bonjou Aswer Top Up, mwen gen yon pwoblèm ak depo mwen.")}
+        href={waLink("Bonjou Awens Topup, mwen gen yon pwoblèm ak depo mwen.")}
         target="_blank"
         rel="noopener noreferrer"
         className="block py-2 text-center text-sm font-medium text-slate-500 underline underline-offset-4 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
@@ -131,7 +131,7 @@ export function DepositSheet({ onClose, onToast }) {
                 <AlertTriangle className="h-5 w-5 shrink-0" />
                 <span>
                   Nimewo {method.name} nou an poko sou sit la.{" "}
-                  <a href={waLink(`Bonjou Aswer Top Up, ki nimewo ${method.name} pou m fè depo a?`)} target="_blank" rel="noopener noreferrer" className="font-bold underline">
+                  <a href={waLink(`Bonjou Awens Topup, ki nimewo ${method.name} pou m fè depo a?`)} target="_blank" rel="noopener noreferrer" className="font-bold underline">
                     Mande l sou WhatsApp
                   </a>
                   .
@@ -164,8 +164,9 @@ export function DepositSheet({ onClose, onToast }) {
   );
 }
 
-export function TransferSheet({ profile, onClose }) {
-  const [code, setCode] = useState("");
+// `initialCode`: AWENS-ID ki soti nan yon kòd QR (lyen ?pay=)
+export function TransferSheet({ profile, initialCode = "", onClose }) {
+  const [code, setCode] = useState(initialCode);
   const [amount, setAmount] = useState("");
   const [recipient, setRecipient] = useState(null); // { name } | { missing: true }
   const [confirming, setConfirming] = useState(false);
@@ -175,7 +176,7 @@ export function TransferSheet({ profile, onClose }) {
   const balance = Number(profile?.balance || 0);
   const value = Number(amount);
 
-  // Chèche non moun nan lè ASWER-ID a konplè
+  // Chèche non moun nan lè AWENS-ID a konplè
   useEffect(() => {
     setRecipient(null);
     if (code.length !== 8) return;
@@ -211,7 +212,7 @@ export function TransferSheet({ profile, onClose }) {
           <p className="text-slate-500 dark:text-slate-400">Ou pral voye</p>
           <p className="text-4xl font-extrabold tabular-nums text-slate-900 dark:text-white">{formatPrice(value)}</p>
           <p className="text-slate-500 dark:text-slate-400">
-            bay <span className="font-bold text-slate-900 dark:text-white">{recipient.name}</span> (ASWER-ID {code})
+            bay <span className="font-bold text-slate-900 dark:text-white">{recipient.name}</span> (AWENS-ID {code})
           </p>
           <ErrorNote>{error}</ErrorNote>
           <div className="grid grid-cols-2 gap-3 pt-2">
@@ -228,7 +229,7 @@ export function TransferSheet({ profile, onClose }) {
           </p>
           <Input
             id="transfer-code"
-            label="ASWER-ID moun k ap resevwa a"
+            label="AWENS-ID moun k ap resevwa a"
             icon={UserRound}
             required
             maxLength={8}
@@ -239,11 +240,11 @@ export function TransferSheet({ profile, onClose }) {
             placeholder="Ex: K7M2QX9P"
           />
           {code === profile?.wallet_code ? (
-            <p className="text-sm font-medium text-red-500">Sa se pwòp ASWER-ID ou.</p>
+            <p className="text-sm font-medium text-red-500">Sa se pwòp AWENS-ID ou.</p>
           ) : recipient?.name ? (
             <p className="flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-4 w-4" /> {recipient.name}</p>
           ) : recipient?.missing ? (
-            <p className="text-sm font-medium text-red-500">Nou pa jwenn ASWER-ID sa a.</p>
+            <p className="text-sm font-medium text-red-500">Nou pa jwenn AWENS-ID sa a.</p>
           ) : null}
           <Input
             id="transfer-amount"

@@ -111,6 +111,8 @@ export function useAccount(onNotification) {
     ready,
     user,
     profile: mine ? profile : null,
+    // Foto pwofil la, oswa foto kont Google la si kliyan an poko mete youn
+    photo: mine ? profile.photo || user.photoURL || null : null,
     orders: mine ? orders : [],
     deposits: mine ? deposits : [],
     transfers: mine ? transfers : [],

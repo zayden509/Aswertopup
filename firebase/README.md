@@ -79,6 +79,17 @@ Plan Spark la bay **50 000 lekti** ak **20 000 ekriti** pa jou. Sa ase pou plizy
 kliyan chak jou. Si w depase l, Firebase bloke baz done a jiska demen: ou ka pase sou
 plan **Blaze** (ou peye sèlman sa w itilize).
 
-## Koneksyon ak Google (si w vle)
-1. **Authentication → Sign-in method → Add new provider → Google**, aktive l, epi **Save**.
-2. Nan `config.js`, mete `GOOGLE_LOGIN = true`.
+## Koneksyon ak Google
+Bouton **Kontinye ak Google** la deja sou sit la (`GOOGLE_LOGIN = true` nan `config.js`).
+Pou l mache:
+1. **Authentication → Sign-in method → Ajouter un fournisseur → Google**, aktive l, chwazi
+   imèl sipò a, epi **Enregistrer**.
+2. **Authentication → Paramètres → Domaines autorisés**: ajoute `awenstopup.com`,
+   `www.awenstopup.com` ak `aswertopup.vercel.app`.
+
+Kliyan ki konekte ak Google jwenn foto kont Google yo kòm foto pwofil (yo ka chanje l).
+
+## Efase yon kont
+Kliyan yo voye demann lan sou WhatsApp (anba paj akèy la → **Efase kont**). Pou efase l:
+1. **Authentication → Users**: chèche imèl la, peze **⋮ → Supprimer le compte**.
+2. **Firestore → Données → users**: efase dokiman kliyan an.

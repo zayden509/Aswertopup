@@ -31,7 +31,7 @@ import bannerSipo from "./img/banners/sipo.jpg";
 
 /* ============ KONFIGIRASYON ============ */
 // Nimewo WhatsApp, videyo tutoriel ak kle Firebase yo nan config.js
-export { WHATSAPP_NUMBER, VIDEO_TUTORIAL_URL, GOOGLE_LOGIN } from "./config.js";
+export { WHATSAPP_NUMBER, VIDEO_TUTORIAL_URL, GOOGLE_LOGIN, SITE_URL, SOCIAL_LINKS } from "./config.js";
 
 // Rang kliyan yo selon kantite kòb yo depanse (an goud)
 export const RANKS = [
@@ -180,7 +180,7 @@ export const SLIDES = [
     emoji: "💬",
     title: "Ou bezwen èd?",
     image: bannerSipo,
-    text: "Ekip Aswer Top Up la la pou reponn ou sou WhatsApp.",
+    text: "Ekip Awens Topup la la pou reponn ou sou WhatsApp.",
     button: "Kontakte nou",
     action: "whatsapp",
     Art: MessageCircle,
@@ -189,7 +189,7 @@ export const SLIDES = [
 
 /* ============ NOTIFIKASYON ============ */
 export const NOTIFICATIONS = [
-  { emoji: "🎉", title: "Byenvini sou Aswer Top Up", text: "Rechaje jwèt ou yo rapid e an sekirite.", time: "Kounye a" },
+  { emoji: "🎉", title: "Byenvini sou Awens Topup", text: "Rechaje jwèt ou yo rapid e an sekirite.", time: "Kounye a" },
   { emoji: "🛰️", title: "Nouvo: Starlink", text: "Ou ka peye abònman Starlink ou sou sit la.", time: "Jodi a" },
   { emoji: "🔥", title: "Free Fire disponib", text: "Dyaman Free Fire yo disponib, livrezon rapid.", time: "Jodi a" },
 ];

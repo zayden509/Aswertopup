@@ -81,7 +81,7 @@ function OneCustomer({ profiles, onToast }) {
     <div className="space-y-2">
       <label className="flex items-center gap-3 rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 focus-within:border-sky-400 dark:border-slate-700 dark:bg-slate-950">
         <Search className="h-5 w-5 shrink-0 text-slate-400" />
-        <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Chèche non, imèl oswa ASWER-ID" className="w-full bg-transparent focus:outline-none" />
+        <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Chèche non, imèl oswa AWENS-ID" className="w-full bg-transparent focus:outline-none" />
       </label>
       {q && results.length === 0 && <p className="px-1 text-sm text-slate-500 dark:text-slate-400">Pa gen kliyan ki koresponn.</p>}
       <ul className="space-y-1">

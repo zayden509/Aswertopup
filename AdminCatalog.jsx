@@ -5,6 +5,7 @@ import { backend, errorText } from "./backend.js";
 import { allProducts } from "./catalog.js";
 import { Sheet, ProductArt, ErrorNote, formatPrice, minPrice, packageName } from "./ui.jsx";
 import { Chips, Empty, Field, Toggle, inputClass, normalize } from "./adminUi.jsx";
+import { squarePhoto } from "./image.js";
 
 const PRODUCT_CATEGORIES = CATEGORIES.filter((c) => c !== "Tout");
 
@@ -21,31 +22,6 @@ const BUILT_IN_PACKAGES = PRODUCTS.flatMap((product) =>
     needs_id: Boolean(item.needsId),
     sort,
   }));
-
-// Foto a vin yon ti kare 320 × 320 (≈ 20 KB) pou l pa peze sou baz done a
-async function squarePhoto(file, size = 320) {
-  const url = URL.createObjectURL(file);
-  try {
-    const img = await new Promise((resolve, reject) => {
-      const i = new Image();
-      i.onload = () => resolve(i);
-      i.onerror = () => reject(new Error("Nou pa ka li foto sa a. Chwazi yon lòt."));
-      i.src = url;
-    });
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, size, size);
-    const side = Math.min(img.naturalWidth, img.naturalHeight);
-    ctx.drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, size, size);
-    const webp = canvas.toDataURL("image/webp", 0.8);
-    return webp.startsWith("data:image/webp") ? webp : canvas.toDataURL("image/jpeg", 0.82);
-  } finally {
-    URL.revokeObjectURL(url);
-  }
-}
 
 function PriceRow({ pkg, onToast, onDelete }) {
   const [price, setPrice] = useState(String(Number(pkg.price)));

@@ -158,7 +158,7 @@ export default function AdminCustomers({ profiles, orders, deposits, onToast }) 
     <div className="space-y-4">
       <label className="flex items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 focus-within:border-sky-400 dark:border-slate-800 dark:bg-slate-900">
         <Search className="h-5 w-5 shrink-0 text-slate-400" />
-        <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Non, imèl oswa ASWER-ID" className="w-full bg-transparent focus:outline-none" />
+        <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Non, imèl oswa AWENS-ID" className="w-full bg-transparent focus:outline-none" />
       </label>
       <Chips options={SORTS} value={sortId} onChange={(id) => { setSortId(id); setShown(PAGE); }} label="Lòd" />
       <p className="px-1 text-sm text-slate-500 dark:text-slate-400">{number.format(list.length)} kliyan</p>

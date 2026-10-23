@@ -2,7 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-html { -webkit-tap-highlight-color: transparent; }
+html { -webkit-tap-highlight-color: transparent; text-size-adjust: 100%; }
+/* Pa gen reta lè w peze, ni zoom doub-tap sou bouton yo */
+a, button, [role="button"], input, label { touch-action: manipulation; }
 body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
@@ -13,6 +15,15 @@ body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-
   to { transform: translateY(0); opacity: 1; }
 }
 .animate-slide-down { animation: slide-down 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+
+/* Fenèt yo ak meni an: sèlman transform ak opacity, pou animasyon yo rete lis (60–120 i/s) */
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-up { from { transform: translate3d(0, 24px, 0); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes slide-in-left { from { transform: translate3d(-100%, 0, 0); } to { transform: none; } }
+.animate-fade-in { animation: fade-in 0.2s ease-out; }
+.animate-sheet-up { animation: sheet-up 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.animate-slide-in-left { animation: slide-in-left 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-slide-down { animation: none; }
+  .animate-slide-down, .animate-fade-in, .animate-sheet-up, .animate-slide-in-left { animation: none; }
 }

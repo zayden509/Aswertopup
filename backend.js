@@ -5,7 +5,13 @@ import { FIREBASE_CONFIG } from "./config.js";
 export { errorText } from "./errors.js";
 
 const enabled = Boolean(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId);
-const loading = enabled ? import("./firebase.js").then((m) => m.createBackend(FIREBASE_CONFIG)) : null;
+let ready = null; // backend lan lè l fin chaje
+const loading = enabled
+  ? import("./firebase.js").then((m) => {
+      ready = m.createBackend(FIREBASE_CONFIG);
+      return ready;
+    })
+  : null;
 
 // Fonksyon ki retounen yon "stop" touswit, menm si Firebase poko fin chaje
 const SUBSCRIPTIONS = [
@@ -29,7 +35,9 @@ export const backend = enabled
             };
           };
         }
-        return async (...args) => (await loading)[name](...args);
+        // Lè Firebase fin chaje, nou rele fonksyon an touswit: Safari bloke fenèt Google la
+        // si l pa louvri nan menm moman kliyan an peze bouton an
+        return (...args) => (ready ? Promise.resolve(ready[name](...args)) : loading.then((b) => b[name](...args)));
       },
     })
   : null;

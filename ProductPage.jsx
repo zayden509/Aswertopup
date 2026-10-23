@@ -255,7 +255,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
             Ekri nou sou WhatsApp, n ap ba w pri yo ak tout opsyon ki disponib pou {product.name}.
           </p>
           <a
-            href={waLink(`Bonjou Aswer Top Up, mwen vle achte ${product.name}. Ki pri yo ye?`)}
+            href={waLink(`Bonjou Awens Topup, mwen vle achte ${product.name}. Ki pri yo ye?`)}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-6 py-3.5 font-bold text-white hover:brightness-95"
@@ -398,7 +398,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
           </StepCard>
 
           <div
-            className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95"
+            className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/[.97] dark:border-slate-800 dark:bg-slate-900/[.97]"
             style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
           >
             <div className="mx-auto flex max-w-3xl items-center gap-4 px-4 pt-3">

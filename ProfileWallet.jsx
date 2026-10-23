@@ -10,6 +10,18 @@ export function initials(profile) {
   return ((words[0]?.[0] || "?") + (words[1]?.[0] || "")).toUpperCase();
 }
 
+// Foto pwofil kliyan an, oswa inisyal li yo si l pa gen foto.
+// `className` bay gwosè a (ak gwosè tèks inisyal yo).
+export function UserAvatar({ profile, photo, className = "h-11 w-11 text-sm" }) {
+  const src = photo ?? profile?.photo;
+  if (src) return <img src={src} alt="" referrerPolicy="no-referrer" decoding="async" className={`${className} shrink-0 rounded-full object-cover`} />;
+  return (
+    <span className={`grid ${className} shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 font-extrabold text-white`}>
+      {initials(profile)}
+    </span>
+  );
+}
+
 function Stat({ icon: Icon, tone, label, value, unit }) {
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
@@ -90,7 +102,7 @@ export default function ProfileWallet({ account, onDeposit, onTransfer, onOpenOr
           onClick={() => copyText(profile.wallet_code, onToast)}
           className="relative mt-4 inline-flex items-center gap-2 rounded-full bg-black/20 px-3 py-1.5 ring-1 ring-white/10"
         >
-          <span className="text-[10px] font-bold tracking-widest text-sky-200/80">ASWER-ID</span>
+          <span className="text-[10px] font-bold tracking-widest text-sky-200/80">AWENS-ID</span>
           <span className="font-mono text-sm font-bold tracking-[.2em]">{profile.wallet_code}</span>
           <Copy className="h-3.5 w-3.5 text-sky-200" />
         </button>

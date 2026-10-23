@@ -32,7 +32,7 @@ export function savePlayerId(id) {
 
 export function orderMessage(order) {
   const lines = [
-    `Nouvo kòmand Aswer Top Up (${order.id})`,
+    `Nouvo kòmand Awens Topup (${order.id})`,
     `Pwodwi: ${order.product}`,
     `Pake: ${order.package}`,
     `Pri: ${order.priceText}`,

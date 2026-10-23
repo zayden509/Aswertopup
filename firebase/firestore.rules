@@ -41,13 +41,20 @@ service cloud.firestore {
     function changedOnly(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
     function exactKeys(keys) { return request.resource.data.keys().hasOnly(keys) && request.resource.data.keys().hasAll(keys); }
     function optString(v, max) { return v == null || (v is string && v.size() <= max); }
+    // Foto pwofil: yon ti imaj (data:) sit la redimansyone, oswa foto kont Google la (https)
+    function validPhoto(p) {
+      return p == null || (p is string && p.size() <= 60000
+        && (p.matches('^data:image/(webp|jpeg|png);base64,[A-Za-z0-9+/=]+$') || p.matches('^https://[^ "<>]+$')));
+    }
 
     // ---------- Kliyan yo ----------
     match /users/{uid} {
       allow read: if signedIn() && (me() == uid || isAdmin());
       allow create: if signedIn() && me() == uid && validNewUser(uid);
       allow update: if signedIn() && (
-        (me() == uid && changedOnly(['full_name']) && optString(request.resource.data.full_name, 60))
+        (me() == uid && changedOnly(['full_name', 'photo'])
+          && optString(request.resource.data.full_name, 60)
+          && validPhoto(request.resource.data.get('photo', null)))
         || (me() == uid && spendOk(uid))
         || transferCreditOk(uid)
         || adminCreditOk(uid)

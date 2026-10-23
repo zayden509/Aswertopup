@@ -109,7 +109,7 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
     return (
       <div className="space-y-4">
         <LoginPrompt
-          title="Mon portefeuille ASWER"
+          title="Mon portefeuille AWENS"
           text="Konekte pou w ajoute kòb ak MonCash oswa NatCash, wè solde ou epi achte an kèk segonn."
           onLogin={onLogin}
         />
@@ -139,7 +139,7 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
     <div className="space-y-5">
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50 via-white to-violet-50 p-5 shadow-lg shadow-sky-500/10 ring-1 ring-sky-100 dark:from-sky-500/10 dark:via-slate-900 dark:to-violet-500/10 dark:ring-slate-800">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-xl font-bold text-sky-500">Mon portefeuille ASWER</h1>
+          <h1 className="text-xl font-bold text-sky-500">Mon portefeuille AWENS</h1>
           <button
             type="button"
             onClick={toggleHidden}
@@ -155,7 +155,7 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
             onClick={() => copyText(profile.wallet_code, onToast)}
             className="mt-3 inline-flex items-center gap-3 rounded-full bg-white/80 px-4 py-2 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700"
           >
-            <span className="text-xs font-bold tracking-widest text-slate-500 dark:text-slate-400">ASWER-ID</span>
+            <span className="text-xs font-bold tracking-widest text-slate-500 dark:text-slate-400">AWENS-ID</span>
             <span className="font-mono text-base font-bold tracking-wider text-slate-900 dark:text-white">{profile.wallet_code}</span>
             <Copy className="h-4 w-4 text-slate-500" />
           </button>

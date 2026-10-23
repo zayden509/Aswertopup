@@ -18,5 +18,16 @@ export const FIREBASE_CONFIG = {
   appId: "1:262999101303:web:ca0407bb2940a5f560db72",
 };
 
-// Mete true lè w fin aktive Google nan Firebase (Authentication → Sign-in method → Google)
-export const GOOGLE_LOGIN = false;
+// Bouton "Kontinye ak Google". Li mache sèlman lè Google aktive nan Firebase
+// (Authentication → Sign-in method → Google) e domèn sit la otorize.
+export const GOOGLE_LOGIN = true;
+
+// Adrès sit la: kòd QR Wallet yo mennen la
+export const SITE_URL = "https://www.awenstopup.com";
+
+// Rezo sosyal yo (anba paj akèy la). Kite yon lyen vid pou l pa parèt.
+export const SOCIAL_LINKS = {
+  tiktok: "",
+  instagram: "",
+  facebook: "",
+};

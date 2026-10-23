@@ -1,7 +1,7 @@
 import React from "react";
 import { Copy } from "lucide-react";
 import { copyText } from "./ui.jsx";
-import { initials } from "./ProfileWallet.jsx";
+import { UserAvatar } from "./ProfileWallet.jsx";
 
 // Ti moso ki sèvi nan tout onglet Panneau admin lan
 
@@ -70,11 +70,7 @@ export function Chips({ options, value, onChange, label }) {
 }
 
 export function Avatar({ profile, size = "h-11 w-11 text-sm" }) {
-  return (
-    <span className={`grid ${size} shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 font-extrabold text-white`}>
-      {initials(profile)}
-    </span>
-  );
+  return <UserAvatar profile={profile} className={size} />;
 }
 
 export function CustomerLine({ profile }) {

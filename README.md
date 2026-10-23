@@ -1,4 +1,4 @@
-# Aswer Top Up
+# Awens Topup
 
 Sit rechaj jwèt, abònman ak gift cards (React + Vite + Tailwind).
 
@@ -22,7 +22,10 @@ swiv gid [`firebase/README.md`](firebase/README.md) (Firebase, plan gratis la).
 - `PaymentPage.jsx`: paj Wallet la (MonCash, NatCash, tutoriel).
 - `HistoryPage.jsx`: istorik kòmand yo (sove sou telefòn kliyan an).
 - `WalletPage.jsx`, `WalletSheets.jsx`: Wallet la, depo ak transfè (lè baz done a konekte).
-- `SettingsPage.jsx`: Paramètres (rang, kont).
+- `SettingsPage.jsx`, `ProfileTabs.jsx`: paj "Mon profil" la (foto, rakousi, Profil / QR Code /
+  Frais & limites).
+- `SideMenu.jsx`: meni sou kote a (bouton ☰). `Footer.jsx`: pye paj akèy la ak paj legal yo.
+- `image.js`: redimansyone foto yo (pwofil, pwodwi) anvan yo ale nan baz done a.
 - `AdminPage.jsx` ak `Admin*.jsx`, `adminUi.jsx`: Panneau admin nan (estatistik, kòmand, depo,
   kliyan, pwodwi, mesaj, ekip). Li chaje sèlman pou admin yo.
 - `catalog.js`: mete pwodwi ki nan `data.js` ansanm ak sa admin nan kreye yo.
@@ -41,6 +44,9 @@ Nan `config.js`:
 - `WHATSAPP_NUMBER`: nimewo WhatsApp sipò a (egzanp `50937000000`). Tout kòmand yo rive la.
 - `VIDEO_TUTORIAL_URL`: lyen videyo tutoriel la.
 - `FIREBASE_CONFIG`: kle Firebase yo (gade `firebase/README.md`).
+- `GOOGLE_LOGIN`: bouton "Kontinye ak Google" la.
+- `SITE_URL`: adrès sit la (kòd QR Wallet yo mennen la).
+- `SOCIAL_LINKS`: lyen TikTok, Instagram, Facebook (anba paj akèy la). Yon lyen vid pa parèt.
 
 Nan `data.js`:
 - `PAYMENT_METHODS`: mete nimewo MonCash ak NatCash yo nan `number`.
