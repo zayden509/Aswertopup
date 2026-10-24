@@ -1,7 +1,7 @@
 /* ============ KONFIGIRASYON SIT LA ============ */
 
 // Nimewo WhatsApp la ak kòd peyi a, san "+" ni espas (egzanp: "50937000000").
-export const WHATSAPP_NUMBER = "";
+export const WHATSAPP_NUMBER = "50934431664";
 
 // Lyen videyo tutoriel la (YouTube, TikTok…). Kite l vid si l poko pare.
 export const VIDEO_TUTORIAL_URL = "";

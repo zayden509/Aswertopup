@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { X, Home, ShoppingCart, Wallet, History, Bell, UserRound, PlayCircle, ShieldCheck, Moon, Sun, Download, LogOut, LogIn, ChevronRight } from "lucide-react";
-import { Logo, WhatsAppIcon, waLink, formatPrice } from "./ui.jsx";
+import { Logo, WhatsAppIcon, waLink, supportMessage, formatPrice } from "./ui.jsx";
 import { UserAvatar } from "./ProfileWallet.jsx";
 
 // Meni sou kote a (bouton ☰ anlè agoch)
@@ -131,7 +131,7 @@ export default function SideMenu({ account, tab, dark, onToggleTheme, onClose, o
           <button type="button" onClick={() => { onClose(); onInstall(); }} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-500 py-3.5 font-bold text-white shadow-lg shadow-sky-500/25">
             <Download className="h-5 w-5" /> Installer l'app
           </button>
-          <a href={waLink("Bonjou Awens Topup, mwen bezwen èd.")} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366]/10 py-3 font-bold text-[#128C7E] dark:text-[#25D366]">
+          <a href={waLink(supportMessage("Bonjou Awens Topup, mwen bezwen èd.", profile))} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366]/10 py-3 font-bold text-[#128C7E] dark:text-[#25D366]">
             <WhatsAppIcon className="h-5 w-5" /> Sipò WhatsApp
           </a>
           {account.user && (

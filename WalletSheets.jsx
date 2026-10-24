@@ -3,7 +3,7 @@ import { Plus, Send, ChevronRight, BookOpen, Copy, CheckCircle2, Loader2, Hash, 
 import { PAYMENT_METHODS, VIDEO_TUTORIAL_URL } from "./data.js";
 import { backend, errorText } from "./backend.js";
 import { usePaymentMethods } from "./payments.js";
-import { Sheet, ErrorNote, waLink, openExternal, formatPrice, copyText } from "./ui.jsx";
+import { Sheet, ErrorNote, waLink, supportMessage, openExternal, formatPrice, copyText } from "./ui.jsx";
 
 export function Input({ id, label, icon: Icon, hint, ...props }) {
   return (
@@ -170,7 +170,7 @@ export function MethodList({ onPick, onToast }) {
 }
 
 // Depo: chwazi MonCash oswa NatCash, voye kòb la sou kont lan, epi valide l ak kòd tranzaksyon an
-export function DepositSheet({ initialAmount = "", onClose, onToast }) {
+export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) {
   const methods = usePaymentMethods();
   const [methodId, setMethodId] = useState(() => (methods.find((m) => m.number && m.recommended) || methods.find((m) => m.number) || methods[0]).id);
   const method = methods.find((m) => m.id === methodId) || methods[0];
@@ -184,6 +184,12 @@ export function DepositSheet({ initialAmount = "", onClose, onToast }) {
     if (VIDEO_TUTORIAL_URL) openExternal(VIDEO_TUTORIAL_URL);
     else onToast("Videyo a poko disponib, li ap vini byento.");
   };
+
+  // Mesaj WhatsApp "Yon pwoblèm?" la ak tout enfòmasyon depo a, pou ekip la jwenn li vit
+  const problemLines = ["Bonjou Awens Topup, mwen gen yon pwoblèm ak depo mwen.", "", `Mòd: ${method.name}`];
+  if (amount) problemLines.push(`Montan: ${amount} HTG`);
+  if (reference.trim()) problemLines.push(`TransCode: ${reference.trim()}`);
+  const problemText = problemLines.join("\n");
 
   const submit = async (e) => {
     e.preventDefault();
@@ -245,7 +251,12 @@ export function DepositSheet({ initialAmount = "", onClose, onToast }) {
             <button type="button" onClick={openTutorial} className="flex items-center gap-1.5 hover:text-slate-800 dark:hover:text-slate-200">
               <BookOpen className="h-4 w-4" /> Tutoriel de dépôt
             </button>
-            <a href={waLink("Bonjou Awens Topup, mwen gen yon pwoblèm ak depo mwen.")} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 hover:text-slate-800 dark:hover:text-slate-200">
+            <a
+              href={waLink(supportMessage(problemText, profile))}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-4 hover:text-slate-800 dark:hover:text-slate-200"
+            >
               Yon pwoblèm?
             </a>
           </div>

@@ -41,6 +41,11 @@ export function OrderSheet({ order, catalog = PRODUCTS, onClose, onToast }) {
   const reached = steps.indexOf(order.status);
   const stepLabel = { unpaid: "Peman voye", pending: order.payment ? "Peman OK" : "Resevwa", processing: "An kou", delivered: "Livre", refused: "Refize" };
   const method = order.payment && PAYMENT_METHODS.find((m) => m.id === order.payment.method);
+  // Mesaj WhatsApp ak tout detay kòmand lan, pou ekip la pa bezwen mande yo
+  const helpLines = ["Bonjou Awens Topup, mwen bezwen èd ak kòmand mwen an.", "", `Kòmand: ${order.code}`, `Pwodwi: ${order.product_name} · ${order.package_label}`];
+  if (order.player_id) helpLines.push(`Player ID: ${order.player_id}`);
+  helpLines.push(`Pri: ${formatPrice(Number(order.price))}`, `Estati: ${orderStatus(order).label}`);
+  const helpText = helpLines.join("\n");
 
   return (
     <Sheet
@@ -49,7 +54,7 @@ export function OrderSheet({ order, catalog = PRODUCTS, onClose, onToast }) {
       title={`Kòmand ${order.code}`}
       footer={
         <a
-          href={waLink(`Bonjou Awens Topup, mwen bezwen èd ak kòmand ${order.code} (${order.product_name} · ${order.package_label}).`)}
+          href={waLink(helpText)}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3.5 font-bold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"

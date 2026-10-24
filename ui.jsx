@@ -9,6 +9,18 @@ export function waLink(text) {
   return `${base}?text=${encodeURIComponent(text)}`;
 }
 
+// Nimewo WhatsApp la jan moun li l: +509 34 43 1664
+export function formatWhatsApp(number = WHATSAPP_NUMBER) {
+  const d = String(number || "").replace(/\D/g, "");
+  return d.length === 11 && d.startsWith("509") ? `+509 ${d.slice(3, 5)} ${d.slice(5, 7)} ${d.slice(7)}` : d ? `+${d}` : "";
+}
+
+// Mesaj sipò ak AWENS-ID ak imèl kliyan an, pou ekip la konnen ki moun k ap ekri
+export function supportMessage(text, profile) {
+  const who = [profile?.wallet_code && `AWENS-ID: ${profile.wallet_code}`, profile?.email && `Imèl: ${profile.email}`].filter(Boolean);
+  return who.length ? `${text}\n\n${who.join("\n")}` : text;
+}
+
 export function openExternal(url) {
   window.open(url, "_blank", "noopener,noreferrer");
 }

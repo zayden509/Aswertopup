@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bell, Menu, UserRound, Search, Home, ShoppingCart, Tag, History, Wallet, ArrowRight, Loader2, Share, MoreVertical } from "lucide-react";
 import { CATEGORIES, HOME_SECTIONS, SLIDES, NOTIFICATIONS, VIDEO_TUTORIAL_URL } from "./data.js";
-import { waLink, openExternal, Logo, WhatsAppIcon, IconButton, ProductCard, ProductTile, Sheet } from "./ui.jsx";
+import { waLink, supportMessage, openExternal, Logo, WhatsAppIcon, IconButton, ProductCard, ProductTile, Sheet } from "./ui.jsx";
 import { loadOrders, saveOrder } from "./orders.js";
 import { useAccount } from "./account.js";
 import { buildCatalog } from "./catalog.js";
@@ -425,7 +425,7 @@ export default function App() {
     if (action === "video") {
       openTutorial();
     } else if (action === "whatsapp") {
-      openExternal(waLink("Bonjou Awens Topup, mwen bezwen èd."));
+      openExternal(waLink(supportMessage("Bonjou Awens Topup, mwen bezwen èd.", account.profile)));
     } else if (action === "payment") {
       setTab("wallet");
     } else if (action.startsWith("product:")) {
@@ -604,7 +604,7 @@ export default function App() {
           {/* Bouton WhatsApp la pa kouvri Pwofil la (li gen pwòp bouton Sipò) ni Panneau admin lan */}
           {tab !== "admin" && tab !== "settings" && (
             <a
-              href={waLink("Bonjou Awens Topup!")}
+              href={waLink(supportMessage("Bonjou Awens Topup! Mwen gen yon kesyon.", account.profile))}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Ekri nou sou WhatsApp"
@@ -622,7 +622,7 @@ export default function App() {
       {panel === "notifications" && (
         <NotificationsSheet account={account} onClose={() => setPanel(null)} onLogin={(m) => { setPanel(null); needLogin(m); }} onOpen={openNotification} />
       )}
-      {panel === "deposit" && signedIn && <DepositSheet initialAmount={depositAmount} onClose={() => setPanel(null)} onToast={setToast} />}
+      {panel === "deposit" && signedIn && <DepositSheet initialAmount={depositAmount} profile={account.profile} onClose={() => setPanel(null)} onToast={setToast} />}
       {panel === "transfer" && signedIn && (
         <TransferSheet profile={account.profile} initialCode={payCode || ""} onClose={() => { setPanel(null); setPayCode(null); }} />
       )}

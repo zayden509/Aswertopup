@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ShieldCheck, Zap, MessageCircle, ChevronRight, FileText, Lock, UserX, Instagram, Facebook } from "lucide-react";
 import { PAYMENT_METHODS, SOCIAL_LINKS } from "./data.js";
-import { Logo, Sheet, WhatsAppIcon, waLink } from "./ui.jsx";
+import { Logo, Sheet, WhatsAppIcon, waLink, supportMessage, formatWhatsApp } from "./ui.jsx";
 
 function TikTokIcon({ className = "" }) {
   return (
@@ -82,7 +82,7 @@ function LegalSheet({ id, email, onClose }) {
             <WhatsAppIcon className="h-5 w-5" /> Voye demann lan
           </a>
         ) : (
-          <a href={waLink("Bonjou Awens Topup, mwen gen yon kesyon.")} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+          <a href={waLink(supportMessage("Bonjou Awens Topup, mwen gen yon kesyon.", email && { email }))} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
             <WhatsAppIcon className="h-5 w-5" /> Poze nou yon kesyon
           </a>
         )}
@@ -134,8 +134,8 @@ export default function Footer({ email, onGo, onTutorial, onRank }) {
           Rechaje jwèt ou yo, peye abònman ak gift card an goud. Rapid, an sekirite, e senp, depi telefòn ou.
         </p>
         <div className="relative mt-4 flex flex-wrap gap-2">
-          <a href={waLink("Bonjou Awens Topup!")} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-900/30">
-            <WhatsAppIcon className="h-5 w-5" /> WhatsApp
+          <a href={waLink(supportMessage("Bonjou Awens Topup! Mwen gen yon kesyon.", email && { email }))} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-900/30">
+            <WhatsAppIcon className="h-5 w-5" /> {formatWhatsApp() || "WhatsApp"}
           </a>
           {socials.map((s) => (
             <a key={s.id} href={SOCIAL_LINKS[s.id]} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-bold text-slate-900">
@@ -155,7 +155,7 @@ export default function Footer({ email, onGo, onTutorial, onRank }) {
         <div>
           <h3 className="mb-1 text-xs font-bold uppercase tracking-[.18em] text-slate-400">Sipò</h3>
           <ul>
-            <LinkRow onClick={() => window.open(waLink("Bonjou Awens Topup, mwen bezwen èd."), "_blank", "noopener,noreferrer")}>Sant èd</LinkRow>
+            <LinkRow onClick={() => window.open(waLink(supportMessage("Bonjou Awens Topup, mwen bezwen èd.", email && { email })), "_blank", "noopener,noreferrer")}>Sant èd</LinkRow>
             <LinkRow onClick={onTutorial}>Tutoriel</LinkRow>
             <LinkRow onClick={() => onGo("wallet")}>Kijan pou peye</LinkRow>
             <LinkRow onClick={onRank}>Pwogram fidelite</LinkRow>

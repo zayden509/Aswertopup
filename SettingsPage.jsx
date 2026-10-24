@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { RANKS } from "./data.js";
 import { backend, errorText } from "./backend.js";
-import { Sheet, ErrorNote, WhatsAppIcon, waLink, formatPrice, formatDate, copyText } from "./ui.jsx";
+import { Sheet, ErrorNote, WhatsAppIcon, waLink, supportMessage, formatPrice, formatDate, copyText } from "./ui.jsx";
 import { LoginPrompt } from "./WalletPage.jsx";
 import ProfileWallet, { UserAvatar } from "./ProfileWallet.jsx";
 import { QrCard, FeesCard } from "./ProfileTabs.jsx";
@@ -198,7 +198,7 @@ export default function SettingsPage({
     { label: "Voye", icon: Send, onClick: onTransfer },
     { label: "Notifikasyon", icon: Bell, onClick: onNotifications, badge: account.unread },
     { label: "Tutoriel", icon: PlayCircle, onClick: onTutorial },
-    { label: "Sipò", icon: WhatsAppIcon, href: waLink("Bonjou Awens Topup, mwen bezwen èd.") },
+    { label: "Sipò", icon: WhatsAppIcon, href: waLink(supportMessage("Bonjou Awens Topup, mwen bezwen èd.", profile)) },
     profile.is_admin
       ? { label: "Admin", icon: ShieldCheck, onClick: onAdmin }
       : { label: "Rang", icon: Award, onClick: () => { setTab("profile"); setTimeout(() => document.getElementById("rank")?.scrollIntoView({ behavior: "smooth" }), 50); } },
@@ -214,7 +214,7 @@ export default function SettingsPage({
         </div>
       )}
       <Row icon={dark ? Moon : Sun} label="Thème" value={dark ? "Sombre" : "Clair"} onClick={onToggleTheme} />
-      <Row icon={WhatsAppIcon} label="Kontakte sipò a" href={waLink("Bonjou Awens Topup, mwen bezwen èd.")} />
+      <Row icon={WhatsAppIcon} label="Kontakte sipò a" href={waLink(supportMessage("Bonjou Awens Topup, mwen bezwen èd.", account.profile))} />
     </Section>
   );
 
