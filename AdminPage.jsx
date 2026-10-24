@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, ShieldCheck, Crown, Check, X, Loader2, RefreshCw, PackageCheck, Clock, Search,
   LayoutDashboard, ShoppingBag, ArrowDownLeft, Users, Package, MessageSquareText, Zap, Settings,
@@ -431,6 +431,28 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
 
   // Ki pake ki otomatik (FazerCards)
   useEffect(() => backend.subscribeSupplierMap(setSupplierMap), [epoch]);
+
+  // Livrezon otomatik san bouton: yon kòmand otomatik ki poko rive kote FazerCards (oswa ki te
+  // bloke sou yon erè), oswa ki rete "an kou" twò lontan, voye/verifye poukont li yon fwa
+  // chak fwa Panneau admin lan louvri. Sèvè a pa janm voye menm kòmand lan de fwa.
+  const nudged = useRef(new Set());
+  useEffect(() => {
+    const now = Date.now();
+    const age = (o) => now - Date.parse(o.updated_at || o.created_at);
+    orders.forEach((o) => {
+      if (nudged.current.has(o.id) || !supplierMap[o.package_id]?.auto) return;
+      const s = o.supplier;
+      let action = null;
+      if (o.status === "pending" && !s && age(o) > 60000) action = "send";
+      else if (o.status === "pending" && s?.status === "error" && age(o) > 120000) action = "send";
+      else if (o.status === "pending" && s?.status === "sending" && !s.order_id && age(o) > 300000) action = "retry";
+      else if (["pending", "processing"].includes(o.status) && s?.order_id && !["completed", "failed", "refund"].includes(s.status) && age(o) > 600000) action = "send";
+      if (!action) return;
+      nudged.current.add(o.id);
+      if (action === "retry") backend.adminFazer("retry", { orderId: o.id }).catch(() => {});
+      else backend.requestAutoDelivery(o.id);
+    });
+  }, [orders, supplierMap]);
 
   // Lè non yon pwodwi chanje sou sit la, pake li yo nan baz done a swiv li (kòmand ki deja fèt yo pa chanje)
   const nameFixes = useMemo(() => packageNameFixes(account.prices, account.catalog.products), [account.prices, account.catalog.products]);

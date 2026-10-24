@@ -384,7 +384,13 @@ export default function App() {
     setCategory(cat);
     setTab("shop");
   };
-  const startDeposit = () => (signedIn ? setPanel("deposit") : needLogin("login"));
+  // `amount`: sa ki manke pou yon acha (paj pwodwi a), pou depo a deja ranpli
+  const [depositAmount, setDepositAmount] = useState("");
+  const startDeposit = (amount) => {
+    if (!signedIn) return needLogin("login");
+    setDepositAmount(typeof amount === "number" ? String(amount) : "");
+    setPanel("deposit");
+  };
 
   // Ouvri sa yon notifikasyon pale de li: kòmand lan, oswa Wallet la
   const openNotification = (n) => {
@@ -616,7 +622,7 @@ export default function App() {
       {panel === "notifications" && (
         <NotificationsSheet account={account} onClose={() => setPanel(null)} onLogin={(m) => { setPanel(null); needLogin(m); }} onOpen={openNotification} />
       )}
-      {panel === "deposit" && signedIn && <DepositSheet onClose={() => setPanel(null)} onToast={setToast} />}
+      {panel === "deposit" && signedIn && <DepositSheet initialAmount={depositAmount} onClose={() => setPanel(null)} onToast={setToast} />}
       {panel === "transfer" && signedIn && (
         <TransferSheet profile={account.profile} initialCode={payCode || ""} onClose={() => { setPanel(null); setPayCode(null); }} />
       )}

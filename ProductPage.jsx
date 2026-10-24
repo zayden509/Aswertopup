@@ -3,7 +3,7 @@ import {
   ArrowLeft, Info, CheckCircle2, Flame, ShoppingCart, User, CreditCard, Package, Hash, MessageCircle,
   ShieldCheck, Wallet, Plus, Loader2, AlertTriangle, LogIn, Phone, Zap,
 } from "lucide-react";
-import { PAYMENT_METHODS } from "./data.js";
+import { PAYMENT_METHODS, DIRECT_PAYMENT } from "./data.js";
 import { backend, errorText } from "./backend.js";
 import { Sheet, StepCard, ProductArt, GemIcon, WhatsAppIcon, ErrorNote, formatPrice, packageName, waLink } from "./ui.jsx";
 import { loadPlayerId, savePlayerId, newOrderId, orderMessage } from "./orders.js";
@@ -171,9 +171,12 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
   const loggedIn = Boolean(account.user);
   const balance = Number(account.profile?.balance ?? 0);
   const missing = item ? Math.max(0, item.price - balance) : 0;
-  // Pa defo: Wallet si solde a ase, sinon MonCash
-  const payWith = payChoice ?? (loggedIn && item && missing > 0 ? payment.id : "wallet");
+  // Wallet sèlman (DIRECT_PAYMENT = false): kliyan an rechaje Wallet li anvan l achte.
+  // Sinon: Wallet si solde a ase, oswa MonCash/NatCash dirèkteman.
+  const payWith = DIRECT_PAYMENT ? payChoice ?? (loggedIn && item && missing > 0 ? payment.id : "wallet") : "wallet";
   const directMethod = PAYMENT_METHODS.find((m) => m.id === payWith) || null;
+  // Depo a ranpli ak sa k manke a (omwen 50 HTG, minimòm yon depo)
+  const topUp = () => onDeposit(Math.max(50, missing));
 
   // Bouton anba a: li di kliyan an egzakteman sa k manke
   let action = { text: "Acheter", run: () => { setError(""); setOrderId(newOrderId()); setConfirming(true); } };
@@ -181,7 +184,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
   else if (idMissing) action = { text: "Mete Player ID ou", run: null };
   else if (idError) action = { text: "Korije Player ID a", run: null };
   else if (walletMode && !loggedIn) action = { text: "Konekte pou achte", icon: LogIn, run: () => onLogin("login") };
-  else if (walletMode && payWith === "wallet" && missing > 0) action = { text: "Ajouter de l'argent", icon: Plus, run: onDeposit };
+  else if (walletMode && payWith === "wallet" && missing > 0) action = { text: "Recharger mon Wallet", icon: Plus, run: topUp };
 
   // Mòd WhatsApp (pa gen baz done)
   const waOrder = !walletMode && item && orderId && {
@@ -397,15 +400,17 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                       {item && missing > 0 && (
                         <p className="flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
                           <AlertTriangle className="h-5 w-5 shrink-0" />
-                          Ou bezwen {formatPrice(missing)} ankò. Ajoute kòb, oswa peye dirèkteman ak MonCash/NatCash anba a.
+                          {DIRECT_PAYMENT
+                            ? `Ou bezwen ${formatPrice(missing)} ankò. Ajoute kòb, oswa peye dirèkteman ak MonCash/NatCash anba a.`
+                            : `Ou bezwen ${formatPrice(missing)} ankò. Rechaje Wallet ou ak MonCash oswa NatCash, epi w ap ka achte touswit.`}
                         </p>
                       )}
-                      <button type="button" onClick={onDeposit} className="flex items-center gap-1 rounded-xl bg-white px-3 py-2 text-sm font-bold text-sky-600 ring-1 ring-sky-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-sky-500/30">
-                        <Plus className="h-4 w-4" /> Ajouter de l'argent
+                      <button type="button" onClick={topUp} className="flex items-center gap-1 rounded-xl bg-white px-3 py-2 text-sm font-bold text-sky-600 ring-1 ring-sky-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-sky-500/30">
+                        <Plus className="h-4 w-4" /> Recharger mon Wallet
                       </button>
                     </div>
                   </PayOption>
-                  {PAYMENT_METHODS.map((m) => (
+                  {DIRECT_PAYMENT && PAYMENT_METHODS.map((m) => (
                     <PayOption
                       key={m.id}
                       active={payWith === m.id}

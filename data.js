@@ -38,7 +38,7 @@ import bannerSipo from "./img/banners/sipo.jpg";
 
 /* ============ KONFIGIRASYON ============ */
 // Nimewo WhatsApp, videyo tutoriel ak kle Firebase yo nan config.js
-export { WHATSAPP_NUMBER, VIDEO_TUTORIAL_URL, GOOGLE_LOGIN, SITE_URL, SOCIAL_LINKS } from "./config.js";
+export { WHATSAPP_NUMBER, VIDEO_TUTORIAL_URL, GOOGLE_LOGIN, SITE_URL, SOCIAL_LINKS, DIRECT_PAYMENT } from "./config.js";
 
 // Rang kliyan yo selon kantite kòb yo depanse (an goud)
 export const RANKS = [

@@ -113,9 +113,9 @@ export function MethodList({ onPick, onToast }) {
   );
 }
 
-export function DepositSheet({ onClose, onToast }) {
+export function DepositSheet({ initialAmount = "", onClose, onToast }) {
   const [method, setMethod] = useState(null);
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(initialAmount);
   const [reference, setReference] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);

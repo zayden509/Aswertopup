@@ -78,8 +78,13 @@ kontinye mache.
   ka sèvi de fwa.
 - **Acheter**: règ Firestore yo tcheke pri a nan koleksyon `packages` la ak solde
   kliyan an. Yon kliyan pa ka chanje solde li, ni peye mwens pase pri a.
-- **Peye dirèkteman**: nan etap **Paiement**, kliyan an ka chwazi MonCash oswa NatCash olye
-  Wallet li. Li voye pri a sou nimewo ou, epi li mete ID tranzaksyon an. Kòmand lan parèt nan
+- **Wallet sèlman** (pa defo, `DIRECT_PAYMENT = false` nan `config.js`): kliyan an dwe rechaje
+  Wallet li anvan l achte. Si solde a pa ase, bouton an di **Recharger mon Wallet** epi depo a
+  deja ranpli ak sa k manke a. Lè l peye ak Wallet, pake FazerCards yo livre otomatikman: si yon
+  kòmand pa t rive voye (kliyan an fèmen paj la twò vit), sit la voye l poukont li lè kliyan an
+  oswa yon admin louvri sit la ankò.
+- **Peye dirèkteman** (`DIRECT_PAYMENT = true`): nan etap **Paiement**, kliyan an ka chwazi
+  MonCash oswa NatCash olye Wallet li. Li voye pri a sou nimewo ou, epi li mete ID tranzaksyon an. Kòmand lan parèt nan
   Panneau admin → Kòmand ak **Peman ap verifye**. Verifye l nan MonCash ou, epi peze
   **Mwen resevwa peman an**: si pake a otomatik, FazerCards livre l touswit. Si kòb la pa
   rive, peze **Refuser** (pa gen ranbousman, paske Wallet kliyan an pa t touche).

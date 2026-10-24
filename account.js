@@ -12,6 +12,10 @@ function loadSeen() {
   }
 }
 
+const MINUTE = 60000;
+const DAY = 24 * 60 * MINUTE;
+const SUPPLIER_DONE = ["completed", "failed", "refund"];
+
 // Dènye pri ak katalòg nou te resevwa: boutik la parèt touswit nan pwochen vizit la,
 // epi done an dirèk yo ranplase yo lè yo rive. Pri a toujou verifye sou sèvè a lè kliyan an achte.
 const SHOP_KEY = "awens-shop-v1";
@@ -104,6 +108,28 @@ export function useAccount(onNotification) {
       },
     });
   }, [userId, epoch]);
+
+  // Kòmand ki peye ak Wallet men ki poko rive kote FazerCards (pa egzanp kliyan an te fèmen paj la
+  // twò vit), oswa ki rete "an kou" twò lontan: sit la mande sèvè a voye l oswa verifye l ankò.
+  // Sèvè a deside si pake a otomatik, epi li pa janm voye menm kòmand lan de fwa.
+  const nudged = useRef(new Set());
+  useEffect(() => {
+    if (!backend || !userId) return;
+    const now = Date.now();
+    const age = (o) => now - Date.parse(o.updated_at || o.created_at);
+    orders
+      .filter((o) => {
+        if (nudged.current.has(o.id) || o.kind === "exchange" || now - Date.parse(o.created_at) > 2 * DAY) return false;
+        const s = o.supplier;
+        if (o.status === "pending" && !s) return age(o) > MINUTE;
+        return ["pending", "processing"].includes(o.status) && s?.order_id && !SUPPLIER_DONE.includes(s.status) && age(o) > 10 * MINUTE;
+      })
+      .slice(0, 5)
+      .forEach((o) => {
+        nudged.current.add(o.id);
+        backend.requestAutoDelivery(o.id);
+      });
+  }, [orders, userId]);
 
   const reload = useCallback(async () => {
     setEpoch((e) => e + 1);

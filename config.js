@@ -22,6 +22,11 @@ export const FIREBASE_CONFIG = {
 // (Authentication → Sign-in method → Google) e domèn sit la otorize.
 export const GOOGLE_LOGIN = true;
 
+// Peye yon kòmand dirèkteman ak MonCash/NatCash (san Wallet), epi admin nan konfime peman an.
+// false: kliyan an dwe rechaje Wallet li anvan l achte; kòmand lan peye ak solde a epi
+// pake FazerCards yo livre otomatikman touswit.
+export const DIRECT_PAYMENT = false;
+
 // Adrès sit la: kòd QR Wallet yo mennen la
 export const SITE_URL = "https://www.awenstopup.com";
 
