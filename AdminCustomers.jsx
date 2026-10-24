@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Search, Send, Loader2, ShieldCheck, Wallet, ShoppingBag, ArrowDownLeft, CalendarDays } from "lucide-react";
 import { backend, errorText } from "./backend.js";
-import { Sheet, StatusChip, ErrorNote, formatPrice, formatDate, formatDateTime, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
+import { Sheet, StatusChip, ErrorNote, formatPrice, formatDate, formatDateTime, orderStatus, DEPOSIT_STATUS } from "./ui.jsx";
 import { rankInfo } from "./SettingsPage.jsx";
 import { Avatar, Chips, CopyChip, Empty, Field, inputClass, normalize, number } from "./adminUi.jsx";
 
@@ -106,7 +106,7 @@ function CustomerSheet({ profile, orders, deposits, onClose, onToast }) {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold tabular-nums text-slate-900 dark:text-white">{formatPrice(o.price)}</p>
-                    <StatusChip status={ORDER_STATUS[o.status]} />
+                    <StatusChip status={orderStatus(o)} />
                   </div>
                 </li>
               ))}

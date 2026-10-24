@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { TrendingUp, TrendingDown, ShoppingBag, Users, UserPlus, ArrowDownLeft, ReceiptText, Percent, Wallet, Clock, ChevronRight, Table2 } from "lucide-react";
 import { dayKey, lastDays } from "./days.js";
-import { formatPrice } from "./ui.jsx";
+import { formatPrice, isPaidOrder } from "./ui.jsx";
 import { Card, Chips, compact, number } from "./adminUi.jsx";
 
 const PERIODS = [
@@ -16,7 +16,7 @@ const DAY_MONTH = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "sho
 const FULL_DAY = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 const asDate = (key) => new Date(`${key}T12:00:00Z`);
 
-const sold = (o) => o.status !== "refused";
+const sold = isPaidOrder;
 const sum = (list, pick) => list.reduce((total, x) => total + Number(pick(x) || 0), 0);
 
 // Yon chif won pou tèt grafik la (0 / mwatye / tèt)
@@ -204,7 +204,7 @@ export default function AdminDashboard({ orders, deposits, profiles, visits, onG
   }));
   const labelEvery = periodId === "today" ? 6 : period.days <= 7 ? 1 : 7;
 
-  const openOrders = orders.filter((o) => o.status === "pending" || o.status === "processing").length;
+  const openOrders = orders.filter((o) => o.status === "unpaid" || o.status === "pending" || o.status === "processing").length;
   const pendingDeposits = deposits.filter((d) => d.status === "pending").length;
   const topMax = stats.top[0]?.revenue || 1;
 

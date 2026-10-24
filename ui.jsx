@@ -233,11 +233,21 @@ export function timeAgo(value) {
 }
 
 export const ORDER_STATUS = {
+  unpaid: { label: "Peman ap verifye", className: "bg-violet-100 text-violet-800 dark:bg-violet-500/15 dark:text-violet-300" },
   pending: { label: "En attente", className: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" },
   processing: { label: "En cours", className: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300" },
   delivered: { label: "Livré", className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300" },
   refused: { label: "Refusé · Remboursé", className: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300" },
 };
+
+// Yon kòmand peye dirèkteman (MonCash/NatCash) ki refize pa ranbouse nan Wallet la
+export function orderStatus(order) {
+  if (order.status === "refused" && order.payment) return { ...ORDER_STATUS.refused, label: "Refusé" };
+  return ORDER_STATUS[order.status] || ORDER_STATUS.pending;
+}
+
+// Kòmand ki peye vre (pa konte sa ki refize oswa sa ki tann konfimasyon peman an)
+export const isPaidOrder = (o) => o.status !== "refused" && o.status !== "unpaid";
 
 export const DEPOSIT_STATUS = {
   pending: { label: "En attente", className: ORDER_STATUS.pending.className },

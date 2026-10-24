@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { PAYMENT_METHODS } from "./data.js";
 import { backend, errorText } from "./backend.js";
-import { StatusChip, ErrorNote, formatPrice, formatDateTime, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
+import { StatusChip, ErrorNote, formatPrice, formatDateTime, orderStatus, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
 import { Chips, CopyChip, CustomerLine, Empty, normalize } from "./adminUi.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
 import AdminCustomers from "./AdminCustomers.jsx";
@@ -28,7 +28,7 @@ const TABS = [
 // "Tout" an premye: yon kòmand rete nan lis la menm apre l livre (oswa livre otomatikman)
 const ORDER_FILTERS = [
   { id: "all", label: "Tout", test: () => true },
-  { id: "open", label: "Pou trete", test: (o) => o.status === "pending" || o.status === "processing" },
+  { id: "open", label: "Pou trete", test: (o) => o.status === "unpaid" || o.status === "pending" || o.status === "processing" },
   { id: "delivered", label: "Livré", test: (o) => o.status === "delivered" },
   { id: "refused", label: "Refusé", test: (o) => o.status === "refused" },
 ];
@@ -94,13 +94,31 @@ function OrderCard({ order, profile, auto, onToast }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  const unpaid = order.status === "unpaid";
+  const method = order.payment && PAYMENT_METHODS.find((m) => m.id === order.payment.method);
+
   const update = async (status) => {
     setBusy(true);
     setError("");
     try {
       await backend.adminUpdateOrder(order, status, code, note);
       setMode(null);
-      onToast(status === "refused" ? `${order.code} refize, kliyan an ranbouse.` : `${order.code}: ${ORDER_STATUS[status].label}.`);
+      onToast(status === "refused" ? `${order.code} refize${unpaid ? "" : ", kliyan an ranbouse"}.` : `${order.code}: ${ORDER_STATUS[status].label}.`);
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Admin nan resevwa kòb MonCash/NatCash la: kòmand lan ale kote FazerCards si pake a otomatik
+  const confirmPayment = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await backend.adminConfirmPayment(order);
+      if (auto) backend.requestAutoDelivery(order.id);
+      onToast(auto ? `${order.code}: peman konfime, FazerCards ap livre l.` : `${order.code}: peman konfime. Livre l kounye a.`);
     } catch (err) {
       setError(errorText(err));
     } finally {
@@ -115,7 +133,7 @@ function OrderCard({ order, profile, auto, onToast }) {
           <p className="font-bold text-slate-900 dark:text-white">{order.product_name} · {order.package_label}</p>
           <CustomerLine profile={profile} />
         </div>
-        <StatusChip status={ORDER_STATUS[order.status]} />
+        <StatusChip status={orderStatus(order)} />
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <CopyChip label="#" value={order.code} onToast={onToast} />
@@ -128,29 +146,57 @@ function OrderCard({ order, profile, auto, onToast }) {
           Voye <b>{order.amount} {order.currency}</b> bay <b>{order.recipient.name}</b> · frè {order.fee} {order.currency} · to {order.rate} HTG
         </p>
       )}
+      {order.payment && (
+        <div className={`mt-2 rounded-xl px-3 py-2 ring-1 ${unpaid ? "bg-amber-50 ring-amber-200 dark:bg-amber-500/10 dark:ring-amber-500/30" : "bg-slate-50 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700"}`}>
+          <p className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+            {method && <img src={method.logo} alt="" className="h-6 w-6 rounded-md object-cover" />}
+            {unpaid ? `Tcheke si w resevwa ${formatPrice(Number(order.price))} sou ${method?.name || order.payment.method}` : `Peye ak ${method?.name || order.payment.method}`}
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-2">
+            <CopyChip label="Tranzaksyon" value={order.payment.reference} onToast={onToast} />
+            {order.payment.sender_phone && <CopyChip label="Tel" value={order.payment.sender_phone} onToast={onToast} />}
+          </div>
+        </div>
+      )}
       <SupplierLine order={order} auto={auto} onToast={onToast} />
       <p className="mt-1 text-xs text-slate-400">{formatDateTime(order.created_at)}</p>
       {order.delivery_code && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Kòd: <span className="font-mono font-semibold">{order.delivery_code}</span></p>}
 
       {order.status !== "refused" && (
         <div className="mt-3 space-y-3 border-t border-slate-100 pt-3 dark:border-slate-800">
-          {mode === null ? (
+          {mode === null && unpaid ? (
+            <>
+              <ErrorNote>{error}</ErrorNote>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" disabled={busy} onClick={confirmPayment} className="flex items-center gap-1.5 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-bold text-white disabled:opacity-60">
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Mwen resevwa peman an
+                </button>
+                <button type="button" onClick={() => setMode("refuse")} className="flex items-center gap-1.5 rounded-xl bg-red-50 px-3 py-2 text-sm font-bold text-red-600 dark:bg-red-500/10 dark:text-red-300">
+                  <X className="h-4 w-4" /> Refuser
+                </button>
+              </div>
+            </>
+          ) : mode === null ? (
             <div className="flex flex-wrap gap-2">
               {order.status === "pending" && (
                 <button type="button" disabled={busy} onClick={() => update("processing")} className="flex items-center gap-1.5 rounded-xl bg-sky-50 px-3 py-2 text-sm font-bold text-sky-700 dark:bg-sky-500/10 dark:text-sky-300">
                   <Clock className="h-4 w-4" /> En cours
                 </button>
               )}
-              <button type="button" onClick={() => setMode("deliver")} className="flex items-center gap-1.5 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-bold text-white">
-                <PackageCheck className="h-4 w-4" /> {order.status === "delivered" ? "Chanje kòd la" : "Livrer"}
-              </button>
+              {/* Yon pake FazerCards ki deja livre pa gen kòd pou chanje */}
+              {!(auto && order.status === "delivered") && (
+                <button type="button" onClick={() => setMode("deliver")} className="flex items-center gap-1.5 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-bold text-white">
+                  <PackageCheck className="h-4 w-4" /> {order.status === "delivered" ? "Chanje kòd la" : "Livrer"}
+                </button>
+              )}
               <button type="button" onClick={() => setMode("refuse")} className="flex items-center gap-1.5 rounded-xl bg-red-50 px-3 py-2 text-sm font-bold text-red-600 dark:bg-red-500/10 dark:text-red-300">
                 <X className="h-4 w-4" /> Refuser
               </button>
             </div>
           ) : (
             <>
-              {mode === "deliver" && (
+              {/* Pake FazerCards yo pa bezwen kòd: dyaman yo rive sou kont jwè a */}
+              {mode === "deliver" && !auto && (
                 <input
                   id={`code-${order.id}`}
                   value={code}
@@ -176,7 +222,7 @@ function OrderCard({ order, profile, auto, onToast }) {
                   className={`flex items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-white disabled:opacity-60 ${mode === "deliver" ? "bg-emerald-500" : "bg-red-500"}`}
                 >
                   {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {mode === "deliver" ? "Konfime livrezon" : "Refize + ranbouse"}
+                  {mode === "deliver" ? "Konfime livrezon" : unpaid ? "Refize (peman pa rive)" : "Refize + ranbouse"}
                 </button>
               </div>
             </>

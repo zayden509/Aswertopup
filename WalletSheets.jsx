@@ -4,7 +4,7 @@ import { PAYMENT_METHODS, VIDEO_TUTORIAL_URL } from "./data.js";
 import { backend, errorText } from "./backend.js";
 import { Sheet, ErrorNote, waLink, openExternal, formatPrice, copyText } from "./ui.jsx";
 
-function Input({ id, label, icon: Icon, hint, ...props }) {
+export function Input({ id, label, icon: Icon, hint, ...props }) {
   return (
     <label htmlFor={id} className="block">
       <span className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300">{label}</span>
@@ -26,6 +26,37 @@ function Success({ title, text, onClose }) {
       <h4 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">{title}</h4>
       <p className="mx-auto mt-2 max-w-sm text-slate-500 dark:text-slate-400">{text}</p>
       <button type="button" onClick={onClose} className="mt-6 rounded-2xl bg-sky-500 px-8 py-3 font-bold text-white hover:bg-sky-600">Fini</button>
+    </div>
+  );
+}
+
+// Etap 1 yon peman MonCash/NatCash: nimewo pou kliyan an voye kòb la (ak bouton Kopye)
+export function PayTo({ method, amount, onToast }) {
+  return (
+    <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
+      <div className="flex items-center gap-3">
+        <img src={method.logo} alt="" className="h-11 w-11 rounded-xl object-cover" />
+        <p className="font-bold text-slate-900 dark:text-white">1. Voye {amount ? formatPrice(amount) : "kòb la"} sou {method.name}</p>
+      </div>
+      {method.number ? (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
+          <span className="select-all text-xl font-bold tabular-nums tracking-wide text-slate-900 dark:text-white">{method.number}</span>
+          <button type="button" onClick={() => copyText(method.number, onToast)} className="flex items-center gap-1.5 rounded-lg bg-sky-50 px-3 py-1.5 text-sm font-semibold text-sky-600 dark:bg-sky-500/10 dark:text-sky-300">
+            <Copy className="h-4 w-4" /> Kopye
+          </button>
+        </div>
+      ) : (
+        <p className="mt-3 flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+          <AlertTriangle className="h-5 w-5 shrink-0" />
+          <span>
+            Nimewo {method.name} nou an poko sou sit la.{" "}
+            <a href={waLink(`Bonjou Awens Topup, ki nimewo ${method.name} pou m peye a?`)} target="_blank" rel="noopener noreferrer" className="font-bold underline">
+              Mande l sou WhatsApp
+            </a>
+            .
+          </span>
+        </p>
+      )}
     </div>
   );
 }
@@ -114,31 +145,7 @@ export function DepositSheet({ onClose, onToast }) {
             <ChevronLeft className="h-4 w-4" /> Lòt mòd peman
           </button>
 
-          <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
-            <div className="flex items-center gap-3">
-              <img src={method.logo} alt="" className="h-11 w-11 rounded-xl object-cover" />
-              <p className="font-bold text-slate-900 dark:text-white">1. Voye kòb la sou {method.name}</p>
-            </div>
-            {method.number ? (
-              <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
-                <span className="select-all text-xl font-bold tabular-nums tracking-wide text-slate-900 dark:text-white">{method.number}</span>
-                <button type="button" onClick={() => copyText(method.number, onToast)} className="flex items-center gap-1.5 rounded-lg bg-sky-50 px-3 py-1.5 text-sm font-semibold text-sky-600 dark:bg-sky-500/10 dark:text-sky-300">
-                  <Copy className="h-4 w-4" /> Kopye
-                </button>
-              </div>
-            ) : (
-              <p className="mt-3 flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
-                <AlertTriangle className="h-5 w-5 shrink-0" />
-                <span>
-                  Nimewo {method.name} nou an poko sou sit la.{" "}
-                  <a href={waLink(`Bonjou Awens Topup, ki nimewo ${method.name} pou m fè depo a?`)} target="_blank" rel="noopener noreferrer" className="font-bold underline">
-                    Mande l sou WhatsApp
-                  </a>
-                  .
-                </span>
-              </p>
-            )}
-          </div>
+          <PayTo method={method} onToast={onToast} />
 
           <p className="font-bold text-slate-900 dark:text-white">2. Mete enfòmasyon tranzaksyon an</p>
           <Input id="deposit-amount" label="Montan ou voye a (HTG)" icon={Banknote} inputMode="numeric" type="number" min="50" max="100000" step="1" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Ex: 1000" />

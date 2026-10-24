@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { History, ShoppingCart, Clock, KeyRound, Search, Copy, Hash, CalendarDays, Banknote, User, StickyNote, Check } from "lucide-react";
-import { PRODUCTS } from "./data.js";
-import { Sheet, ProductArt, WhatsAppIcon, StatusChip, waLink, formatPrice, formatDate, formatDateTime, copyText, ORDER_STATUS } from "./ui.jsx";
+import { PRODUCTS, PAYMENT_METHODS } from "./data.js";
+import { Sheet, ProductArt, WhatsAppIcon, StatusChip, waLink, formatPrice, formatDate, formatDateTime, copyText, orderStatus } from "./ui.jsx";
 import { orderMessage } from "./orders.js";
 import { LoginPrompt } from "./WalletPage.jsx";
 
@@ -38,9 +38,12 @@ function EmptyState({ title, text, onShop }) {
 // Detay yon kòmand, ak kòd PIN lan lè admin nan fin livre l
 export function OrderSheet({ order, catalog = PRODUCTS, onClose, onToast }) {
   const product = productForPackage(order.package_id, catalog);
-  const steps = order.status === "refused" ? ["pending", "refused"] : ["pending", "processing", "delivered"];
+  // Peman dirèk (MonCash/NatCash): premye etap la se konfimasyon peman an
+  const first = order.payment ? ["unpaid", "pending"] : ["pending"];
+  const steps = order.status === "refused" ? [first[0], "refused"] : [...first, "processing", "delivered"];
   const reached = steps.indexOf(order.status);
-  const stepLabel = { pending: "Resevwa", processing: "An kou", delivered: "Livre", refused: "Refize" };
+  const stepLabel = { unpaid: "Peman voye", pending: order.payment ? "Peman OK" : "Resevwa", processing: "An kou", delivered: "Livre", refused: "Refize" };
+  const method = order.payment && PAYMENT_METHODS.find((m) => m.id === order.payment.method);
 
   return (
     <Sheet
@@ -64,7 +67,7 @@ export function OrderSheet({ order, catalog = PRODUCTS, onClose, onToast }) {
           <p className="font-bold text-slate-900 dark:text-white">{order.product_name}</p>
           <p className="text-slate-500 dark:text-slate-400">{order.package_label}</p>
         </div>
-        <StatusChip status={ORDER_STATUS[order.status]} />
+        <StatusChip status={orderStatus(order)} />
       </div>
 
       <ol className="mt-5 flex items-center">
@@ -103,6 +106,7 @@ export function OrderSheet({ order, catalog = PRODUCTS, onClose, onToast }) {
           [CalendarDays, "Dat", formatDateTime(order.created_at)],
           [Banknote, "Pri", formatPrice(Number(order.price))],
           order.player_id && [User, "Player ID", order.player_id],
+          order.payment && [Banknote, "Peman", `${method?.name || order.payment.method} · ${order.payment.reference}`],
           order.recipient && [User, "Kont", `${order.recipient.account} (${order.recipient.name})`],
           order.kind === "exchange" && [Banknote, "Frè", `${order.fee} ${order.currency} · 1 ${order.currency} = ${order.rate} HTG`],
           order.admin_note && [StickyNote, "Nòt", order.admin_note],
@@ -128,7 +132,7 @@ function AccountHistory({ account, onShop, onOpenOrder }) {
   const visible = account.orders.filter((o) => {
     if (q && !`${o.code} ${o.product_name} ${o.package_label}`.toLowerCase().includes(q)) return false;
     if (filter === "codes") return Boolean(o.delivery_code);
-    if (filter === "pending") return o.status === "pending" || o.status === "processing";
+    if (filter === "pending") return o.status === "unpaid" || o.status === "pending" || o.status === "processing";
     return filter === "all" || o.status === filter;
   });
 
@@ -184,7 +188,7 @@ function AccountHistory({ account, onShop, onOpenOrder }) {
                   {o.delivery_code ? (
                     <span className="rounded-lg bg-sky-50 px-2 py-0.5 text-[11px] font-bold tracking-wider text-sky-600 dark:bg-sky-500/10 dark:text-sky-300">PIN</span>
                   ) : (
-                    <StatusChip status={ORDER_STATUS[o.status]} />
+                    <StatusChip status={orderStatus(o)} />
                   )}
                 </span>
               </button>

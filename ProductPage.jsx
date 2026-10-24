@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import {
   ArrowLeft, Info, CheckCircle2, Flame, ShoppingCart, User, CreditCard, Package, Hash, MessageCircle,
-  ShieldCheck, Wallet, Plus, Loader2, AlertTriangle, LogIn,
+  ShieldCheck, Wallet, Plus, Loader2, AlertTriangle, LogIn, Phone, Zap,
 } from "lucide-react";
 import { PAYMENT_METHODS } from "./data.js";
 import { backend, errorText } from "./backend.js";
 import { Sheet, StepCard, ProductArt, GemIcon, WhatsAppIcon, ErrorNote, formatPrice, packageName, waLink } from "./ui.jsx";
 import { loadPlayerId, savePlayerId, newOrderId, orderMessage } from "./orders.js";
+import { PayTo, Input } from "./WalletSheets.jsx";
 
 const ID_PATTERN = /^\d{6,15}$/;
 
@@ -96,6 +97,28 @@ function DealOption({ item, active, onSelect }) {
   );
 }
 
+// Yon chwa peman (Wallet, MonCash, NatCash) nan etap "Paiement" an
+function PayOption({ active, onSelect, art, title, badge, text, children }) {
+  return (
+    <div className={`rounded-2xl border-2 transition ${active ? "border-sky-500 bg-sky-50 dark:bg-sky-500/10" : "border-slate-200 dark:border-slate-700"}`}>
+      <button type="button" role="radio" aria-checked={active} onClick={onSelect} className="flex w-full items-center gap-3 p-3 text-left">
+        {art}
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-2 font-bold text-slate-900 dark:text-white">
+            {title}
+            {badge && <span className="rounded-full bg-emerald-400 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-emerald-950">{badge}</span>}
+          </span>
+          <span className="block text-sm tabular-nums text-slate-500 dark:text-slate-400">{text}</span>
+        </span>
+        <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${active ? "border-sky-500" : "border-slate-300 dark:border-slate-600"}`}>
+          {active && <span className="h-3 w-3 rounded-full bg-sky-500" />}
+        </span>
+      </button>
+      {active && children}
+    </div>
+  );
+}
+
 function SummaryRow({ icon: Icon, label, children }) {
   return (
     <div className="flex items-center justify-between gap-4 py-3.5">
@@ -119,7 +142,7 @@ function withLivePrices(groups, prices) {
     .filter((g) => g.items.length > 0);
 }
 
-export default function ProductPage({ product, account, onBack, onOrder, onLogin, onDeposit, onViewOrders }) {
+export default function ProductPage({ product, account, onBack, onOrder, onLogin, onDeposit, onViewOrders, onToast }) {
   const walletMode = account.enabled; // kont + Wallet (Firebase) olye WhatsApp
   const groups = withLivePrices(product.groups || [], account.prices);
   const [playerId, setPlayerId] = useState(() => (product.playerId ? loadPlayerId() : ""));
@@ -131,6 +154,10 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [placed, setPlaced] = useState(null);
+  // Mòd Wallet: peye ak solde a, oswa dirèkteman ak MonCash/NatCash (admin nan konfime peman an)
+  const [payChoice, setPayChoice] = useState(null);
+  const [reference, setReference] = useState("");
+  const [senderPhone, setSenderPhone] = useState("");
 
   const group = groups.find((g) => g.items.some((it) => it.id === selectedId)) || null;
   const item = group?.items.find((it) => it.id === selectedId) || null;
@@ -144,6 +171,9 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
   const loggedIn = Boolean(account.user);
   const balance = Number(account.profile?.balance ?? 0);
   const missing = item ? Math.max(0, item.price - balance) : 0;
+  // Pa defo: Wallet si solde a ase, sinon MonCash
+  const payWith = payChoice ?? (loggedIn && item && missing > 0 ? payment.id : "wallet");
+  const directMethod = PAYMENT_METHODS.find((m) => m.id === payWith) || null;
 
   // Bouton anba a: li di kliyan an egzakteman sa k manke
   let action = { text: "Acheter", run: () => { setError(""); setOrderId(newOrderId()); setConfirming(true); } };
@@ -151,7 +181,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
   else if (idMissing) action = { text: "Mete Player ID ou", run: null };
   else if (idError) action = { text: "Korije Player ID a", run: null };
   else if (walletMode && !loggedIn) action = { text: "Konekte pou achte", icon: LogIn, run: () => onLogin("login") };
-  else if (walletMode && missing > 0) action = { text: "Ajouter de l'argent", icon: Plus, run: onDeposit };
+  else if (walletMode && payWith === "wallet" && missing > 0) action = { text: "Ajouter de l'argent", icon: Plus, run: onDeposit };
 
   // Mòd WhatsApp (pa gen baz done)
   const waOrder = !walletMode && item && orderId && {
@@ -189,6 +219,22 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
     }
   };
 
+  // Peman dirèk: kòmand lan tann admin nan konfime li resevwa kòb la, apre sa li ale kote FazerCards
+  const placeDirectOrder = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const order = await backend.placeDirectOrder(item.id, id || null, { method: directMethod.id, reference, senderPhone });
+      if (id) savePlayerId(id);
+      setPlaced(order);
+      setReference("");
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const closeConfirm = () => {
     setConfirming(false);
     setPlaced(null);
@@ -199,11 +245,11 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
     placed ? null : (
       <button
         type="button"
-        onClick={placeOrder}
+        onClick={directMethod ? placeDirectOrder : placeOrder}
         disabled={busy}
         className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 disabled:opacity-60"
       >
-        {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />} Confirmer l'achat
+        {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />} {directMethod ? "Voye kòmand lan" : "Confirmer l'achat"}
       </button>
     )
   ) : (
@@ -335,25 +381,41 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
           <StepCard step={product.playerId ? 3 : 2} title={walletMode ? "Paiement" : "Mode de paiement"}>
             {walletMode ? (
               loggedIn ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 rounded-2xl border-2 border-sky-500 bg-sky-50 p-3 dark:bg-sky-500/10">
-                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-500 to-violet-500 text-white">
-                      <Wallet className="h-6 w-6" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-bold text-slate-900 dark:text-white">Solde du compte</span>
-                      <span className="block text-sm tabular-nums text-slate-500 dark:text-slate-400">{formatPrice(balance)} disponib</span>
-                    </span>
-                    <button type="button" onClick={onDeposit} className="flex shrink-0 items-center gap-1 rounded-xl bg-white px-3 py-2 text-sm font-bold text-sky-600 ring-1 ring-sky-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-sky-500/30">
-                      <Plus className="h-4 w-4" /> Ajouter
-                    </button>
-                  </div>
-                  {item && missing > 0 && (
-                    <p className="flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
-                      <AlertTriangle className="h-5 w-5 shrink-0" />
-                      Ou bezwen {formatPrice(missing)} ankò pou pake sa a. Ajoute kòb ak MonCash oswa NatCash.
-                    </p>
-                  )}
+                <div className="space-y-2.5" role="radiogroup" aria-label="Paiement">
+                  <PayOption
+                    active={payWith === "wallet"}
+                    onSelect={() => setPayChoice("wallet")}
+                    art={(
+                      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-500 to-violet-500 text-white">
+                        <Wallet className="h-6 w-6" />
+                      </span>
+                    )}
+                    title="Solde du compte"
+                    text={`${formatPrice(balance)} disponib`}
+                  >
+                    <div className="space-y-2 px-3 pb-3">
+                      {item && missing > 0 && (
+                        <p className="flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+                          <AlertTriangle className="h-5 w-5 shrink-0" />
+                          Ou bezwen {formatPrice(missing)} ankò. Ajoute kòb, oswa peye dirèkteman ak MonCash/NatCash anba a.
+                        </p>
+                      )}
+                      <button type="button" onClick={onDeposit} className="flex items-center gap-1 rounded-xl bg-white px-3 py-2 text-sm font-bold text-sky-600 ring-1 ring-sky-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-sky-500/30">
+                        <Plus className="h-4 w-4" /> Ajouter de l'argent
+                      </button>
+                    </div>
+                  </PayOption>
+                  {PAYMENT_METHODS.map((m) => (
+                    <PayOption
+                      key={m.id}
+                      active={payWith === m.id}
+                      onSelect={() => setPayChoice(m.id)}
+                      art={<img src={m.logo} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />}
+                      title={m.name}
+                      badge={m.recommended ? "RECOMMANDÉ" : null}
+                      text="Peye dirèkteman pou kòmand sa a"
+                    />
+                  ))}
                 </div>
               ) : (
                 <div className="rounded-2xl bg-slate-50 p-4 text-center ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
@@ -427,7 +489,9 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                 </span>
                 <h4 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">Kòmand {placed.code} pase!</h4>
                 <p className="mx-auto mt-2 max-w-sm text-slate-500 dark:text-slate-400">
-                  {formatPrice(Number(placed.price))} soti nan Wallet ou. W ap resevwa yon notifikasyon depi kòmand lan livre.
+                  {placed.payment
+                    ? "N ap verifye peman an. Depi l konfime, n ap livre kòmand lan, epi w ap resevwa yon notifikasyon."
+                    : `${formatPrice(Number(placed.price))} soti nan Wallet ou. W ap resevwa yon notifikasyon depi kòmand lan livre.`}
                 </p>
                 <div className="mt-6 grid grid-cols-2 gap-3">
                   <button type="button" onClick={closeConfirm} className="rounded-2xl bg-slate-100 py-3.5 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">Kontinye achte</button>
@@ -454,7 +518,13 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                 <dl className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
                   <SummaryRow icon={Package} label="Produit">{product.name}</SummaryRow>
                   {id && <SummaryRow icon={User} label="Player ID"><span className="tabular-nums">{id}</span></SummaryRow>}
-                  {walletMode ? (
+                  {walletMode && directMethod ? (
+                    <SummaryRow icon={CreditCard} label="Paiement">
+                      <span className="inline-flex items-center gap-2">
+                        <img src={directMethod.logo} alt="" className="h-6 w-6 rounded-md object-cover" /> {directMethod.name}
+                      </span>
+                    </SummaryRow>
+                  ) : walletMode ? (
                     <>
                       <SummaryRow icon={CreditCard} label="Paiement">Solde</SummaryRow>
                       <SummaryRow icon={Wallet} label="Solde apre acha">
@@ -472,7 +542,28 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                     </>
                   )}
                 </dl>
-                {walletMode ? (
+                {walletMode && directMethod ? (
+                  <div className="mt-2 space-y-4">
+                    <PayTo method={directMethod} amount={item.price} onToast={onToast} />
+                    <p className="font-bold text-slate-900 dark:text-white">2. Mete ID tranzaksyon an</p>
+                    <Input
+                      id="order-reference"
+                      label="ID tranzaksyon an"
+                      icon={Hash}
+                      value={reference}
+                      onChange={(e) => setReference(e.target.value)}
+                      placeholder="Ex: 1234567890"
+                      autoComplete="off"
+                      hint={`Nimewo tranzaksyon ki nan mesaj ${directMethod.name} voye ba ou a.`}
+                    />
+                    <Input id="order-phone" label="Nimewo ou voye kòb la (si w vle)" icon={Phone} inputMode="tel" value={senderPhone} onChange={(e) => setSenderPhone(e.target.value)} placeholder="Ex: 37000000" autoComplete="tel" />
+                    <p className="flex gap-2 rounded-xl bg-violet-50 p-3 text-sm text-violet-900 dark:bg-violet-500/10 dark:text-violet-200">
+                      <Zap className="h-5 w-5 shrink-0" />
+                      Depi nou konfime peman an, kòmand lan livre otomatikman.
+                    </p>
+                    <ErrorNote>{error}</ErrorNote>
+                  </div>
+                ) : walletMode ? (
                   <ErrorNote>{error}</ErrorNote>
                 ) : (
                   <p className="mt-2 flex gap-3 rounded-2xl bg-sky-50 p-3.5 text-sm text-sky-900 dark:bg-sky-500/10 dark:text-sky-100">

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Wallet, Eye, EyeOff, Copy, Plus, Send, ShoppingCart, ArrowDownLeft, ArrowUpRight, LogIn } from "lucide-react";
-import { formatPrice, formatDate, copyText, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
+import { formatPrice, formatDate, copyText, isPaidOrder, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
 import { MethodList } from "./WalletSheets.jsx";
 
 const HIDE_KEY = "aswer-hide-balance";
@@ -29,7 +29,8 @@ export function useHiddenBalance() {
 // Mete kòmand, depo ak transfè yo nan yon sèl lis, pi resan an anwo
 export function buildTransactions({ orders, deposits, transfers, user }) {
   const rows = [
-    ...orders.map((o) => ({
+    // Kòmand peye dirèkteman (MonCash/NatCash) pa soti nan Wallet la
+    ...orders.filter((o) => !o.payment).map((o) => ({
       kind: "order", key: `o-${o.id}`, date: o.created_at, raw: o,
       title: `${o.product_name} · ${o.package_label}`, amount: -Number(o.price), status: ORDER_STATUS[o.status],
     })),
@@ -125,7 +126,7 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
   const rows = buildTransactions(account);
   const visible = filter === "all" ? rows : rows.filter((r) => r.kind === filter);
   const stats = [
-    { label: "Achats", value: account.orders.filter((o) => o.status !== "refused").length, cls: "text-sky-500" },
+    { label: "Achats", value: account.orders.filter(isPaidOrder).length, cls: "text-sky-500" },
     { label: "Dépôts", value: account.deposits.filter((d) => d.status === "completed").length, cls: "text-emerald-500" },
     { label: "Transferts", value: account.transfers.length, cls: "text-violet-500" },
     {

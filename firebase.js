@@ -292,6 +292,40 @@ export function createBackend(config, options = {}) {
       });
     },
 
+    // Kliyan an peye dirèkteman ak MonCash/NatCash: kòmand lan tann admin nan konfime peman an
+    // (solde Wallet la pa chanje). Nimewo tranzaksyon an ka sèvi yon sèl fwa.
+    async placeDirectOrder(packageId, playerId, { method, reference, senderPhone }) {
+      const uid = currentUid();
+      const pid = String(playerId || "").trim() || null;
+      if (pid && !/^\d{6,15}$/.test(pid)) throw new UserError("Player ID a dwe gen ant 6 ak 15 chif.");
+      if (!METHOD_NAMES[method]) throw new UserError("Chwazi MonCash oswa NatCash.");
+      const ref = String(reference || "").toUpperCase().replace(/\s+/g, "");
+      if (!/^[A-Z0-9-]{4,40}$/.test(ref)) throw new UserError("Mete ID tranzaksyon an (sèlman lèt ak chif, omwen 4).");
+      const phone = String(senderPhone || "").trim().slice(0, 20) || null;
+      const refDoc = doc(db, "depositRefs", `${method}_${ref}`);
+      const orderRef = doc(collection(db, "orders"));
+      const code = `AS-${randomCode(6)}`;
+      return runTransaction(db, async (tx) => {
+        const pkgSnap = await tx.get(doc(db, "packages", packageId));
+        const pkg = pkgSnap.data();
+        if (!pkgSnap.exists() || !pkg.available) throw new UserError("Pake sa a pa disponib.");
+        if (pkg.needs_id && !pid) throw new UserError("Mete Player ID ou pou pake sa a.");
+        if ((await tx.get(refDoc)).exists()) throw new UserError("Nimewo tranzaksyon sa a deja itilize.");
+
+        const payment = { method, reference: ref, sender_phone: phone };
+        const order = {
+          code, user_id: uid, package_id: packageId, product_name: pkg.product_name, package_label: pkg.label,
+          price: pkg.price, player_id: pid, status: "unpaid", delivery_code: null, admin_note: null,
+          created_at: serverTimestamp(), updated_at: serverTimestamp(), payment,
+        };
+        tx.set(orderRef, order);
+        tx.set(refDoc, { order_id: orderRef.id, user_id: uid });
+        tx.set(newNotificationRef(uid), notification("order", `Kòmand ${code} resevwa`,
+          `${pkg.product_name} · ${pkg.label} (${formatHtg(pkg.price)}). N ap verifye peman ${METHOD_NAMES[method]} ou a (${ref}).`, code));
+        return { ...order, id: orderRef.id, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      });
+    },
+
     // Konvèsyon (Meru, PayPal…): règ yo verifye frè a ak pri a menm jan ak exchange.js
     async placeExchangeOrder(productId, amount, recipient) {
       const uid = currentUid();
@@ -407,7 +441,7 @@ export function createBackend(config, options = {}) {
           recentOrders = s.docs.map(toPlain);
           emitOrders();
         }, report("admin orders")),
-        onSnapshot(query(collection(db, "orders"), where("status", "in", ["pending", "processing"])), (s) => {
+        onSnapshot(query(collection(db, "orders"), where("status", "in", ["unpaid", "pending", "processing"])), (s) => {
           openOrders = s.docs.map(toPlain);
           emitOrders();
         }, report("admin open orders")),
@@ -434,6 +468,8 @@ export function createBackend(config, options = {}) {
     // `supplier`: estati livrezon otomatik la (FazerCards), ekri nan menm operasyon an
     async adminUpdateOrder(order, status, deliveryCode, note, supplier) {
       if (order.status === "refused") throw new UserError("Kòmand sa a deja refize e ranbouse.");
+      if (order.status === "unpaid" && status !== "refused") throw new UserError("Konfime peman an anvan.");
+      const unpaid = order.status === "unpaid";
       const changes = { status, updated_at: serverTimestamp() };
       if (supplier) changes.supplier = { ...supplier, at: serverTimestamp() };
       if (deliveryCode?.trim()) changes.delivery_code = deliveryCode.trim().slice(0, 200);
@@ -441,7 +477,8 @@ export function createBackend(config, options = {}) {
 
       const batch = writeBatch(db);
       batch.update(doc(db, "orders", order.id), changes);
-      if (status === "refused") {
+      // Peman dirèk ki pa rive: pa gen anyen pou ranbouse
+      if (status === "refused" && !unpaid) {
         batch.update(userRef(order.user_id), {
           balance: increment(order.price), total_spent: increment(-order.price), last_admin_op: { kind: "refund", id: order.id },
         });
@@ -451,10 +488,21 @@ export function createBackend(config, options = {}) {
         const text = {
           processing: [`Kòmand ${order.code} an kou`, `N ap trete ${what}.`],
           delivered: [`Kòmand ${order.code} livre ✅`, `${what}${changes.delivery_code || order.delivery_code ? ". Kòd ou a nan Historique." : " sou kont ou."}`],
-          refused: [`Kòmand ${order.code} refize`, `${formatHtg(order.price)} retounen nan Wallet ou.${changes.admin_note ? ` ${changes.admin_note}` : ""}`],
+          refused: [`Kòmand ${order.code} refize`, `${unpaid ? `Nou pa jwenn peman ${METHOD_NAMES[order.payment?.method] || ""} ou a.` : `${formatHtg(order.price)} retounen nan Wallet ou.`}${changes.admin_note ? ` ${changes.admin_note}` : ""}`],
         }[status];
         if (text) batch.set(newNotificationRef(order.user_id), notification("order", text[0], text[1], order.code));
       }
+      await batch.commit();
+    },
+
+    // Admin nan resevwa peman dirèk la: kòmand lan vin "pending" (pare pou FazerCards oswa pou livre)
+    async adminConfirmPayment(order) {
+      if (order.status !== "unpaid") throw new UserError("Peman kòmand sa a deja trete.");
+      const batch = writeBatch(db);
+      batch.update(doc(db, "orders", order.id), { status: "pending", updated_at: serverTimestamp() });
+      batch.update(userRef(order.user_id), { total_spent: increment(order.price), last_admin_op: { kind: "paid", id: order.id } });
+      batch.set(newNotificationRef(order.user_id), notification("order", `Peman ${order.code} resevwa ✅`,
+        `${order.product_name} · ${order.package_label}. N ap livre l kounye a.`, order.code));
       await batch.commit();
     },
 

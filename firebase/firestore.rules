@@ -14,6 +14,8 @@ rules_version = '2';
 //     resevwa a + montan)
 //   - yon admin ki konfime yon depo (+ montan depo a) oswa ki refize
 //     yon kòmand (+ pri kòmand lan, yon sèl fwa)
+// Yon kòmand "unpaid" (kliyan an peye dirèkteman ak MonCash/NatCash) pa
+// touche solde a: admin nan konfime peman an, oswa li refize l san ranbousman.
 //
 // Admin yo: pwopriyetè a se admin ou te mete alamen nan konsòl la
 // (is_admin = true, san admin_by). Se sèlman li ki ka ajoute oswa retire
@@ -136,7 +138,8 @@ service cloud.firestore {
         && changedOnly(['balance', 'total_spent', 'last_admin_op'])
         && op.keys().hasOnly(['kind', 'id'])
         && ((op.kind == 'deposit' && depositCreditOk(uid, op.id, before, after))
-            || (op.kind == 'refund' && refundOk(uid, op.id, before, after)));
+            || (op.kind == 'refund' && refundOk(uid, op.id, before, after))
+            || (op.kind == 'paid' && paidOk(uid, op.id, before, after)));
     }
 
     function depositCreditOk(uid, id, before, after) {
@@ -150,9 +153,19 @@ service cloud.firestore {
     function refundOk(uid, id, before, after) {
       let path = orderDoc(id);
       let o = get(path).data;
-      return o.user_id == uid && o.status != 'refused' && getAfter(path).data.status == 'refused'
+      return o.user_id == uid && !(o.status in ['refused', 'unpaid']) && getAfter(path).data.status == 'refused'
         && after.balance == before.balance + o.price
         && after.total_spent == before.total_spent - o.price;
+    }
+
+    // Admin nan resevwa peman dirèk yon kòmand: li konte nan total kliyan an, solde a pa chanje
+    function paidOk(uid, id, before, after) {
+      let path = orderDoc(id);
+      let o = get(path).data;
+      return o.user_id == uid && o.status == 'unpaid'
+        && getAfter(path).data.status in ['pending', 'processing', 'delivered']
+        && after.balance == before.balance
+        && after.total_spent == before.total_spent + o.price;
     }
 
     // Pwopriyetè a fè yon lòt kliyan admin (admin_by = li menm) oswa li retire l
@@ -280,7 +293,8 @@ service cloud.firestore {
       allow read: if signedIn() && (resource.data.user_id == me() || isAdmin());
       allow create: if signedIn() && (
         (request.resource.data.get('kind', null) == 'exchange' && validNewExchangeOrder(id))
-        || (request.resource.data.get('kind', null) != 'exchange' && validNewOrder(id)));
+        || (request.resource.data.get('kind', null) != 'exchange' && request.resource.data.status == 'unpaid' && validNewUnpaidOrder(id))
+        || (request.resource.data.get('kind', null) != 'exchange' && request.resource.data.status != 'unpaid' && validNewOrder(id)));
       allow update: if isAdmin() && validOrderUpdate();
     }
 
@@ -302,6 +316,33 @@ service cloud.firestore {
         && after.balance == before.balance - d.price
         && after.total_spent == before.total_spent + d.price
         && after.last_op == {'kind': 'order', 'id': id};
+    }
+
+    // Kliyan an peye dirèkteman ak MonCash/NatCash: kòmand lan tann admin nan konfime peman an.
+    // Solde a pa chanje; nimewo tranzaksyon an ka sèvi yon sèl fwa (depositRefs).
+    function validNewUnpaidOrder(id) {
+      let d = request.resource.data;
+      let pkg = get(packageDoc(d.package_id)).data;
+      let ref = depositRefDoc(d.payment.method + '_' + d.payment.reference);
+      return exactKeys(['code', 'user_id', 'package_id', 'product_name', 'package_label', 'price',
+                        'player_id', 'status', 'delivery_code', 'admin_note', 'created_at', 'updated_at', 'payment'])
+        && d.user_id == me()
+        && pkg.available == true
+        && d.price == pkg.price && d.product_name == pkg.product_name && d.package_label == pkg.label
+        && d.status == 'unpaid' && d.delivery_code == null && d.admin_note == null
+        && (d.player_id == null || (d.player_id is string && d.player_id.matches('^[0-9]{6,15}$')))
+        && (pkg.needs_id != true || d.player_id != null)
+        && d.code is string && d.code.matches('^AS-[A-HJ-NP-Z2-9]{6}$')
+        && d.created_at == request.time && d.updated_at == request.time
+        && validPayment(d.payment)
+        && !exists(ref) && getAfter(ref).data.order_id == id;
+    }
+
+    function validPayment(p) {
+      return p is map && p.keys().hasOnly(['method', 'reference', 'sender_phone']) && p.keys().hasAll(['method', 'reference'])
+        && p.method in ['moncash', 'natcash']
+        && p.reference is string && p.reference.matches('^[A-Z0-9-]{4,40}$')
+        && optString(p.get('sender_phone', null), 20);
     }
 
     // Konvèsyon (Meru, PayPal…): pri a = (montan + frè palye a) × to a, arondi anlè.
@@ -353,7 +394,13 @@ service cloud.firestore {
         && optString(after.delivery_code, 200)
         && optString(after.admin_note, 300)
         && (!('supplier' in after) || validSupplier(after.supplier))
-        && (after.status != 'refused' || getAfter(u).data.balance == get(u).data.balance + before.price);
+        && (before.status == 'unpaid'
+          // Peman dirèk: refize = pa gen ranbousman (kliyan an pa t peye ak solde l);
+          // konfime = pri a ajoute nan total kliyan an (paidOk)
+          ? (after.status == 'refused'
+              ? getAfter(u).data.balance == get(u).data.balance
+              : getAfter(u).data.total_spent == get(u).data.total_spent + before.price)
+          : (after.status != 'refused' || getAfter(u).data.balance == get(u).data.balance + before.price));
     }
 
     // Livrezon otomatik (FazerCards): estati kòmand lan kote founisè a
@@ -403,14 +450,22 @@ service cloud.firestore {
     // Yon nimewo tranzaksyon MonCash/NatCash ka sèvi yon sèl fwa
     match /depositRefs/{key} {
       allow get: if signedIn();
-      allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(['deposit_id', 'user_id'])
-        && request.resource.data.user_id == me()
-        && depositRefOk(key, getAfter(depositDoc(request.resource.data.deposit_id)).data);
+      allow create: if signedIn() && request.resource.data.user_id == me() && (
+        (request.resource.data.keys().hasOnly(['deposit_id', 'user_id'])
+          && depositRefOk(key, getAfter(depositDoc(request.resource.data.deposit_id)).data))
+        || (request.resource.data.keys().hasOnly(['order_id', 'user_id'])
+          && orderRefOk(key, request.resource.data.order_id)));
     }
 
     function depositRefOk(key, d) {
       return d.user_id == me() && key == d.method + '_' + d.reference;
+    }
+
+    // Kòmand peye dirèkteman: nimewo tranzaksyon an se pou nouvo kòmand sa a
+    function orderRefOk(key, id) {
+      let o = getAfter(orderDoc(id)).data;
+      return !exists(orderDoc(id)) && o.user_id == me() && o.status == 'unpaid'
+        && key == o.payment.method + '_' + o.payment.reference;
     }
 
     // ---------- Transfè yo ----------

@@ -498,6 +498,7 @@ export default function App() {
             onLogin={needLogin}
             onDeposit={startDeposit}
             onViewOrders={() => goToTab("history")}
+            onToast={setToast}
           />
         )}
 
