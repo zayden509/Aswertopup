@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Zap, RefreshCw, Loader2, Link2, Search, CheckCircle2, AlertTriangle, Webhook, Wallet, Crown, Trash2, ChevronRight } from "lucide-react";
 import { backend, errorText } from "./backend.js";
 import { Sheet, ErrorNote, formatPrice, formatDate } from "./ui.jsx";
-import { Card, Empty, Field, Toggle, inputClass, normalize } from "./adminUi.jsx";
+import { Card, Chips, Empty, Field, Toggle, AdminButton, inputClass, normalize } from "./adminUi.jsx";
+import { matchOffer } from "./fazerMatch.js";
 
 const usd = (v) => `$${Number(v).toFixed(2)}`;
 
@@ -255,6 +256,135 @@ function MappingSheet({ pkg, current, onClose, onToast }) {
   );
 }
 
+// Konekte tout pake Free Fire yo ak FazerCards an yon sèl kou (100 + BONUS 10 → 110 Diamonds…)
+function AutoLink({ packages, supplierMap, onToast }) {
+  const [regions, setRegions] = useState(null);
+  const [region, setRegion] = useState(null);
+  const [offers, setOffers] = useState(null);
+  const [fieldKey, setFieldKey] = useState(null);
+  const [skip, setSkip] = useState({}); // pake admin nan dekoche
+  const [rate, setRate] = useState("145");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadRegion = async (c) => {
+    setRegion(c);
+    setOffers(null);
+    setSkip({});
+    const res = await backend.adminFazer("offers", { category_id: c.category_id });
+    setOffers(res.offers || []);
+    setFieldKey((res.fields || []).find((f) => f.type === "text")?.key || res.fields?.[0]?.key || null);
+  };
+
+  const run = async (task) => {
+    setBusy(true);
+    setError("");
+    try {
+      await task();
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const start = () => run(async () => {
+    const items = (await backend.adminFazer("categories", { q: "free fire" })).items || [];
+    setRegions(items);
+    const preferred = items.find((c) => /latam/i.test(c.name)) || items[0];
+    if (preferred) await loadRegion(preferred);
+  });
+
+  const rows = offers ? packages.map((pkg) => {
+    const offer = matchOffer(pkg, offers);
+    const current = supplierMap[pkg.id];
+    const same = current?.auto && current.offer_id === offer?.offer_id && current.category_id === region?.category_id;
+    return { pkg, offer, same, checked: Boolean(offer) && !same && !skip[pkg.id] };
+  }) : [];
+  const chosen = rows.filter((r) => r.checked);
+
+  const save = () => run(async () => {
+    await Promise.all(chosen.map(({ pkg, offer }) => backend.adminSetSupplierMap(pkg.id, {
+      category_id: region.category_id, category_name: region.name, offer_id: offer.offer_id, offer_name: offer.name,
+      price_usd: String(offer.price_usd), field_key: fieldKey, auto: true,
+    })));
+    onToast(`${chosen.length} pake konekte ⚡ Kòmand yo ap ale kote FazerCards poukont yo.`);
+  });
+
+  const toHtg = (usdPrice) => Math.ceil(Number(usdPrice) * Number(rate || 0));
+
+  return (
+    <Card
+      title={<span className="flex items-center gap-2"><Zap className="h-5 w-5 text-violet-500" /> Konekte Free Fire an yon sèl kou</span>}
+      subtitle="Sit la jwenn pake FazerCards ki menm ak pa w yo (100 + BONUS 10 = 110 Diamonds…). Tcheke lis la, epi konfime."
+    >
+      {!regions ? (
+        <AdminButton tone="primary" icon={Search} busy={busy} disabled={busy} onClick={start} className="bg-violet-600 hover:bg-violet-700 dark:bg-violet-500">
+          Chèche pake FazerCards yo
+        </AdminButton>
+      ) : (
+        <div className="space-y-3">
+          {regions.length === 0 && <Empty>FazerCards pa jwenn Free Fire.</Empty>}
+          {regions.length > 1 && (
+            <Chips
+              options={regions.map((c) => ({ id: c.category_id, label: c.name.replace(/^Free Fire\s*/i, "") || c.name }))}
+              value={region?.category_id}
+              onChange={(id) => run(() => loadRegion(regions.find((c) => c.category_id === id)))}
+              label="Rejyon"
+            />
+          )}
+          {region && !offers && <Loader2 className="h-5 w-5 animate-spin text-violet-500" />}
+          {offers && (
+            <>
+              <ul className="divide-y divide-slate-100 rounded-xl ring-1 ring-slate-200 dark:divide-slate-800 dark:ring-slate-800">
+                {rows.map(({ pkg, offer, same, checked }) => {
+                  const cost = offer ? toHtg(offer.price_usd) : 0;
+                  return (
+                    <li key={pkg.id}>
+                      <label className={`flex items-center gap-3 px-3 py-2.5 ${offer && !same ? "cursor-pointer" : ""}`}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={!offer || same}
+                          onChange={() => setSkip((s) => ({ ...s, [pkg.id]: !s[pkg.id] }))}
+                          className="h-5 w-5 shrink-0 accent-violet-600"
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold text-slate-900 dark:text-white">{pkg.label} <span className="font-normal text-slate-500 dark:text-slate-400">· {formatPrice(pkg.price)}</span></span>
+                          <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+                            {offer ? `→ ${offer.name} · ${usd(offer.price_usd)} (≈ ${formatPrice(cost)})` : "Pa jwenn pake ki koresponn: konekte l alamen anba a"}
+                          </span>
+                        </span>
+                        {same ? (
+                          <span className="shrink-0 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-bold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">Deja konekte</span>
+                        ) : offer ? (
+                          <span className={`shrink-0 text-xs font-bold tabular-nums ${pkg.price - cost >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>
+                            {pkg.price - cost >= 0 ? "+" : ""}{formatPrice(pkg.price - cost)}
+                          </span>
+                        ) : null}
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <Field label="To dola a (HTG pou 1 $)">
+                  <input inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value.replace(/[^\d.]/g, ""))} className={`${inputClass} w-28`} />
+                </Field>
+                <AdminButton tone="primary" icon={Zap} busy={busy} disabled={busy || chosen.length === 0} onClick={save} className="bg-violet-600 hover:bg-violet-700 dark:bg-violet-500">
+                  Konekte {chosen.length} pake
+                </AdminButton>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Chif vèt la se benefis ou sou chak pake (pri ou − sa FazerCards koute). Si l wouj, monte pri a nan Pwodwi anvan.</p>
+            </>
+          )}
+        </div>
+      )}
+      <div className="mt-3"><ErrorNote>{error}</ErrorNote></div>
+    </Card>
+  );
+}
+
 export default function AdminAuto({ account, supplierMap, onToast }) {
   const [openId, setOpenId] = useState(null);
   const [search, setSearch] = useState("");
@@ -268,6 +398,12 @@ export default function AdminAuto({ account, supplierMap, onToast }) {
   return (
     <div className="space-y-4">
       <FazerStatus onToast={onToast} />
+
+      <AutoLink
+        packages={Object.values(account.prices).filter((p) => /free fire/i.test(p.product_name)).sort((a, b) => a.price - b.price)}
+        supplierMap={supplierMap}
+        onToast={onToast}
+      />
 
       <Card title={`Pake yo (${autoCount} otomatik)`}>
         <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">

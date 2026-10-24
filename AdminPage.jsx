@@ -106,7 +106,7 @@ function SupplierLine({ order, auto, onToast }) {
   );
 }
 
-function OrderCard({ order, profile, product, auto, onToast }) {
+function OrderCard({ order, profile, product, auto, onLink, onToast }) {
   const [mode, setMode] = useState(null); // "deliver" | "refuse"
   const [code, setCode] = useState("");
   const [note, setNote] = useState("");
@@ -115,6 +115,8 @@ function OrderCard({ order, profile, product, auto, onToast }) {
 
   const unpaid = order.status === "unpaid";
   const method = order.payment && PAYMENT_METHODS.find((m) => m.id === order.payment.method);
+  // Yon top-up jwèt (gen Player ID) ki p ap ka ale kote FazerCards poukont li
+  const needsLink = !auto && !order.supplier && order.kind !== "exchange" && Boolean(order.player_id) && ["unpaid", "pending"].includes(order.status);
 
   const update = async (status) => {
     setBusy(true);
@@ -174,7 +176,7 @@ function OrderCard({ order, profile, product, auto, onToast }) {
         <Detail label="Dat"><span className="text-slate-500 dark:text-slate-400">{formatDateTime(order.created_at)}</span></Detail>
       </dl>
 
-      {(order.kind === "exchange" || order.payment || order.supplier || auto) && (
+      {(order.kind === "exchange" || order.payment || order.supplier || auto || needsLink) && (
         <div className="space-y-2 px-4 pb-3">
           {order.kind === "exchange" && (
             <p className="rounded-xl bg-sky-50 px-3 py-2.5 text-sm text-sky-900 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:text-sky-100 dark:ring-sky-500/20">
@@ -196,6 +198,13 @@ function OrderCard({ order, profile, product, auto, onToast }) {
             </div>
           )}
           <SupplierLine order={order} auto={auto} onToast={onToast} />
+          {needsLink && (
+            <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5 ring-1 ring-slate-200 dark:bg-slate-800/50 dark:ring-slate-700">
+              <Zap className="h-4 w-4 shrink-0 text-slate-400" />
+              <p className="min-w-0 flex-1 text-sm text-slate-600 dark:text-slate-300">Pake sa a poko konekte ak FazerCards: li p ap livre poukont li.</p>
+              <AdminButton onClick={onLink} className="h-8 shrink-0 text-xs">Konekte l</AdminButton>
+            </div>
+          )}
         </div>
       )}
       {order.admin_note && <p className="px-4 pb-3 text-sm text-slate-500 dark:text-slate-400">Nòt: {order.admin_note}</p>}
@@ -327,7 +336,7 @@ function SearchBox({ value, onChange, placeholder }) {
   );
 }
 
-function OrdersTab({ orders, older, onLoadOlder, filter, onFilter, profiles, catalog, supplierMap, loading, onToast }) {
+function OrdersTab({ orders, older, onLoadOlder, filter, onFilter, profiles, catalog, supplierMap, loading, onLink, onToast }) {
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -366,6 +375,7 @@ function OrdersTab({ orders, older, onLoadOlder, filter, onFilter, profiles, cat
             profile={profiles[o.user_id]}
             product={productForPackage(o.package_id, catalog)}
             auto={Boolean(supplierMap[o.package_id]?.auto)}
+            onLink={onLink}
             onToast={onToast}
           />
         ))}
@@ -520,7 +530,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
         {tab === "orders" && (
           <OrdersTab
             orders={allOrders} older={older} onLoadOlder={loadOlder} filter={orderFilter} onFilter={setOrderFilter}
-            profiles={profiles} catalog={catalog} supplierMap={supplierMap} loading={loading} onToast={onToast}
+            profiles={profiles} catalog={catalog} supplierMap={supplierMap} loading={loading} onLink={() => setTab("auto")} onToast={onToast}
           />
         )}
         {tab === "deposits" && (
