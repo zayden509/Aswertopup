@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Send, ChevronRight, ChevronLeft, BookOpen, Copy, CheckCircle2, Loader2, Hash, Phone, Banknote, UserRound, AlertTriangle } from "lucide-react";
+import { Plus, Send, ChevronRight, BookOpen, Copy, CheckCircle2, Loader2, Hash, Banknote, UserRound, AlertTriangle, ShieldCheck } from "lucide-react";
 import { PAYMENT_METHODS, VIDEO_TUTORIAL_URL } from "./data.js";
 import { backend, errorText } from "./backend.js";
 import { usePaymentMethods } from "./payments.js";
@@ -31,38 +31,94 @@ function Success({ title, text, onClose }) {
   );
 }
 
-// Etap 1 yon peman MonCash/NatCash: nimewo pou kliyan an voye kòb la (ak bouton Kopye)
+// Nimewo Ayiti yo ekri an gwoup pou kliyan an li yo fasil: 43 69 9262
+export function formatAccountNumber(number) {
+  const d = String(number || "").replace(/\D/g, "");
+  return d.length === 8 ? `${d.slice(0, 2)} ${d.slice(2, 4)} ${d.slice(4)}` : d;
+}
+
+// Chwa MonCash / NatCash (kat ak bouton radyo). Yon mòd peman san nimewo pa ka chwazi.
+export function MethodPicker({ methods, value, onChange }) {
+  return (
+    <div className="space-y-2.5" role="radiogroup" aria-label="Canal de paiement">
+      {methods.map((m) => {
+        const active = m.id === value;
+        return (
+          <button
+            key={m.id}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            disabled={!m.number}
+            onClick={() => onChange(m.id)}
+            className={`flex w-full items-center gap-3 rounded-2xl border-2 p-3.5 text-left transition disabled:opacity-50 ${
+              active ? "border-sky-500 bg-sky-50 dark:bg-sky-500/10" : "border-slate-200 bg-white hover:border-sky-200 dark:border-slate-700 dark:bg-slate-900"
+            }`}
+          >
+            <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${active ? "border-sky-500" : "border-slate-300 dark:border-slate-600"}`}>
+              {active && <span className="h-3 w-3 rounded-full bg-sky-500" />}
+            </span>
+            <img src={m.logo} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+            <span className="min-w-0 flex-1">
+              <span className={`block font-bold ${active ? "text-sky-700 dark:text-sky-300" : "text-slate-900 dark:text-white"}`}>{m.name}</span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400">{m.number ? "Canal de paiement" : "Bientôt disponible"}</span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// Kont pou kliyan an voye kòb la: non, nimewo (gwo, ak bouton Copier)
+export function AccountCard({ method, onToast }) {
+  if (!method.number) {
+    return (
+      <p className="flex gap-2 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+        <AlertTriangle className="h-5 w-5 shrink-0" />
+        <span>
+          Nimewo {method.name} nou an poko sou sit la.{" "}
+          <a href={waLink(`Bonjou Awens Topup, ki nimewo ${method.name} pou m peye a?`)} target="_blank" rel="noopener noreferrer" className="font-bold underline">
+            Mande l sou WhatsApp
+          </a>
+          .
+        </span>
+      </p>
+    );
+  }
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-slate-50 py-4 pl-5 pr-4 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
+      <span className="absolute inset-y-0 left-0 w-1.5 bg-sky-500" aria-hidden="true" />
+      {method.holder && (
+        <>
+          <p className="text-[11px] font-bold uppercase tracking-[.14em] text-slate-500 dark:text-slate-400">Nom du compte</p>
+          <p className="mt-1 text-lg font-bold text-slate-900 dark:text-white">{method.holder}</p>
+          <div className="my-3 h-px bg-slate-200 dark:bg-slate-700" />
+        </>
+      )}
+      <p className="text-[11px] font-bold uppercase tracking-[.14em] text-slate-500 dark:text-slate-400">Numéro du compte</p>
+      <div className="mt-1 flex items-center justify-between gap-3">
+        <span className="select-all text-2xl font-extrabold tabular-nums tracking-wide text-sky-600 dark:text-sky-400">{formatAccountNumber(method.number)}</span>
+        <button
+          type="button"
+          onClick={() => copyText(method.number, onToast)}
+          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-600 ring-1 ring-sky-200 hover:bg-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30"
+        >
+          <Copy className="h-4 w-4" /> Copier
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Etap 1 yon peman dirèk pou yon kòmand: kont pou kliyan an voye kòb la
 export function PayTo({ method: picked, amount, onToast }) {
   // Nimewo an dirèk (pwopriyetè a ka chanje l nan Panneau admin → Paramèt)
   const method = usePaymentMethods().find((m) => m.id === picked.id) || picked;
   return (
-    <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
-      <div className="flex items-center gap-3">
-        <img src={method.logo} alt="" className="h-11 w-11 rounded-xl object-cover" />
-        <p className="font-bold text-slate-900 dark:text-white">1. Voye {amount ? formatPrice(amount) : "kòb la"} sou {method.name}</p>
-      </div>
-      {method.number ? (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
-          <span className="min-w-0">
-            <span className="block select-all text-xl font-bold tabular-nums tracking-wide text-slate-900 dark:text-white">{method.number}</span>
-            {method.holder && <span className="block truncate text-sm text-slate-500 dark:text-slate-400">{method.holder}</span>}
-          </span>
-          <button type="button" onClick={() => copyText(method.number, onToast)} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-sky-50 px-3 py-1.5 text-sm font-semibold text-sky-600 dark:bg-sky-500/10 dark:text-sky-300">
-            <Copy className="h-4 w-4" /> Kopye
-          </button>
-        </div>
-      ) : (
-        <p className="mt-3 flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
-          <AlertTriangle className="h-5 w-5 shrink-0" />
-          <span>
-            Nimewo {method.name} nou an poko sou sit la.{" "}
-            <a href={waLink(`Bonjou Awens Topup, ki nimewo ${method.name} pou m peye a?`)} target="_blank" rel="noopener noreferrer" className="font-bold underline">
-              Mande l sou WhatsApp
-            </a>
-            .
-          </span>
-        </p>
-      )}
+    <div className="space-y-2">
+      <p className="font-bold text-slate-900 dark:text-white">1. Voye {amount ? formatPrice(amount) : "kòb la"} sou {method.name}</p>
+      <AccountCard method={method} onToast={onToast} />
     </div>
   );
 }
@@ -113,21 +169,28 @@ export function MethodList({ onPick, onToast }) {
   );
 }
 
+// Depo: chwazi MonCash oswa NatCash, voye kòb la sou kont lan, epi valide l ak kòd tranzaksyon an
 export function DepositSheet({ initialAmount = "", onClose, onToast }) {
-  const [method, setMethod] = useState(null);
+  const methods = usePaymentMethods();
+  const [methodId, setMethodId] = useState(() => (methods.find((m) => m.number && m.recommended) || methods.find((m) => m.number) || methods[0]).id);
+  const method = methods.find((m) => m.id === methodId) || methods[0];
   const [amount, setAmount] = useState(initialAmount);
   const [reference, setReference] = useState("");
-  const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(null);
+
+  const openTutorial = () => {
+    if (VIDEO_TUTORIAL_URL) openExternal(VIDEO_TUTORIAL_URL);
+    else onToast("Videyo a poko disponib, li ap vini byento.");
+  };
 
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
     setError("");
     try {
-      setSent(await backend.requestDeposit({ amount, method: method.id, reference, senderPhone: phone }));
+      setSent(await backend.requestDeposit({ amount, method: method.id, reference, senderPhone: null }));
     } catch (err) {
       setError(errorText(err));
     } finally {
@@ -143,34 +206,46 @@ export function DepositSheet({ initialAmount = "", onClose, onToast }) {
           text="N ap verifye peman an. W ap resevwa yon notifikasyon lè kòb la antre nan Wallet ou."
           onClose={onClose}
         />
-      ) : !method ? (
-        <MethodList onPick={setMethod} onToast={onToast} />
       ) : (
         <form onSubmit={submit} className="space-y-4">
-          <button type="button" onClick={() => setMethod(null)} className="flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white">
-            <ChevronLeft className="h-4 w-4" /> Lòt mòd peman
-          </button>
+          <MethodPicker methods={methods} value={method.id} onChange={setMethodId} />
+          <AccountCard method={method} onToast={onToast} />
 
-          <PayTo method={method} onToast={onToast} />
+          <section className="space-y-4 rounded-2xl bg-white p-4 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+            <div className="flex items-start gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-50 text-sky-600 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/20">
+                <ShieldCheck className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Validation du paiement</h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Voye kòb la sou kont anlè a, epi mete montan an ak kòd tranzaksyon {method.name} ba ou a.</p>
+              </div>
+            </div>
+            <Input id="deposit-amount" label="Montant envoyé (HTG)" icon={Banknote} inputMode="numeric" type="number" min="50" max="100000" step="1" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Ex. 1000" />
+            <Input
+              id="deposit-reference"
+              label="TransCode ou Txn ID"
+              icon={Hash}
+              required
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              placeholder="Ex. 26072853633942"
+              autoComplete="off"
+            />
+            <ErrorNote>{error}</ErrorNote>
+            <button type="submit" disabled={busy || !method.number} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 hover:bg-sky-600 disabled:opacity-60">
+              {busy && <Loader2 className="h-5 w-5 animate-spin" />} Valider mon dépôt
+            </button>
+          </section>
 
-          <p className="font-bold text-slate-900 dark:text-white">2. Mete enfòmasyon tranzaksyon an</p>
-          <Input id="deposit-amount" label="Montan ou voye a (HTG)" icon={Banknote} inputMode="numeric" type="number" min="50" max="100000" step="1" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Ex: 1000" />
-          <Input
-            id="deposit-reference"
-            label="ID tranzaksyon an"
-            icon={Hash}
-            required
-            value={reference}
-            onChange={(e) => setReference(e.target.value)}
-            placeholder="Ex: 1234567890"
-            autoComplete="off"
-            hint={`Nimewo tranzaksyon ki nan mesaj ${method.name} voye ba ou a.`}
-          />
-          <Input id="deposit-phone" label="Nimewo ou voye kòb la (si w vle)" icon={Phone} inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Ex: 37000000" autoComplete="tel" />
-          <ErrorNote>{error}</ErrorNote>
-          <button type="submit" disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 hover:bg-sky-600 disabled:opacity-60">
-            {busy && <Loader2 className="h-5 w-5 animate-spin" />} Voye depo a
-          </button>
+          <div className="flex items-center justify-center gap-4 text-sm font-medium text-slate-500 dark:text-slate-400">
+            <button type="button" onClick={openTutorial} className="flex items-center gap-1.5 hover:text-slate-800 dark:hover:text-slate-200">
+              <BookOpen className="h-4 w-4" /> Tutoriel de dépôt
+            </button>
+            <a href={waLink("Bonjou Awens Topup, mwen gen yon pwoblèm ak depo mwen.")} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 hover:text-slate-800 dark:hover:text-slate-200">
+              Yon pwoblèm?
+            </a>
+          </div>
         </form>
       )}
     </Sheet>
