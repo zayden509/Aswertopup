@@ -30,6 +30,7 @@ swiv gid [`firebase/README.md`](firebase/README.md) (Firebase, plan gratis la).
   kliyan, pwodwi, mesaj, ekip). Li chaje sèlman pou admin yo.
 - `catalog.js`: mete pwodwi ki nan `data.js` ansanm ak sa admin nan kreye yo.
 - `payments.js`: nimewo MonCash/NatCash an dirèk (pwopriyetè a chanje yo nan Panneau admin → Paramèt).
+- `smsParse.js`, `api/sms-webhook.js`, `api/sms-match.js`, `AdminSms.jsx`: depo otomatik ak SMS (httpSMS).
 - `ExchangePage.jsx`, `exchange.js`: paj konvèsyon pwodwi Finans yo (to du jou, frè pa palye).
   Kalkil la menm jan nan `firebase/firestore.rules`.
 - `days.js`: jou yo ak lè Ayiti, pou estatistik yo.

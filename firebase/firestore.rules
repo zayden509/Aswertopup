@@ -258,15 +258,27 @@ service cloud.firestore {
 
     // settings/catalog: pwodwi sit la ki kache yo.
     // settings/payments: nimewo MonCash/NatCash kliyan yo voye kòb la (pwopriyetè a sèlman).
+    // settings/automation: konfimasyon depo otomatik ak SMS (pwopriyetè a sèlman, admin yo li l).
     match /settings/{id} {
-      allow read: if true;
+      allow read: if id != 'automation' || isAdmin();
       allow write: if (isAdmin() && id == 'catalog'
           && request.resource.data.keys().hasOnly(['hidden'])
           && request.resource.data.hidden is list && request.resource.data.hidden.size() <= 300)
         || (isOwner() && id == 'payments'
           && request.resource.data.keys().hasOnly(['moncash', 'natcash'])
           && validPayAccount(request.resource.data.get('moncash', null))
-          && validPayAccount(request.resource.data.get('natcash', null)));
+          && validPayAccount(request.resource.data.get('natcash', null)))
+        || (isOwner() && id == 'automation'
+          && exactKeys(['sms_auto', 'senders', 'max_auto'])
+          && request.resource.data.sms_auto is bool
+          && request.resource.data.senders is list && request.resource.data.senders.size() <= 10
+          && request.resource.data.max_auto is int
+          && request.resource.data.max_auto >= 0 && request.resource.data.max_auto <= 100000);
+    }
+
+    // SMS NatCash/MonCash sèvè a resevwa nan httpSMS (admin yo sèlman; bot sèvè a se yon admin)
+    match /smsPayments/{id} {
+      allow read, write: if isAdmin();
     }
 
     function validPayAccount(a) {

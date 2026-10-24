@@ -571,6 +571,90 @@ export function createBackend(config, options = {}) {
 
     adminDeleteSupplierMap: (packageId) => deleteDoc(doc(db, "supplierMap", packageId)),
 
+    /* ---------- SMS peman (httpSMS) ---------- */
+    // Sèvè a: anrejistre yon SMS yon sèl fwa (httpSMS ka voye menm SMS la plizyè fwa)
+    async adminSaveSms(id, data) {
+      const ref = doc(db, "smsPayments", id);
+      return runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if (snap.exists()) return toPlain(snap);
+        tx.set(ref, { ...data, status: "new", deposit_id: null, received_at: serverTimestamp() });
+        return { id, ...data, status: "new", deposit_id: null };
+      });
+    },
+
+    async adminGetSms(id) {
+      const snap = await getDoc(doc(db, "smsPayments", id));
+      return snap.exists() ? toPlain(snap) : null;
+    },
+
+    // Yon SMS sèvi pou yon sèl depo: nou "pran" l anvan nou konfime depo a
+    async adminClaimSms(id, depositId) {
+      const ref = doc(db, "smsPayments", id);
+      return runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists() || snap.data().status !== "new") return false;
+        tx.update(ref, { status: "used", deposit_id: depositId });
+        return true;
+      });
+    },
+
+    adminReleaseSms: (id) => updateDoc(doc(db, "smsPayments", id), { status: "new", deposit_id: null }),
+
+    async adminGetAutomation() {
+      const snap = await getDoc(doc(db, "settings", "automation"));
+      return snap.exists() ? snap.data() : {};
+    },
+
+    async adminGetDeposit(id) {
+      const snap = await getDoc(doc(db, "deposits", id));
+      return snap.exists() ? toPlain(snap) : null;
+    },
+
+    // Depo ki gen kòd tranzaksyon sa a (depositRefs se endèks kòd yo)
+    async adminFindDepositByRef(method, reference) {
+      const refSnap = await getDoc(doc(db, "depositRefs", `${method}_${reference}`));
+      const depositId = refSnap.exists() ? refSnap.data().deposit_id : null;
+      if (!depositId) return null;
+      const snap = await getDoc(doc(db, "deposits", depositId));
+      return snap.exists() ? toPlain(snap) : null;
+    },
+
+    // Panneau admin: dènye SMS yo
+    subscribeSms(callback) {
+      return onSnapshot(query(collection(db, "smsPayments"), orderBy("received_at", "desc"), limit(40)), (snap) => {
+        callback(snap.docs.map(toPlain));
+      }, (error) => console.error("sms", error));
+    },
+
+    subscribeAutomation(callback) {
+      return onSnapshot(doc(db, "settings", "automation"), (snap) => callback(snap.data() || {}), (error) => console.error("automation", error));
+    },
+
+    // Pwopriyetè a sèlman: limen/etenn konfimasyon otomatik la, nimewo ofisyèl ki voye SMS yo, limit la
+    async adminSetAutomation({ smsAuto, senders, maxAuto }) {
+      const max = Number(maxAuto);
+      if (!Number.isInteger(max) || max < 0 || max > 100000) throw new UserError("Limit la dwe yon chif san vigil ant 0 ak 100 000.");
+      const list = [...new Set((senders || []).map((x) => String(x).trim()).filter(Boolean))].slice(0, 10);
+      await setDoc(doc(db, "settings", "automation"), { sms_auto: Boolean(smsAuto), senders: list, max_auto: max });
+    },
+
+    // Kliyan an fin voye depo a: sèvè a gade si SMS NatCash/MonCash la deja rive
+    async requestDepositCheck(depositId) {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        if (!token) return null;
+        const res = await fetch("/api/sms-match", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ depositId }),
+        });
+        return res.ok ? await res.json() : null;
+      } catch {
+        return null;
+      }
+    },
+
     // Pou fonksyon sèvè yo (bot admin nan)
     async adminIsAdmin(uid) {
       const snap = await getDoc(userRef(uid));

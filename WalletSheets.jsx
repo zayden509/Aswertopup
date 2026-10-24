@@ -190,7 +190,10 @@ export function DepositSheet({ initialAmount = "", onClose, onToast }) {
     setBusy(true);
     setError("");
     try {
-      setSent(await backend.requestDeposit({ amount, method: method.id, reference, senderPhone: null }));
+      const deposit = await backend.requestDeposit({ amount, method: method.id, reference, senderPhone: null });
+      // Si SMS NatCash/MonCash la deja rive sou telefòn boutik la, depo a konfime touswit
+      const check = await backend.requestDepositCheck(deposit.id);
+      setSent({ ...deposit, confirmed: Boolean(check?.confirmed) });
     } catch (err) {
       setError(errorText(err));
     } finally {
@@ -202,8 +205,8 @@ export function DepositSheet({ initialAmount = "", onClose, onToast }) {
     <Sheet open onClose={onClose} title="Faire un dépôt" icon={<Plus className="h-6 w-6" />}>
       {sent ? (
         <Success
-          title={`Depo ${formatPrice(Number(sent.amount))} voye!`}
-          text="N ap verifye peman an. W ap resevwa yon notifikasyon lè kòb la antre nan Wallet ou."
+          title={sent.confirmed ? `Depo ${formatPrice(Number(sent.amount))} konfime ✅` : `Depo ${formatPrice(Number(sent.amount))} voye!`}
+          text={sent.confirmed ? "Kòb la nan Wallet ou kounye a. Ou ka achte touswit." : "N ap verifye peman an. W ap resevwa yon notifikasyon lè kòb la antre nan Wallet ou."}
           onClose={onClose}
         />
       ) : (

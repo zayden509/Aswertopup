@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Save, Lock, Eye } from "lucide-react";
+import { Save, Lock, Eye, MessageSquareText, X, Copy } from "lucide-react";
 import { backend, errorText } from "./backend.js";
-import { ErrorNote } from "./ui.jsx";
+import { ErrorNote, copyText } from "./ui.jsx";
 import { usePaymentMethods } from "./payments.js";
-import { Card, Field, AdminButton, inputClass } from "./adminUi.jsx";
+import { Card, Field, Toggle, AdminButton, inputClass } from "./adminUi.jsx";
 
 // Nimewo MonCash/NatCash kliyan yo voye kòb la (depo ak peman dirèk).
 // Se pwopriyetè a sèlman ki ka chanje yo: yon lòt admin pa ka voye peman yo sou nimewo pa l.
@@ -105,11 +105,103 @@ function Preview() {
   );
 }
 
+// Depo otomatik ak SMS (httpSMS): limen/etenn, nimewo ofisyèl ki voye SMS yo, limit la
+function SmsAutomation({ owner, onToast }) {
+  const [saved, setSaved] = useState(null);
+  const [form, setForm] = useState({ smsAuto: false, senders: [], maxAuto: "5000" });
+  const [sender, setSender] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const webhook = `${window.location.origin}/api/sms-webhook`;
+
+  useEffect(() => backend.subscribeAutomation((a) => {
+    setSaved(a);
+    setForm({ smsAuto: Boolean(a.sms_auto), senders: a.senders || [], maxAuto: String(a.max_auto ?? 5000) });
+  }), []);
+
+  const save = async (next = form) => {
+    setBusy(true);
+    setError("");
+    try {
+      await backend.adminSetAutomation({ smsAuto: next.smsAuto, senders: next.senders, maxAuto: Number(next.maxAuto) });
+      onToast("Paramèt SMS yo anrejistre.");
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const addSender = () => {
+    const value = sender.trim();
+    if (!value) return;
+    setForm((f) => ({ ...f, senders: [...new Set([...f.senders, value])] }));
+    setSender("");
+  };
+
+  return (
+    <Card
+      title={<span className="flex items-center gap-2"><MessageSquareText className="h-5 w-5 text-sky-500" /> Depo otomatik ak SMS</span>}
+      subtitle="Ak httpSMS sou telefòn Android ki gen SIM NatCash/MonCash la, sit la li SMS peman yo epi li konfime depo yo poukont li."
+    >
+      <div className="space-y-4">
+        <div className="rounded-xl bg-slate-50 p-3 text-sm ring-1 ring-slate-200 dark:bg-slate-950/40 dark:ring-slate-800">
+          <p className="font-medium text-slate-700 dark:text-slate-200">Adrès webhook la (pou httpSMS)</p>
+          <button type="button" onClick={() => copyText(webhook, onToast)} className="mt-1 flex max-w-full items-center gap-2 font-mono text-sky-600 dark:text-sky-400">
+            <span className="truncate">{webhook}</span> <Copy className="h-4 w-4 shrink-0" />
+          </button>
+        </div>
+
+        <fieldset disabled={!owner} className="space-y-4">
+          <Toggle
+            on={form.smsAuto}
+            onChange={(on) => setForm((f) => ({ ...f, smsAuto: on }))}
+            label={form.smsAuto ? "Konfime depo yo otomatikman" : "Otomatik etenn: ou konfime depo yo alamen"}
+          />
+          <Field label="Nimewo ofisyèl ki voye SMS NatCash/MonCash yo" hint="Se sèlman SMS ki soti nan nimewo sa yo ki ka konfime yon depo. Ou ka ajoute yo dirèkteman nan lis SMS yo (Depo).">
+            <div className="flex flex-wrap gap-2">
+              {form.senders.map((x) => (
+                <span key={x} className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30">
+                  {x}
+                  {owner && (
+                    <button type="button" aria-label={`Retire ${x}`} onClick={() => setForm((f) => ({ ...f, senders: f.senders.filter((y) => y !== x) }))}>
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </span>
+              ))}
+              {form.senders.length === 0 && <span className="text-sm text-slate-400">Poko gen nimewo ofisyèl.</span>}
+            </div>
+            {owner && (
+              <div className="mt-2 flex gap-2">
+                <input value={sender} onChange={(e) => setSender(e.target.value)} placeholder="Ex: NatCash oswa 4949" className={inputClass} />
+                <AdminButton onClick={addSender} className="h-10 shrink-0">Ajoute</AdminButton>
+              </div>
+            )}
+          </Field>
+          <Field label="Limit otomatik (HTG)" hint="Yon depo ki pi gwo pase sa a rete pou ou konfime l alamen.">
+            <input inputMode="numeric" value={form.maxAuto} onChange={(e) => setForm((f) => ({ ...f, maxAuto: e.target.value.replace(/\D/g, "") }))} className={`${inputClass} w-40 tabular-nums`} />
+          </Field>
+        </fieldset>
+        <ErrorNote>{error}</ErrorNote>
+        {owner ? (
+          <div className="flex justify-end">
+            <AdminButton tone="primary" icon={Save} busy={busy} disabled={busy || saved === null} onClick={() => save()}>Sove</AdminButton>
+          </div>
+        ) : (
+          <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400"><Lock className="h-4 w-4" /> Se pwopriyetè a sèlman ki ka chanje paramèt sa yo.</p>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 export default function AdminSettings({ owner, onToast }) {
   return (
     <div className="space-y-4">
       <PaymentNumbers owner={owner} onToast={onToast} />
       <Preview />
+      <SmsAutomation owner={owner} onToast={onToast} />
     </div>
   );
 }

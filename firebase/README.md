@@ -138,3 +138,27 @@ Sa ki fè l mache: 3 fonksyon sou Vercel (`api/fulfill.js`, `api/fazer.js`,
 Teste ak pwòp kont jwèt ou anvan (pi piti pake a). Kenbe kòb sou balans FazerCards ou
 (USDT oswa Binance Pay, minimòm 10 $) ak yon abònman FazerCards aktif.
 
+
+## Depo otomatik ak SMS (httpSMS)
+Lè yon kliyan voye kòb sou NatCash (oswa MonCash) ou, telefòn ou resevwa yon SMS ak montan
+an ak kòd tranzaksyon an. Aplikasyon **httpSMS** voye SMS sa a bay sit la
+(`api/sms-webhook.js`). Lè kliyan an mete menm kòd la ak menm montan an nan depo li, depo a
+konfime poukont li, epi kòb la antre nan Wallet li touswit.
+
+Yon depo konfime otomatikman sèlman si: ou limen l nan **Paramèt**, SMS la soti nan yon nimewo
+ou make **ofisyèl**, se kòb ou **resevwa**, kòd la ak montan an menm, montan an pa depase
+**limit otomatik** la, e SMS la poko sèvi. Tout lòt depo yo rete nan **Depo** pou ou.
+
+### Konfigirasyon (yon sèl fwa)
+1. Sou telefòn **Android** ki gen SIM NatCash la: enstale **httpSMS** (Google Play), epi
+   konekte l ak kont ou sou httpsms.com (kle API ki nan **Settings** sit httpsms.com la).
+   Kite aplikasyon an li SMS yo, epi retire l nan "optimisation batterie".
+2. Sou httpsms.com → **Settings → Webhooks → Add webhook**:
+   - **Callback URL**: adrès ki nan **Panneau admin → Paramèt → Depo otomatik ak SMS**
+   - **Signing key**: yon modpas long ou envante
+   - **Events**: `message.phone.received`
+3. **Vercel → Settings → Environment Variables**: `HTTPSMS_SIGNING_KEY` = menm signing key la,
+   epi **Redeploy**.
+4. Fè yon ti depo tès. SMS la dwe parèt nan **Panneau admin → Depo → SMS peman**, ak montan
+   an ak kòd la. Peze **Se nimewo ofisyèl NatCash** sou li.
+5. **Paramèt → Depo otomatik ak SMS**: limen l, chwazi limit la, epi **Sove**.

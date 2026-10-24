@@ -15,6 +15,7 @@ import AdminMessages from "./AdminMessages.jsx";
 import AdminTeam, { isOwner } from "./AdminTeam.jsx";
 import AdminAuto from "./AdminAuto.jsx";
 import AdminSettings from "./AdminSettings.jsx";
+import AdminSms from "./AdminSms.jsx";
 
 const TABS = [
   { id: "dashboard", label: "Tablo", Icon: LayoutDashboard, title: "Tablo" },
@@ -496,7 +497,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
     messages: "Ekri kliyan yo nan notifikasyon sit la",
     team: "Moun ki gen aksè nan Panneau admin lan",
     auto: "FazerCards livre dyaman yo poukont li",
-    settings: "Nimewo kliyan yo voye kòb la",
+    settings: "Nimewo peman ak depo otomatik",
   };
 
   return (
@@ -563,6 +564,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
               ))}
             </ul>
             {!loading && deposits.length === 0 && <Empty>Pa gen depo ankò.</Empty>}
+            <AdminSms owner={owner} onToast={onToast} />
           </>
         )}
         {tab === "customers" && <AdminCustomers profiles={profiles} orders={allOrders} deposits={deposits} onToast={onToast} />}
