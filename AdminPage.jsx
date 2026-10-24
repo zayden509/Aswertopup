@@ -7,7 +7,7 @@ import { PAYMENT_METHODS } from "./data.js";
 import { backend, errorText } from "./backend.js";
 import { StatusChip, ErrorNote, ProductArt, formatPrice, formatDateTime, orderStatus, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
 import { Chips, CopyText, Empty, AdminButton, SectionHead, panel, inputClass, normalize } from "./adminUi.jsx";
-import { productForPackage } from "./catalog.js";
+import { productForPackage, packageNameFixes } from "./catalog.js";
 import AdminDashboard from "./AdminDashboard.jsx";
 import AdminCustomers from "./AdminCustomers.jsx";
 import AdminCatalog from "./AdminCatalog.jsx";
@@ -421,6 +421,12 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
 
   // Ki pake ki otomatik (FazerCards)
   useEffect(() => backend.subscribeSupplierMap(setSupplierMap), [epoch]);
+
+  // Lè non yon pwodwi chanje sou sit la, pake li yo nan baz done a swiv li (kòmand ki deja fèt yo pa chanje)
+  const nameFixes = useMemo(() => packageNameFixes(account.prices, account.catalog.products), [account.prices, account.catalog.products]);
+  useEffect(() => {
+    if (nameFixes.length) backend.adminRenamePackages(nameFixes).catch((error) => console.error("rename packages", error));
+  }, [nameFixes]);
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [tab]);
 

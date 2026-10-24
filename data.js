@@ -114,7 +114,7 @@ function exchangeConfig(currency, account, rate = 145) {
 export const PRODUCTS = [
   {
     id: "free-fire",
-    name: "Free Fire Pin USA/LATAM",
+    name: "Free Fire USA/LATAM",
     category: "Jwèt",
     isNew: true,
     image: freeFireImg,

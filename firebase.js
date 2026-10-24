@@ -630,6 +630,13 @@ export function createBackend(config, options = {}) {
       await updateDoc(doc(db, "packages", id), { price: value, available });
     },
 
+    // Mete non pwodwi a ajou sou pake yo (lè non pwodwi a chanje)
+    async adminRenamePackages(fixes) {
+      const batch = writeBatch(db);
+      fixes.slice(0, 400).forEach(({ id, product_name }) => batch.update(doc(db, "packages", id), { product_name: String(product_name).slice(0, 80) }));
+      await batch.commit();
+    },
+
     // Mete pake ki nan data.js men ki poko nan baz done a
     async adminAddPackages(list) {
       const batch = writeBatch(db);

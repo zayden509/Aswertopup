@@ -91,3 +91,18 @@ export function buildCatalog(packages, custom) {
 export function productForPackage(packageId, catalog) {
   return catalog.find((p) => p.id === packageId || p.groups?.some((g) => g.items.some((i) => i.id === packageId)));
 }
+
+// Pake ki gen yon ansyen non pwodwi (pa egzanp apre "Free Fire Pin USA/LATAM" vin
+// "Free Fire USA/LATAM"): Panneau admin lan mete non yo ajou nan baz done a.
+// Yon pake ki nan de pwodwi (abònman Free Fire yo) pran non premye a.
+export function packageNameFixes(packages, customProducts = []) {
+  const owner = new Map();
+  PRODUCTS.forEach((p) => (p.groups || []).forEach((g) => g.items.forEach((i) => {
+    if (!owner.has(i.id)) owner.set(i.id, p.name);
+  })));
+  const nameOf = (id) => PRODUCTS.find((p) => p.id === id)?.name || customProducts.find((p) => p.id === id)?.name;
+  return Object.values(packages)
+    .map((pkg) => ({ id: pkg.id, from: pkg.product_name, product_name: pkg.product_id ? nameOf(pkg.product_id) : owner.get(pkg.id) }))
+    .filter((fix) => fix.product_name && fix.product_name !== fix.from)
+    .map(({ id, product_name }) => ({ id, product_name }));
+}
