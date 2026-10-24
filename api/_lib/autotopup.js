@@ -24,11 +24,15 @@ export function fazerError(error) {
   return "Pa ka kontakte FazerCards kounye a. Eseye ankò.";
 }
 
+// Valè yo kole nan Vercel ka gen espas oswa gimè anplis: nou retire yo
+const cleanEnv = (value) => String(value || "").trim().replace(/^(["'])(.*)\1$/, "$2").trim();
+
 let client = null;
 export function fazer() {
-  if (!env.FAZER_API_KEY) throw new SetupError("FAZER_API_KEY poko mete nan Vercel (Settings → Environment Variables).");
+  const apiKey = cleanEnv(env.FAZER_API_KEY);
+  if (!apiKey) throw new SetupError("FAZER_API_KEY poko mete nan Vercel (Settings → Environment Variables).");
   client ??= new FazerCardsClient({
-    apiKey: env.FAZER_API_KEY,
+    apiKey,
     baseUrl: env.FAZER_BASE_URL || undefined,
     appName: "awens-topup",
     timeoutMs: 8000,
@@ -36,18 +40,32 @@ export function fazer() {
   return client;
 }
 
+const WRONG_LOGIN = "BOT_EMAIL oswa BOT_PASSWORD nan Vercel pa menm ak kont bot la, oswa kont bot la poko kreye sou sit la.";
+const BOT_ERRORS = {
+  "auth/invalid-email": "BOT_EMAIL nan Vercel pa yon imèl ki bon. Mete imèl kont bot la egzakteman (egz: bot@awenstopup.com), san espas ni gimè.",
+  "auth/invalid-credential": WRONG_LOGIN,
+  "auth/wrong-password": WRONG_LOGIN,
+  "auth/user-not-found": WRONG_LOGIN,
+  "auth/user-disabled": "Kont bot la bloke nan Firebase (Authentication → Users).",
+  "auth/too-many-requests": "Firebase bloke bot la pou kounye a apre twòp eseye. Tann kèk minit.",
+};
+
+let botBackend = null;
 let botPromise = null;
 export function bot() {
-  if (!env.BOT_EMAIL || !env.BOT_PASSWORD) {
+  const email = cleanEnv(env.BOT_EMAIL);
+  const password = cleanEnv(env.BOT_PASSWORD);
+  if (!email || !password) {
     return Promise.reject(new SetupError("BOT_EMAIL ak BOT_PASSWORD poko mete nan Vercel."));
   }
   botPromise ??= (async () => {
-    const backend = createBackend(firebaseConfig, { appName: "bot", emulatorHost: env.FIREBASE_EMULATOR_HOST });
-    await backend.signIn(env.BOT_EMAIL, env.BOT_PASSWORD);
-    return backend;
+    // Yon sèl app Firebase "bot" pa sèvè; si koneksyon an echwe, nou eseye ankò ak menm app la
+    botBackend ??= createBackend(firebaseConfig, { appName: "bot", emulatorHost: env.FIREBASE_EMULATOR_HOST });
+    await botBackend.signIn(email, password);
+    return botBackend;
   })().catch((error) => {
     botPromise = null;
-    throw new SetupError(`Bot la pa ka konekte nan Firebase (${error.code || error.message}).`);
+    throw new SetupError(BOT_ERRORS[error.code] || `Bot la pa ka konekte nan Firebase (${error.code || error.message}).`);
   });
   return botPromise;
 }
