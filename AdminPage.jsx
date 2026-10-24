@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   ArrowLeft, ShieldCheck, Crown, Check, X, Loader2, RefreshCw, PackageCheck, Clock, Search,
-  LayoutDashboard, ShoppingBag, ArrowDownLeft, Users, Package, MessageSquareText,
+  LayoutDashboard, ShoppingBag, ArrowDownLeft, Users, Package, MessageSquareText, Zap,
 } from "lucide-react";
 import { PAYMENT_METHODS } from "./data.js";
 import { backend, errorText } from "./backend.js";
@@ -12,6 +12,7 @@ import AdminCustomers from "./AdminCustomers.jsx";
 import AdminCatalog from "./AdminCatalog.jsx";
 import AdminMessages from "./AdminMessages.jsx";
 import AdminTeam, { isOwner } from "./AdminTeam.jsx";
+import AdminAuto from "./AdminAuto.jsx";
 
 const TABS = [
   { id: "dashboard", label: "Tablo", Icon: LayoutDashboard },
@@ -21,6 +22,7 @@ const TABS = [
   { id: "catalog", label: "Pwodwi", Icon: Package },
   { id: "messages", label: "Mesaj", Icon: MessageSquareText },
   { id: "team", label: "Ekip", Icon: ShieldCheck },
+  { id: "auto", label: "Otomatik", Icon: Zap },
 ];
 
 const ORDER_FILTERS = [
@@ -30,7 +32,59 @@ const ORDER_FILTERS = [
   { id: "all", label: "Tout", test: () => true },
 ];
 
-function OrderCard({ order, profile, onToast }) {
+const SUPPLIER_STATUS = {
+  sending: ["Ap voye bay FazerCards…", "text-violet-600 dark:text-violet-300"],
+  created: ["FazerCards resevwa l", "text-violet-600 dark:text-violet-300"],
+  processing: ["An kou kote FazerCards", "text-violet-600 dark:text-violet-300"],
+  completed: ["FazerCards livre l ✅", "text-emerald-600 dark:text-emerald-400"],
+  failed: ["FazerCards echwe: kliyan an ranbouse", "text-red-600 dark:text-red-400"],
+  refund: ["FazerCards ranbouse: kliyan an ranbouse", "text-red-600 dark:text-red-400"],
+  error: ["Pa t ka voye l bay FazerCards", "text-red-600 dark:text-red-400"],
+};
+
+// Estati livrezon otomatik la, ak bouton pou verifye oswa eseye ankò
+function SupplierLine({ order, auto, onToast }) {
+  const [busy, setBusy] = useState(null);
+  const s = order.supplier;
+  if (!s && !(auto && order.status === "pending")) return null;
+  const run = async (action) => {
+    setBusy(action);
+    try {
+      const res = await backend.adminFazer(action, { orderId: order.id });
+      onToast(res.status ? `FazerCards: ${SUPPLIER_STATUS[res.status]?.[0] || res.status}` : "Pa gen anyen pou voye.");
+    } catch (err) {
+      onToast(errorText(err));
+    } finally {
+      setBusy(null);
+    }
+  };
+  const [label, tone] = s ? SUPPLIER_STATUS[s.status] || [s.status, "text-slate-600"] : ["Otomatik, poko voye", "text-amber-600 dark:text-amber-400"];
+  const canRetry = !s || s.status === "error" || (s.status === "sending" && !s.order_id);
+  const canSync = s?.order_id && !["completed", "failed", "refund"].includes(s.status);
+  return (
+    <div className="mt-2 rounded-xl bg-violet-50/70 px-3 py-2 ring-1 ring-violet-100 dark:bg-violet-500/5 dark:ring-violet-500/20">
+      <p className={`flex items-center gap-1.5 text-sm font-semibold ${tone}`}><Zap className="h-4 w-4 shrink-0" /> {label}</p>
+      {(s?.offer_name || s?.order_id) && <p className="text-xs text-slate-500 dark:text-slate-400">{[s.offer_name, s.order_id].filter(Boolean).join(" · ")}</p>}
+      {s?.error && <p className="mt-0.5 text-xs text-red-600 dark:text-red-400">{s.error}</p>}
+      {(canRetry || canSync) && (
+        <div className="mt-2 flex gap-2">
+          {canSync && (
+            <button type="button" disabled={Boolean(busy)} onClick={() => run("sync")} className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-violet-700 ring-1 ring-violet-200 disabled:opacity-60 dark:bg-slate-900 dark:text-violet-300 dark:ring-violet-500/30">
+              {busy === "sync" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Verifye
+            </button>
+          )}
+          {canRetry && (
+            <button type="button" disabled={Boolean(busy)} onClick={() => run("retry")} className="flex items-center gap-1.5 rounded-lg bg-violet-500 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60">
+              {busy === "retry" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />} {s ? "Eseye ankò" : "Voye kounye a"}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OrderCard({ order, profile, auto, onToast }) {
   const [mode, setMode] = useState(null); // "deliver" | "refuse"
   const [code, setCode] = useState("");
   const [note, setNote] = useState("");
@@ -71,6 +125,7 @@ function OrderCard({ order, profile, onToast }) {
           Voye <b>{order.amount} {order.currency}</b> bay <b>{order.recipient.name}</b> · frè {order.fee} {order.currency} · to {order.rate} HTG
         </p>
       )}
+      <SupplierLine order={order} auto={auto} onToast={onToast} />
       <p className="mt-1 text-xs text-slate-400">{formatDateTime(order.created_at)}</p>
       {order.delivery_code && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Kòd: <span className="font-mono font-semibold">{order.delivery_code}</span></p>}
 
@@ -188,7 +243,7 @@ function DepositCard({ deposit, profile, onToast }) {
   );
 }
 
-function OrdersTab({ orders, profiles, loading, onToast }) {
+function OrdersTab({ orders, profiles, supplierMap, loading, onToast }) {
   const [filter, setFilter] = useState("open");
   const [search, setSearch] = useState("");
   const q = normalize(search.trim());
@@ -209,7 +264,7 @@ function OrdersTab({ orders, profiles, loading, onToast }) {
       <Chips options={options} value={filter} onChange={setFilter} label="Filtè" />
       <ul className="space-y-3">
         {list.map((o) => (
-          <OrderCard key={`${o.id}-${o.status}-${o.updated_at}`} order={o} profile={profiles[o.user_id]} onToast={onToast} />
+          <OrderCard key={`${o.id}-${o.status}-${o.updated_at}`} order={o} profile={profiles[o.user_id]} auto={Boolean(supplierMap[o.package_id]?.auto)} onToast={onToast} />
         ))}
       </ul>
       {!loading && list.length === 0 && <Empty>Pa gen kòmand isit la.</Empty>}
@@ -225,6 +280,7 @@ export default function AdminPage({ account, onBack, onToast }) {
   const [profiles, setProfiles] = useState({});
   const [visits, setVisits] = useState({});
   const [announcements, setAnnouncements] = useState([]);
+  const [supplierMap, setSupplierMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [epoch, setEpoch] = useState(0); // bouton 🔄: rekòmanse koute done yo
 
@@ -242,6 +298,9 @@ export default function AdminPage({ account, onBack, onToast }) {
       onAnnouncements: setAnnouncements,
     });
   }, [epoch]);
+
+  // Ki pake ki otomatik (FazerCards)
+  useEffect(() => backend.subscribeSupplierMap(setSupplierMap), [epoch]);
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [tab]);
 
@@ -295,7 +354,7 @@ export default function AdminPage({ account, onBack, onToast }) {
       </nav>
 
       {tab === "dashboard" && <AdminDashboard orders={orders} deposits={deposits} profiles={profiles} visits={visits} onGo={setTab} />}
-      {tab === "orders" && <OrdersTab orders={orders} profiles={profiles} loading={loading} onToast={onToast} />}
+      {tab === "orders" && <OrdersTab orders={orders} profiles={profiles} supplierMap={supplierMap} loading={loading} onToast={onToast} />}
       {tab === "deposits" && (
         <>
           <ul className="space-y-3">
@@ -310,6 +369,7 @@ export default function AdminPage({ account, onBack, onToast }) {
       {tab === "catalog" && <AdminCatalog account={account} onToast={onToast} />}
       {tab === "messages" && <AdminMessages profiles={profiles} announcements={announcements} onToast={onToast} />}
       {tab === "team" && <AdminTeam me={me} profiles={profiles} onToast={onToast} />}
+      {tab === "auto" && <AdminAuto account={account} supplierMap={supplierMap} onToast={onToast} />}
     </div>
   );
 }

@@ -230,6 +230,19 @@ service cloud.firestore {
         && d.available is bool;
     }
 
+    // Ki pwodwi FazerCards ki koresponn ak chak pake (livrezon otomatik). Admin sèlman.
+    match /supplierMap/{packageId} {
+      allow read: if isAdmin();
+      allow delete: if isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['provider', 'category_id', 'category_name', 'offer_id', 'offer_name', 'price_usd', 'field_key', 'auto'])
+        && request.resource.data.provider == 'fazercards'
+        && request.resource.data.category_id is string && request.resource.data.category_id.size() <= 100
+        && request.resource.data.offer_id is string && request.resource.data.offer_id.size() <= 100
+        && optString(request.resource.data.get('field_key', null), 60)
+        && request.resource.data.auto is bool;
+    }
+
     // Pwodwi sit la ki kache (yon sèl dokiman: settings/catalog)
     match /settings/{id} {
       allow read: if true;
@@ -333,13 +346,24 @@ service cloud.firestore {
       let before = resource.data;
       let after = request.resource.data;
       let u = userDoc(before.user_id);
-      return changedOnly(['status', 'delivery_code', 'admin_note', 'updated_at'])
+      return changedOnly(['status', 'delivery_code', 'admin_note', 'updated_at', 'supplier'])
         && before.status != 'refused'
         && after.status in ['pending', 'processing', 'delivered', 'refused']
         && after.updated_at == request.time
         && optString(after.delivery_code, 200)
         && optString(after.admin_note, 300)
+        && (!('supplier' in after) || validSupplier(after.supplier))
         && (after.status != 'refused' || getAfter(u).data.balance == get(u).data.balance + before.price);
+    }
+
+    // Livrezon otomatik (FazerCards): estati kòmand lan kote founisè a
+    function validSupplier(s) {
+      return s is map && s.keys().hasOnly(['provider', 'order_id', 'status', 'error', 'offer_name', 'at'])
+        && s.provider == 'fazercards'
+        && optString(s.get('order_id', null), 60)
+        && s.status is string && s.status.size() <= 20
+        && optString(s.get('error', null), 300)
+        && optString(s.get('offer_name', null), 120);
     }
 
     // ---------- Depo yo ----------

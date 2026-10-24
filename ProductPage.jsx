@@ -180,6 +180,8 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
       const order = await backend.placeOrder(item.id, id || null);
       if (id) savePlayerId(id);
       setPlaced(order);
+      // Si pake a otomatik (FazerCards), sèvè a voye l touswit; sinon admin nan trete l
+      backend.requestAutoDelivery(order.id);
     } catch (err) {
       setError(errorText(err));
     } finally {

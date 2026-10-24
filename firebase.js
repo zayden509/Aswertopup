@@ -8,7 +8,7 @@ import {
 } from "firebase/auth";
 import {
   getFirestore, connectFirestoreEmulator, doc, collection, query, where, orderBy, limit, onSnapshot,
-  getDoc, setDoc, addDoc, deleteDoc, runTransaction, writeBatch, updateDoc, increment, serverTimestamp, documentId,
+  getDoc, getDocs, setDoc, addDoc, deleteDoc, runTransaction, writeBatch, updateDoc, increment, serverTimestamp, documentId,
 } from "firebase/firestore";
 import { UserError } from "./errors.js";
 import { dayKey } from "./days.js";
@@ -161,7 +161,8 @@ export function createBackend(config, options = {}) {
       let products = [];
       let hidden = [];
       let exchange = {};
-      const emit = () => callback({ products, hidden, exchange });
+      let ready = false; // to yo fin chaje (pou paj Finans yo pa di "pa disponib" pandan chajman an)
+      const emit = () => callback({ products, hidden, exchange, ready });
       const stops = [
         onSnapshot(collection(db, "products"), (snap) => {
           products = snap.docs.map(toPlain).sort((a, b) => a.sort - b.sort);
@@ -173,6 +174,7 @@ export function createBackend(config, options = {}) {
         }, (error) => console.error("catalog", error)),
         onSnapshot(collection(db, "exchange"), (snap) => {
           exchange = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()]));
+          ready = true;
           emit();
         }, (error) => console.error("exchange", error)),
       ];
@@ -412,9 +414,11 @@ export function createBackend(config, options = {}) {
       return () => unsubscribers.forEach((stop) => stop());
     },
 
-    async adminUpdateOrder(order, status, deliveryCode, note) {
+    // `supplier`: estati livrezon otomatik la (FazerCards), ekri nan menm operasyon an
+    async adminUpdateOrder(order, status, deliveryCode, note, supplier) {
       if (order.status === "refused") throw new UserError("Kòmand sa a deja refize e ranbouse.");
       const changes = { status, updated_at: serverTimestamp() };
+      if (supplier) changes.supplier = { ...supplier, at: serverTimestamp() };
       if (deliveryCode?.trim()) changes.delivery_code = deliveryCode.trim().slice(0, 200);
       if (note?.trim()) changes.admin_note = note.trim().slice(0, 300);
 
@@ -436,6 +440,97 @@ export function createBackend(config, options = {}) {
       }
       await batch.commit();
     },
+
+    /* ---------- Livrezon otomatik (FazerCards) ---------- */
+    // Kle koneksyon kliyan an, pou fonksyon sèvè yo (/api/…) konnen ki moun k ap rele yo
+    getIdToken: () => auth.currentUser?.getIdToken() ?? Promise.resolve(null),
+
+    // Mande sèvè a voye kòmand lan bay FazerCards (si pake a otomatik). Pa janm bloke kliyan an.
+    async requestAutoDelivery(orderId) {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        if (!token) return null;
+        const res = await fetch("/api/fulfill", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ orderId }),
+        });
+        return res.ok ? await res.json() : null;
+      } catch {
+        return null;
+      }
+    },
+
+    // Panneau admin → FazerCards (balans, katalòg, webhook, eseye ankò)
+    async adminFazer(action, params = {}) {
+      const token = await auth.currentUser?.getIdToken();
+      let res;
+      try {
+        res = await fetch("/api/fazer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ action, ...params }),
+        });
+      } catch {
+        throw new UserError("Pa gen koneksyon ak sèvè a. Eseye ankò.");
+      }
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) throw new UserError(data?.error || `Sèvè a pa reponn (HTTP ${res.status}).`);
+      return data;
+    },
+
+    subscribeSupplierMap(callback) {
+      return onSnapshot(collection(db, "supplierMap"), (snap) => {
+        callback(Object.fromEntries(snap.docs.map((d) => [d.id, d.data()])));
+      }, (error) => console.error("supplierMap", error));
+    },
+
+    adminSetSupplierMap: (packageId, data) => setDoc(doc(db, "supplierMap", packageId), {
+      provider: "fazercards", category_id: data.category_id, category_name: data.category_name || null,
+      offer_id: data.offer_id, offer_name: data.offer_name || null, price_usd: data.price_usd ?? null,
+      field_key: data.field_key || null, auto: Boolean(data.auto),
+    }),
+
+    adminDeleteSupplierMap: (packageId) => deleteDoc(doc(db, "supplierMap", packageId)),
+
+    // Pou fonksyon sèvè yo (bot admin nan)
+    async adminIsAdmin(uid) {
+      const snap = await getDoc(userRef(uid));
+      return snap.exists() && snap.data().is_admin === true;
+    },
+
+    async adminGetOrder(id) {
+      const snap = await getDoc(doc(db, "orders", id));
+      return snap.exists() ? toPlain(snap) : null;
+    },
+
+    async adminGetSupplierMap(packageId) {
+      const snap = await getDoc(doc(db, "supplierMap", packageId));
+      return snap.exists() ? snap.data() : null;
+    },
+
+    async adminFindOrderBySupplier(supplierOrderId) {
+      const snap = await getDocs(query(collection(db, "orders"), where("supplier.order_id", "==", supplierOrderId), limit(1)));
+      return snap.empty ? null : toPlain(snap.docs[0]);
+    },
+
+    // Make kòmand lan "ap voye" yon sèl fwa, menm si de demand rive an menm tan.
+    // Retounen kòmand lan si se nou ki pran l, oswa null si yon lòt demand deja la.
+    async adminClaimSupplier(orderId) {
+      const ref = doc(db, "orders", orderId);
+      return runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists()) return null;
+        const order = toPlain(snap);
+        if (order.status !== "pending" || (order.supplier && order.supplier.status !== "error")) return null;
+        tx.update(ref, { supplier: { provider: "fazercards", status: "sending", at: serverTimestamp() }, updated_at: serverTimestamp() });
+        return order;
+      });
+    },
+
+    adminSetSupplier: (orderId, supplier) => updateDoc(doc(db, "orders", orderId), {
+      supplier: { ...supplier, at: serverTimestamp() }, updated_at: serverTimestamp(),
+    }),
 
     async adminReviewDeposit(deposit, approve, note) {
       if (deposit.status !== "pending") throw new UserError("Depo sa a deja trete.");

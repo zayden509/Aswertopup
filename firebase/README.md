@@ -98,3 +98,28 @@ Kliyan ki konekte ak Google jwenn foto kont Google yo kòm foto pwofil (yo ka ch
 Kliyan yo voye demann lan sou WhatsApp (anba paj akèy la → **Efase kont**). Pou efase l:
 1. **Authentication → Users**: chèche imèl la, peze **⋮ → Supprimer le compte**.
 2. **Firestore → Données → users**: efase dokiman kliyan an.
+
+## Livrezon otomatik ak FazerCards
+Lè yon pake **otomatik**, kòmand kliyan an ale kote FazerCards touswit apre acha a.
+FazerCards mete dyaman yo sou kont jwè a, epi sit la make kòmand lan **Livré** poukont li.
+Si FazerCards echwe, kliyan an ranbouse otomatikman. Si FazerCards refize kòmand lan (pa
+egzanp balans ou fini), kòmand lan rete nan **Kòmand** ak yon bouton **Eseye ankò**.
+
+Sa ki fè l mache: 3 fonksyon sou Vercel (`api/fulfill.js`, `api/fazer.js`,
+`api/fazer-webhook.js`). Kle FazerCards la rete sou sèvè a sèlman.
+
+### Konfigirasyon (yon sèl fwa)
+1. **Kont bot la**: sou sit la, kreye yon kont pou sèvè a, pa egzanp `bot@awenstopup.com`, ak
+   yon modpas long. Imèl la pa bezwen egziste. Apre sa, nan **Panneau admin → Ekip**, fè l admin.
+2. **Kle FazerCards la**: sou reseller.fazercards.com → **Profile**, kreye yon kle API.
+3. **Vercel**: pwojè a → **Settings → Environment Variables**, ajoute:
+   - `FAZER_API_KEY`: kle FazerCards la
+   - `BOT_EMAIL`: imèl kont bot la
+   - `BOT_PASSWORD`: modpas kont bot la
+   Apre sa, **Deployments → ⋯ → Redeploy** pou varyab yo pran efè.
+4. **Panneau admin → Otomatik**: verifye balans lan, epi peze **Konekte** pou webhook la.
+5. Peze chak pake, chwazi pwodwi FazerCards ki koresponn lan, epi **Sove**.
+
+Teste ak pwòp kont jwèt ou anvan (pi piti pake a). Kenbe kòb sou balans FazerCards ou
+(USDT oswa Binance Pay, minimòm 10 $) ak yon abònman FazerCards aktif.
+

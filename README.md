@@ -37,6 +37,8 @@ swiv gid [`firebase/README.md`](firebase/README.md) (Firebase, plan gratis la).
 - `account.js`, `backend.js`, `firebase.js`, `errors.js`: koneksyon ak Firebase
   (Firebase chaje sèlman si `config.js` gen kle yo).
 - `firebase/firestore.rules`: règ sekirite ki pwoteje kòb kliyan yo.
+- `api/`: fonksyon sèvè Vercel pou livrezon otomatik FazerCards (gade `firebase/README.md`).
+  `AdminAuto.jsx` se onglet **Otomatik** la nan Panneau admin.
 - `config.js`: nimewo WhatsApp, videyo tutoriel ak kle Firebase yo.
 - `ui.jsx`, `orders.js`: pyès ak fonksyon tout paj yo pataje.
 - `img/`: foto pwodwi yo ak logo peman yo.

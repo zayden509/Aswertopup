@@ -103,6 +103,7 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
   const live = account.catalog.exchange?.[product.id];
   // San baz done (mòd WhatsApp), nou sèvi ak to ki nan data.js. Avèk baz done, admin nan dwe aktive l.
   const config = walletMode ? { ...product.exchange, ...live, available: Boolean(live?.available) } : { ...product.exchange, available: true };
+  const loading = walletMode && !account.catalog.ready;
   const [draft, setField] = useDraft(product.id);
   const [receive, setReceive] = useState("");
   const [pay, setPay] = useState("");
@@ -134,7 +135,8 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
   else if (typed && !q) hint = edited === "pay" ? `Montan sa a pa ase pou minimòm lan (${number.format(config.min)} ${config.currency} + frè).` : `Minimòm ${number.format(config.min)} ${config.currency}.`;
 
   let action = { text: "Acheter", run: () => { setError(""); setWaId(newOrderId()); setConfirming(true); } };
-  if (!config.available) action = { text: "Pa disponib", run: null };
+  if (loading) action = { text: "Chajman…", run: null };
+  else if (!config.available) action = { text: "Pa disponib", run: null };
   else if (!accountOk || !nameOk) action = { text: "Ranpli fòm nan", run: null };
   else if (!q) action = { text: "Chwazi montan an", run: null };
   else if (walletMode && !loggedIn) action = { text: "Konekte pou achte", icon: LogIn, run: () => onLogin("login") };
@@ -225,7 +227,7 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
         </div>
       </section>
 
-      {!config.available && (
+      {!loading && !config.available && (
         <p className="flex gap-2 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-100 dark:ring-amber-500/30">
           <AlertTriangle className="h-5 w-5 shrink-0" />
           <span>
