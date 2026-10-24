@@ -11,6 +11,23 @@ function loadSeen() {
   }
 }
 
+// Dènye pri ak katalòg nou te resevwa: boutik la parèt touswit nan pwochen vizit la,
+// epi done an dirèk yo ranplase yo lè yo rive. Pri a toujou verifye sou sèvè a lè kliyan an achte.
+const SHOP_KEY = "awens-shop-v1";
+function loadShop() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SHOP_KEY));
+    if (saved && typeof saved === "object") return saved;
+  } catch {}
+  return {};
+}
+function saveShop(part) {
+  try {
+    localStorage.setItem(SHOP_KEY, JSON.stringify({ ...loadShop(), ...part }));
+  } catch {}
+}
+const savedShop = loadShop();
+
 const asNotification = (a, seen) => ({
   ...a,
   id: `ann-${a.id}`,
@@ -28,8 +45,9 @@ export function useAccount(onNotification) {
   const [deposits, setDeposits] = useState([]);
   const [transfers, setTransfers] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [prices, setPrices] = useState({});
-  const [catalog, setCatalog] = useState({ products: [], hidden: [], exchange: {} });
+  const [prices, setPrices] = useState(() => savedShop.prices || {});
+  // `ready` rete false jiskaske sèvè a reponn: to konvèsyon yo pa janm soti nan memwa a
+  const [catalog, setCatalog] = useState(() => ({ products: [], hidden: [], exchange: {}, ...savedShop.catalog, ready: false }));
   const [announcements, setAnnouncements] = useState([]);
   const [seen, setSeen] = useState(loadSeen);
   const [epoch, setEpoch] = useState(0); // chanje l pou rekòmanse koute done yo (bouton 🔄)
@@ -39,8 +57,14 @@ export function useAccount(onNotification) {
   const userId = user?.id;
 
   // Pri yo, pwodwi yo ak mesaj pou tout moun yo piblik: menm moun ki pa konekte wè yo
-  useEffect(() => backend?.subscribePrices(setPrices), []);
-  useEffect(() => backend?.subscribeCatalog(setCatalog), []);
+  useEffect(() => backend?.subscribePrices((list) => {
+    setPrices(list);
+    saveShop({ prices: list });
+  }), []);
+  useEffect(() => backend?.subscribeCatalog((next) => {
+    setCatalog(next);
+    saveShop({ catalog: { products: next.products, hidden: next.hidden } });
+  }), []);
   useEffect(() => backend?.subscribeAnnouncements((list, added) => {
     setAnnouncements(list);
     added.forEach((a) => notifyRef.current?.(asNotification(a, "")));

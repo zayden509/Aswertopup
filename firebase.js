@@ -161,22 +161,30 @@ export function createBackend(config, options = {}) {
       let products = [];
       let hidden = [];
       let exchange = {};
-      let ready = false; // to yo fin chaje (pou paj Finans yo pa di "pa disponib" pandan chajman an)
-      const emit = () => callback({ products, hidden, exchange, ready });
+      // Nou voye katalòg la sèlman lè 3 pati yo rive (pou yon pwodwi kache pa parèt yon ti moman),
+      // epi `ready` di to yo fin chaje (pou paj Finans yo pa di "pa disponib" pandan chajman an)
+      const arrived = new Set();
+      const emit = (part) => {
+        arrived.add(part);
+        if (arrived.size === 3) callback({ products, hidden, exchange, ready: true });
+      };
+      const failed = (part) => (error) => {
+        console.error(part, error);
+        emit(part);
+      };
       const stops = [
         onSnapshot(collection(db, "products"), (snap) => {
           products = snap.docs.map(toPlain).sort((a, b) => a.sort - b.sort);
-          emit();
-        }, (error) => console.error("products", error)),
+          emit("products");
+        }, failed("products")),
         onSnapshot(doc(db, "settings", "catalog"), (snap) => {
           hidden = snap.data()?.hidden || [];
-          emit();
-        }, (error) => console.error("catalog", error)),
+          emit("catalog");
+        }, failed("catalog")),
         onSnapshot(collection(db, "exchange"), (snap) => {
           exchange = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()]));
-          ready = true;
-          emit();
-        }, (error) => console.error("exchange", error)),
+          emit("exchange");
+        }, failed("exchange")),
       ];
       return () => stops.forEach((stop) => stop());
     },
@@ -385,14 +393,17 @@ export function createBackend(config, options = {}) {
     subscribeAdmin(handlers) {
       const report = (name) => (error) => console.error(name, error);
       const since = new Date(Date.now() - 31 * 86400000);
+      const RECENT_LIMIT = 3000;
       let recentOrders = [];
       let openOrders = [];
       const emitOrders = () => {
         const byId = new Map([...openOrders, ...recentOrders].map((o) => [o.id, o]));
-        handlers.onOrders(newestFirst([...byId.values()]));
+        // 2yèm valè a: kote istwa an dirèk la kòmanse (adminOlderOrders kontinye anvan dat sa a)
+        const full = recentOrders.length >= RECENT_LIMIT;
+        handlers.onOrders(newestFirst([...byId.values()]), full ? recentOrders.at(-1).created_at : since.toISOString());
       };
       const unsubscribers = [
-        onSnapshot(query(collection(db, "orders"), where("created_at", ">=", since), orderBy("created_at", "desc"), limit(3000)), (s) => {
+        onSnapshot(query(collection(db, "orders"), where("created_at", ">=", since), orderBy("created_at", "desc"), limit(RECENT_LIMIT)), (s) => {
           recentOrders = s.docs.map(toPlain);
           emitOrders();
         }, report("admin orders")),
@@ -412,6 +423,12 @@ export function createBackend(config, options = {}) {
         }, report("admin announcements")),
       ];
       return () => unsubscribers.forEach((stop) => stop());
+    },
+
+    // Kòmand ki pi ansyen pase sa ki deja chaje yo: tout istwa a, 100 pa 100
+    async adminOlderOrders(before, size = 100) {
+      const snap = await getDocs(query(collection(db, "orders"), where("created_at", "<", new Date(before)), orderBy("created_at", "desc"), limit(size)));
+      return snap.docs.map(toPlain);
     },
 
     // `supplier`: estati livrezon otomatik la (FazerCards), ekri nan menm operasyon an

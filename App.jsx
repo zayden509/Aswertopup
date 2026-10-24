@@ -7,11 +7,8 @@ import { useAccount } from "./account.js";
 import { buildCatalog } from "./catalog.js";
 import { backend } from "./backend.js";
 import ProductPage from "./ProductPage.jsx";
-import ExchangePage from "./ExchangePage.jsx";
-import PaymentPage from "./PaymentPage.jsx";
 import HistoryPage, { OrderSheet } from "./HistoryPage.jsx";
 import WalletPage from "./WalletPage.jsx";
-import SettingsPage from "./SettingsPage.jsx";
 import { UserAvatar } from "./ProfileWallet.jsx";
 import SideMenu from "./SideMenu.jsx";
 import Footer from "./Footer.jsx";
@@ -19,8 +16,31 @@ import AuthSheet from "./AuthSheet.jsx";
 import { DepositSheet, TransferSheet } from "./WalletSheets.jsx";
 import { NotificationsSheet, LiveToast } from "./Notifications.jsx";
 
+// Si yon nouvo vèsyon sit la soti pandan paj la louvri, ansyen fichye yo pa egziste ankò:
+// nou rechaje paj la (yon fwa pa minit) olye nou kite l kase
+function lazyPage(load) {
+  return lazy(() => load().catch((error) => {
+    try {
+      const last = Number(sessionStorage.getItem("awens-reload") || 0);
+      if (Date.now() - last > 60000) {
+        sessionStorage.setItem("awens-reload", String(Date.now()));
+        window.location.reload();
+        return new Promise(() => {});
+      }
+    } catch {}
+    throw error;
+  }));
+}
+
 // Panneau admin lan chaje sèlman pou admin yo
-const AdminPage = lazy(() => import("./AdminPage.jsx"));
+const AdminPage = lazyPage(() => import("./AdminPage.jsx"));
+
+// Paj sa yo pa sou paj akèy la: yo chaje apre boutik la parèt, pou premye afichaj la pi vit
+const LATER_PAGES = [() => import("./ExchangePage.jsx"), () => import("./SettingsPage.jsx"), () => import("./PaymentPage.jsx")];
+const ExchangePage = lazyPage(LATER_PAGES[0]);
+const SettingsPage = lazyPage(LATER_PAGES[1]);
+const PaymentPage = lazyPage(LATER_PAGES[2]);
+const pageSpinner = <Loader2 className="mx-auto mt-16 h-8 w-8 animate-spin text-sky-500" />;
 
 /* ============ UTIL ============ */
 function useTheme() {
@@ -298,6 +318,12 @@ export default function App() {
     return () => clearTimeout(t);
   }, [toast]);
 
+  // Chaje lòt paj yo davans lè boutik la fin parèt, pou yo louvri touswit lè kliyan an peze
+  useEffect(() => {
+    const t = setTimeout(() => LATER_PAGES.forEach((load) => load().catch(() => {})), 2500);
+    return () => clearTimeout(t);
+  }, []);
+
   useEffect(() => {
     const onPop = (e) => setProductId(e.state?.product || null);
     window.addEventListener("popstate", onPop);
@@ -449,6 +475,7 @@ export default function App() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 pb-36 pt-2">
+        <Suspense fallback={pageSpinner}>
         {product?.exchange && (
           <ExchangePage
             key={product.id}
@@ -556,10 +583,9 @@ export default function App() {
           />
         )}
         {!product && tab === "admin" && account.profile?.is_admin && (
-          <Suspense fallback={<Loader2 className="mx-auto mt-16 h-8 w-8 animate-spin text-sky-500" />}>
-            <AdminPage account={account} onBack={() => setTab("settings")} onToast={setToast} />
-          </Suspense>
+          <AdminPage account={account} onBack={() => setTab("settings")} onToast={setToast} />
         )}
+        </Suspense>
       </main>
 
       {!product && (

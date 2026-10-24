@@ -224,7 +224,7 @@ export default function AdminDashboard({ orders, deposits, profiles, visits, onG
 
       {(openOrders > 0 || pendingDeposits > 0) && (
         <div className="grid grid-cols-2 gap-3">
-          {openOrders > 0 && <Alert count={openOrders} label="kòmand pou trete" onClick={() => onGo("orders")} />}
+          {openOrders > 0 && <Alert count={openOrders} label="kòmand pou trete" onClick={() => onGo("orders", "open")} />}
           {pendingDeposits > 0 && <Alert count={pendingDeposits} label="depo pou verifye" onClick={() => onGo("deposits")} />}
         </div>
       )}

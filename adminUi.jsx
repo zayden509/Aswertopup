@@ -63,6 +63,7 @@ export function Chips({ options, value, onChange, label }) {
         >
           {o.label}
           {o.count > 0 && <span className="rounded-full bg-red-500 px-1.5 text-[11px] leading-5 text-white">{o.count}</span>}
+          {o.tally !== undefined && <span className="tabular-nums opacity-60">{o.tally}</span>}
         </button>
       ))}
     </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft, ShieldCheck, Crown, Check, X, Loader2, RefreshCw, PackageCheck, Clock, Search,
   LayoutDashboard, ShoppingBag, ArrowDownLeft, Users, Package, MessageSquareText, Zap,
@@ -25,12 +25,15 @@ const TABS = [
   { id: "auto", label: "Otomatik", Icon: Zap },
 ];
 
+// "Tout" an premye: yon kòmand rete nan lis la menm apre l livre (oswa livre otomatikman)
 const ORDER_FILTERS = [
+  { id: "all", label: "Tout", test: () => true },
   { id: "open", label: "Pou trete", test: (o) => o.status === "pending" || o.status === "processing" },
   { id: "delivered", label: "Livré", test: (o) => o.status === "delivered" },
   { id: "refused", label: "Refusé", test: (o) => o.status === "refused" },
-  { id: "all", label: "Tout", test: () => true },
 ];
+const isOpen = ORDER_FILTERS[1].test;
+const OLDER_PAGE = 100;
 
 const SUPPLIER_STATUS = {
   sending: ["Ap voye bay FazerCards…", "text-violet-600 dark:text-violet-300"],
@@ -243,9 +246,10 @@ function DepositCard({ deposit, profile, onToast }) {
   );
 }
 
-function OrdersTab({ orders, profiles, supplierMap, loading, onToast }) {
-  const [filter, setFilter] = useState("open");
+function OrdersTab({ orders, older, onLoadOlder, filter, onFilter, profiles, supplierMap, loading, onToast }) {
   const [search, setSearch] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const q = normalize(search.trim());
   const test = ORDER_FILTERS.find((f) => f.id === filter).test;
   const list = orders.filter(test).filter((o) => {
@@ -253,7 +257,21 @@ function OrdersTab({ orders, profiles, supplierMap, loading, onToast }) {
     const p = profiles[o.user_id];
     return normalize(`${o.code} ${o.player_id} ${o.product_name} ${o.package_label} ${p?.email} ${p?.full_name} ${p?.wallet_code}`).includes(q);
   });
-  const options = ORDER_FILTERS.map((f) => ({ ...f, count: f.id === "open" ? orders.filter(f.test).length : 0 }));
+  const options = ORDER_FILTERS.map((f) => {
+    const n = orders.filter(f.test).length;
+    return f.id === "open" ? { ...f, count: n } : { ...f, tally: n };
+  });
+
+  const loadOlder = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await onLoadOlder();
+    } catch (err) {
+      setError(errorText(err));
+    }
+    setBusy(false);
+  };
 
   return (
     <div className="space-y-4">
@@ -261,14 +279,31 @@ function OrdersTab({ orders, profiles, supplierMap, loading, onToast }) {
         <Search className="h-5 w-5 shrink-0 text-slate-400" />
         <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Kòd, Player ID, imèl…" className="w-full bg-transparent focus:outline-none" />
       </label>
-      <Chips options={options} value={filter} onChange={setFilter} label="Filtè" />
+      <Chips options={options} value={filter} onChange={onFilter} label="Filtè" />
       <ul className="space-y-3">
         {list.map((o) => (
           <OrderCard key={`${o.id}-${o.status}-${o.updated_at}`} order={o} profile={profiles[o.user_id]} auto={Boolean(supplierMap[o.package_id]?.auto)} onToast={onToast} />
         ))}
       </ul>
       {!loading && list.length === 0 && <Empty>Pa gen kòmand isit la.</Empty>}
-      {filter !== "open" && <p className="px-1 text-xs text-slate-400">Lis la montre kòmand 31 dènye jou yo.</p>}
+      {!loading && filter !== "open" && (
+        older.done ? (
+          <p className="px-1 text-center text-xs text-slate-400">Se tout kòmand yo sa: {orders.length}.</p>
+        ) : (
+          <>
+            <ErrorNote>{error}</ErrorNote>
+            <button
+              type="button"
+              onClick={loadOlder}
+              disabled={busy}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3 font-semibold text-slate-700 ring-1 ring-slate-200 disabled:opacity-60 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800"
+            >
+              {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Clock className="h-5 w-5" />}
+              Wè kòmand ki pi ansyen yo
+            </button>
+          </>
+        )
+      )}
     </div>
   );
 }
@@ -283,13 +318,19 @@ export default function AdminPage({ account, onBack, onToast }) {
   const [supplierMap, setSupplierMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [epoch, setEpoch] = useState(0); // bouton 🔄: rekòmanse koute done yo
+  const [orderFilter, setOrderFilter] = useState("all");
+  // Kòmand ki pi ansyen pase 31 jou yo, chaje sou demann (yo pa an dirèk)
+  const [older, setOlder] = useState({ list: [], done: false });
+  const [historyFrom, setHistoryFrom] = useState(null);
 
   // Tout done yo an dirèk: nouvo kòmand ak depo parèt poukont yo
   useEffect(() => {
     setLoading(true);
+    setOlder({ list: [], done: false });
     return backend.subscribeAdmin({
-      onOrders: (list) => {
+      onOrders: (list, from) => {
         setOrders(list);
+        setHistoryFrom(from);
         setLoading(false);
       },
       onDeposits: setDeposits,
@@ -304,10 +345,28 @@ export default function AdminPage({ account, onBack, onToast }) {
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [tab]);
 
+  // Kòmand an dirèk yo genyen sou ansyen yo si se menm kòmand lan
+  const allOrders = useMemo(() => {
+    if (!older.list.length) return orders;
+    const live = new Set(orders.map((o) => o.id));
+    return [...orders, ...older.list.filter((o) => !live.has(o.id))];
+  }, [orders, older.list]);
+
+  const loadOlder = async () => {
+    const before = older.list.at(-1)?.created_at ?? historyFrom;
+    const page = await backend.adminOlderOrders(before, OLDER_PAGE);
+    setOlder((prev) => ({ list: [...prev.list, ...page], done: page.length < OLDER_PAGE }));
+  };
+
+  const go = (target, filter) => {
+    if (filter) setOrderFilter(filter);
+    setTab(target);
+  };
+
   const me = account.profile;
   const owner = isOwner(me);
   const badges = {
-    orders: orders.filter(ORDER_FILTERS[0].test).length,
+    orders: orders.filter(isOpen).length,
     deposits: deposits.filter((d) => d.status === "pending").length,
   };
   const sortedDeposits = [...deposits].sort((a, b) => (a.status === "pending") === (b.status === "pending") ? 0 : a.status === "pending" ? -1 : 1);
@@ -353,8 +412,13 @@ export default function AdminPage({ account, onBack, onToast }) {
         })}
       </nav>
 
-      {tab === "dashboard" && <AdminDashboard orders={orders} deposits={deposits} profiles={profiles} visits={visits} onGo={setTab} />}
-      {tab === "orders" && <OrdersTab orders={orders} profiles={profiles} supplierMap={supplierMap} loading={loading} onToast={onToast} />}
+      {tab === "dashboard" && <AdminDashboard orders={orders} deposits={deposits} profiles={profiles} visits={visits} onGo={go} />}
+      {tab === "orders" && (
+        <OrdersTab
+          orders={allOrders} older={older} onLoadOlder={loadOlder} filter={orderFilter} onFilter={setOrderFilter}
+          profiles={profiles} supplierMap={supplierMap} loading={loading} onToast={onToast}
+        />
+      )}
       {tab === "deposits" && (
         <>
           <ul className="space-y-3">
@@ -365,7 +429,7 @@ export default function AdminPage({ account, onBack, onToast }) {
           {!loading && deposits.length === 0 && <Empty>Pa gen depo ankò.</Empty>}
         </>
       )}
-      {tab === "customers" && <AdminCustomers profiles={profiles} orders={orders} deposits={deposits} onToast={onToast} />}
+      {tab === "customers" && <AdminCustomers profiles={profiles} orders={allOrders} deposits={deposits} onToast={onToast} />}
       {tab === "catalog" && <AdminCatalog account={account} onToast={onToast} />}
       {tab === "messages" && <AdminMessages profiles={profiles} announcements={announcements} onToast={onToast} />}
       {tab === "team" && <AdminTeam me={me} profiles={profiles} onToast={onToast} />}
