@@ -25,6 +25,18 @@ function randomCode(length) {
 
 const formatHtg = (n) => `${new Intl.NumberFormat("fr-FR").format(n)} HTG`;
 
+// Sou yon rezo fèb (4G), premye demann koneksyon an ka echwe: nou eseye yon dezyèm fwa
+// anvan nou di kliyan an pa gen entènèt
+async function retryOnNetwork(run) {
+  try {
+    return await run();
+  } catch (error) {
+    if (error?.code !== "auth/network-request-failed") throw error;
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    return run();
+  }
+}
+
 // Non ki parèt bay lòt kliyan lè yo voye kòb (non an, oswa debi imèl la)
 function publicName(fullName, email) {
   return (fullName || "").trim().slice(0, 60) || `${(email || "").split("@")[0].slice(0, 2)}***`;
@@ -115,7 +127,7 @@ export function createBackend(config, options = {}) {
       });
     },
 
-    signIn: (email, password) => signInWithEmailAndPassword(auth, email.trim(), password),
+    signIn: (email, password) => retryOnNetwork(() => signInWithEmailAndPassword(auth, email.trim(), password)),
 
     async signUp(name, email, password) {
       signupInFlight = (async () => {
