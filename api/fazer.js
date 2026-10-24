@@ -7,7 +7,13 @@
 //   retry          voye yon kòmand ankò apre yon erè (orderId)
 import { bot, callerId, fail, fazer, fazerError, fulfill, json, resetBotOnDenied } from "./_lib/autotopup.js";
 
-const SITE_URL = process.env.SITE_URL || "https://www.awenstopup.com";
+// Adrès webhook la: menm domèn admin lan itilize a (domèn sa a sèvi sit la, li pa redirije),
+// pou FazerCards pa tonbe sou yon redireksyon ant awenstopup.com ak www.awenstopup.com
+function siteOrigin(request) {
+  if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/+$/, "");
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  return host ? `https://${host.split(",")[0].trim()}` : "https://www.awenstopup.com";
+}
 
 async function status() {
   const fz = fazer();
@@ -51,7 +57,7 @@ export async function POST(request) {
       case "status":
         return json({ ok: true, ...(await status()) });
       case "setup-webhook": {
-        const url = `${SITE_URL.replace(/\/+$/, "")}/api/fazer-webhook`;
+        const url = `${siteOrigin(request)}/api/fazer-webhook`;
         await fazer().webhooks.set({ url, enabled: true });
         const test = await fazer().webhooks.test();
         return json({ ok: true, url, test });
