@@ -161,12 +161,15 @@ export function createBackend(config, options = {}) {
       let products = [];
       let hidden = [];
       let exchange = {};
-      // Nou voye katalòg la sèlman lè 3 pati yo rive (pou yon pwodwi kache pa parèt yon ti moman),
+      let payments = null;
+      let images = {};
+      // Nou voye katalòg la sèlman lè tout pati yo rive (pou yon pwodwi kache pa parèt yon ti moman),
       // epi `ready` di to yo fin chaje (pou paj Finans yo pa di "pa disponib" pandan chajman an)
+      const PARTS = 5;
       const arrived = new Set();
       const emit = (part) => {
         arrived.add(part);
-        if (arrived.size === 3) callback({ products, hidden, exchange, ready: true });
+        if (arrived.size === PARTS) callback({ products, hidden, exchange, payments, images, ready: true });
       };
       const failed = (part) => (error) => {
         console.error(part, error);
@@ -185,6 +188,16 @@ export function createBackend(config, options = {}) {
           exchange = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()]));
           emit("exchange");
         }, failed("exchange")),
+        // Nimewo MonCash/NatCash pou peye (Panneau admin → Paramèt)
+        onSnapshot(doc(db, "settings", "payments"), (snap) => {
+          payments = snap.data() || null;
+          emit("payments");
+        }, failed("payments")),
+        // Foto admin nan mete sou pwodwi sit la
+        onSnapshot(collection(db, "productImages"), (snap) => {
+          images = Object.fromEntries(snap.docs.map((d) => [d.id, d.data().image]));
+          emit("images");
+        }, failed("images")),
       ];
       return () => stops.forEach((stop) => stop());
     },
@@ -689,6 +702,25 @@ export function createBackend(config, options = {}) {
 
     // Pwodwi ki pa parèt sou sit la (ni sa ki nan data.js, ni sa admin nan kreye)
     adminSetHidden: (hidden) => setDoc(doc(db, "settings", "catalog"), { hidden: [...new Set(hidden)] }),
+
+    // Nimewo pou kliyan yo voye kòb la (pwopriyetè a sèlman)
+    async adminSetPayments(accounts) {
+      const clean = {};
+      for (const id of ["moncash", "natcash"]) {
+        const number = String(accounts?.[id]?.number || "").replace(/\D/g, "");
+        const name = String(accounts?.[id]?.name || "").trim().slice(0, 60);
+        if (number && (number.length < 8 || number.length > 15)) throw new UserError(`Nimewo ${METHOD_NAMES[id]} lan dwe gen omwen 8 chif (egz: 43699262).`);
+        clean[id] = { number, name };
+      }
+      await setDoc(doc(db, "settings", "payments"), clean);
+    },
+
+    // Foto yon pwodwi (data: yon ti imaj kare), oswa null pou retounen sou foto pa defo a
+    async adminSetProductImage(productId, image) {
+      if (!image) return deleteDoc(doc(db, "productImages", productId));
+      if (image.length > 120000) throw new UserError("Foto a twò lou. Chwazi yon lòt.");
+      await setDoc(doc(db, "productImages", productId), { image });
+    },
 
     /* ---------- Mesaj ---------- */
     async adminSendMessage(uid, title, body) {

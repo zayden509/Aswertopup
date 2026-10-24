@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { backend } from "./backend.js";
+import { setPaymentSettings } from "./payments.js";
 
 // Dènye fwa vizitè a te louvri notifikasyon yo: mesaj pou tout moun ki pi nouvo yo "pa li"
 const SEEN_KEY = "aswer-announcements-seen";
@@ -27,6 +28,7 @@ function saveShop(part) {
   } catch {}
 }
 const savedShop = loadShop();
+setPaymentSettings(savedShop.payments);
 
 const asNotification = (a, seen) => ({
   ...a,
@@ -47,7 +49,7 @@ export function useAccount(onNotification) {
   const [notifications, setNotifications] = useState([]);
   const [prices, setPrices] = useState(() => savedShop.prices || {});
   // `ready` rete false jiskaske sèvè a reponn: to konvèsyon yo pa janm soti nan memwa a
-  const [catalog, setCatalog] = useState(() => ({ products: [], hidden: [], exchange: {}, ...savedShop.catalog, ready: false }));
+  const [catalog, setCatalog] = useState(() => ({ products: [], hidden: [], exchange: {}, images: {}, ...savedShop.catalog, ready: false }));
   const [announcements, setAnnouncements] = useState([]);
   const [seen, setSeen] = useState(loadSeen);
   const [epoch, setEpoch] = useState(0); // chanje l pou rekòmanse koute done yo (bouton 🔄)
@@ -63,7 +65,8 @@ export function useAccount(onNotification) {
   }), []);
   useEffect(() => backend?.subscribeCatalog((next) => {
     setCatalog(next);
-    saveShop({ catalog: { products: next.products, hidden: next.hidden } });
+    setPaymentSettings(next.payments);
+    saveShop({ catalog: { products: next.products, hidden: next.hidden, images: next.images }, payments: next.payments });
   }), []);
   useEffect(() => backend?.subscribeAnnouncements((list, added) => {
     setAnnouncements(list);

@@ -256,12 +256,33 @@ service cloud.firestore {
         && request.resource.data.auto is bool;
     }
 
-    // Pwodwi sit la ki kache (yon sèl dokiman: settings/catalog)
+    // settings/catalog: pwodwi sit la ki kache yo.
+    // settings/payments: nimewo MonCash/NatCash kliyan yo voye kòb la (pwopriyetè a sèlman).
     match /settings/{id} {
       allow read: if true;
-      allow write: if isAdmin() && id == 'catalog'
-        && request.resource.data.keys().hasOnly(['hidden'])
-        && request.resource.data.hidden is list && request.resource.data.hidden.size() <= 300;
+      allow write: if (isAdmin() && id == 'catalog'
+          && request.resource.data.keys().hasOnly(['hidden'])
+          && request.resource.data.hidden is list && request.resource.data.hidden.size() <= 300)
+        || (isOwner() && id == 'payments'
+          && request.resource.data.keys().hasOnly(['moncash', 'natcash'])
+          && validPayAccount(request.resource.data.get('moncash', null))
+          && validPayAccount(request.resource.data.get('natcash', null)));
+    }
+
+    function validPayAccount(a) {
+      return a == null || (a is map && a.keys().hasOnly(['number', 'name'])
+        && a.number is string && a.number.matches('^([0-9]{8,15})?$')
+        && a.name is string && a.name.size() <= 60);
+    }
+
+    // Foto pou pwodwi ki nan sit la deja (pa egzanp STARLINK): admin nan ka chanje l
+    match /productImages/{id} {
+      allow read: if true;
+      allow delete: if isAdmin();
+      allow create, update: if isAdmin() && id.size() <= 60
+        && request.resource.data.keys().hasOnly(['image'])
+        && request.resource.data.image is string && request.resource.data.image.size() <= 120000
+        && request.resource.data.image.matches('^data:image/(webp|jpeg|png);base64,[A-Za-z0-9+/=]+$');
     }
 
     // ---------- Mesaj pou tout kliyan yo ----------

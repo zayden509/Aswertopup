@@ -1,6 +1,5 @@
 import {
-  Flame, Satellite, Target, Shield, Music, Play, Coins,
-  PlayCircle, CreditCard, MessageCircle, CalendarDays, CalendarRange, Ticket, TrendingUp, CircleDollarSign,
+  Flame, PlayCircle, CreditCard, MessageCircle, CalendarDays, CalendarRange, Ticket, TrendingUp,
 } from "lucide-react";
 import { DEFAULT_TIERS } from "./exchange.js";
 import freeFireImg from "./img/free-fire.jpg";
@@ -23,6 +22,13 @@ import cashAppImg from "./img/cash-app.jpg";
 import binanceImg from "./img/binance.jpg";
 import wiseImg from "./img/wise.jpg";
 import meruImg from "./img/meru.jpg";
+import starlinkImg from "./img/starlink.jpg";
+import codmImg from "./img/codm.jpg";
+import mlbbImg from "./img/mlbb.jpg";
+import spotifyImg from "./img/spotify.jpg";
+import googlePlayImg from "./img/google-play.jpg";
+import tiktokImg from "./img/tiktok.jpg";
+import paypalImg from "./img/paypal.jpg";
 import moncashImg from "./img/moncash.jpg";
 import natcashImg from "./img/natcash.jpg";
 import bannerTutoriel from "./img/banners/tutoriel.jpg";
@@ -46,8 +52,8 @@ export const RANKS = [
 // `number` se nimewo kote kliyan yo voye kòb la. Si l vid, sit la di kliyan an
 // mande nimewo a sou WhatsApp.
 export const PAYMENT_METHODS = [
-  { id: "moncash", name: "MonCash", logo: moncashImg, number: "", recommended: true, note: "Peye ak kont MonCash ou" },
-  { id: "natcash", name: "NatCash", logo: natcashImg, number: "", note: "Peye ak kont NatCash ou" },
+  { id: "moncash", name: "MonCash", logo: moncashImg, number: "", holder: "", recommended: true, note: "Peye ak kont MonCash ou" },
+  { id: "natcash", name: "NatCash", logo: natcashImg, number: "43699262", holder: "Awens Kelly Alexandre", note: "Peye ak kont NatCash ou" },
 ];
 
 /* ============ PWODWI ============ */
@@ -126,17 +132,17 @@ export const PRODUCTS = [
     playerIdHelp: FREE_FIRE_ID_HELP,
     groups: [FREE_FIRE_ABONNEMENT],
   },
-  { id: "starlink", name: "STARLINK", category: "Abònman", tagline: "Abonnement", isNew: true, Icon: Satellite, gradient: "from-slate-800 via-indigo-950 to-black" },
+  { id: "starlink", name: "STARLINK", category: "Abònman", tagline: "Abonnement", isNew: true, image: starlinkImg },
   { id: "pubg", name: "PUBG Mobile", category: "Jwèt", image: pubgImg },
-  { id: "codm", name: "Call of Duty Mobile", category: "Jwèt", Icon: Target, gradient: "from-zinc-600 via-zinc-800 to-black" },
+  { id: "codm", name: "Call of Duty Mobile", category: "Jwèt", image: codmImg },
   { id: "blood-strike", name: "Blood Strike", category: "Jwèt", image: bloodStrikeImg },
-  { id: "mlbb", name: "Mobile Legends", category: "Jwèt", Icon: Shield, gradient: "from-sky-500 via-indigo-600 to-violet-800" },
+  { id: "mlbb", name: "Mobile Legends", category: "Jwèt", image: mlbbImg },
   { id: "roblox", name: "Roblox", category: "Jwèt", image: robloxImg },
   { id: "netflix", name: "Netflix", category: "Abònman", image: netflixImg, bg: "#000000" },
-  { id: "spotify", name: "Spotify", category: "Abònman", Icon: Music, gradient: "from-green-400 via-emerald-600 to-slate-900" },
-  { id: "google-play", name: "Google Play", category: "Gift Card", Icon: Play, gradient: "from-emerald-400 via-sky-500 to-indigo-600" },
+  { id: "spotify", name: "Spotify", category: "Abònman", image: spotifyImg },
+  { id: "google-play", name: "Google Play", category: "Gift Card", image: googlePlayImg },
   { id: "app-store", name: "App Store & iTunes", category: "Gift Card", image: appStoreImg, bg: "#ffffff" },
-  { id: "tiktok", name: "TikTok Coins", category: "Gift Card", tagline: "Coins", Icon: Coins, gradient: "from-cyan-400 via-slate-900 to-pink-500" },
+  { id: "tiktok", name: "TikTok Coins", category: "Gift Card", tagline: "Coins", image: tiktokImg },
   { id: "efootball", name: "eFootball", category: "Jwèt", image: efootballImg },
   { id: "fc-mobile", name: "EA FC Mobile", category: "Jwèt", image: fcMobileImg },
   { id: "dls", name: "Dream League Soccer", category: "Jwèt", image: dlsImg },
@@ -153,7 +159,7 @@ export const PRODUCTS = [
   },
   {
     id: "paypal", name: "PayPal", category: "Finans", tagline: "Transfert", isNew: true,
-    Icon: CircleDollarSign, gradient: "from-[#003087] via-[#0070e0] to-[#00a2ff]",
+    image: paypalImg,
     exchange: exchangeConfig("USD", { label: "Imèl kont PayPal ou", placeholder: "ou@gmail.com" }),
   },
   {

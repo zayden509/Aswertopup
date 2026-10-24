@@ -54,7 +54,10 @@ kontinye mache.
 - **Kliyan**: tout kont ki anrejistre yo, solde yo, sa yo depanse, kòmand yo. Ou ka ekri
   yon kliyan dirèkteman: mesaj la parèt nan 🔔 li.
 - **Pwodwi**: kreye yon pwodwi (non, foto, kategori), ajoute pake ak pri, kache oswa remete
-  nenpòt pwodwi, efase pwodwi ou te kreye yo.
+  nenpòt pwodwi, efase pwodwi ou te kreye yo. Louvri nenpòt pwodwi sit la epi peze
+  **Chanje foto a** pou mete pwòp foto pa w (**Foto orijinal la** remete sa ki te la).
+  Yon pake dyaman ki rele `520 + BONUS 52` nan seksyon **Diamants** parèt ansanm ak lòt
+  kat dyaman yo, nan lòd pri.
 - **Pwodwi Finans** (Meru, PayPal, Cash App, Binance Pay, Wise): yo mache ak yon konvèsyon.
   Kliyan an mete konbyen li vle resevwa (oswa konbyen li vle peye), sit la ajoute frè palye a
   epi miltipliye pa to du jou a. Nan **Pwodwi → Finans**, louvri chak pwodwi, mete to a
@@ -65,6 +68,8 @@ kontinye mache.
 - **Ekip**: ajoute yon admin ak imèl li (li dwe gen yon kont sou sit la deja), oswa retire l.
   Se sèlman **pwopriyetè** a (admin ou te mete alamen nan Firebase la) ki ka fè sa.
   Lòt admin yo ka fè tout rès bagay yo.
+- **Paramèt**: nimewo MonCash ak NatCash kliyan yo voye kòb la, ak non ki sou kont lan.
+  Se pwopriyetè a sèlman ki ka chanje yo.
 
 ## Kijan sa mache
 - **Déposer**: kliyan an voye kòb sou MonCash/NatCash ou, epi li mete montan an ak ID

@@ -434,47 +434,51 @@ export default function App() {
     if (!account.enabled) setStaticUnread(0);
   };
   const currentTab = TABS.find((t) => t.id === tab);
+  // Panneau admin lan gen pwòp ba anlè pa l: meni sit la (anlè ak anba) pa parèt
+  const adminView = !product && tab === "admin" && Boolean(account.profile?.is_admin);
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-white">
       {/* Pa gen flou (backdrop-blur) sou ba ki rete fiks yo: sa fè paj la woule pi lis sou telefòn */}
-      <header className="sticky top-0 z-30 bg-slate-100/95 dark:bg-slate-950/95">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-3 py-3">
-          <div className="flex min-w-0 items-center gap-1">
-            <IconButton label="Meni" onClick={() => setMenuOpen(true)}>
-              <Menu className="h-6 w-6" />
-            </IconButton>
-            <button type="button" onClick={() => goToTab("home")} className="flex min-w-0 items-center gap-2" aria-label="Awens Topup, lakay">
-              <Logo className="h-10 w-10 shrink-0 drop-shadow" />
-              <span className="flex items-baseline gap-1.5 leading-none">
-                <span className="text-[26px] font-black tracking-tight">AWENS</span>
-                <span className="text-[12px] font-extrabold tracking-[.2em] text-sky-500">TOPUP</span>
-              </span>
-            </button>
-          </div>
-          <div className="flex shrink-0 items-center">
-            <IconButton label="Notifikasyon" onClick={openNotifications}>
-              <Bell className="h-6 w-6" />
-              {unread > 0 && (
-                <span className="absolute right-0.5 top-0.5 min-w-[22px] rounded-full bg-red-500 px-1.5 text-center text-[11px] font-bold leading-5 text-white ring-2 ring-slate-100 dark:ring-slate-950">
-                  {unread > 9 ? "9+" : unread}
-                </span>
-              )}
-            </IconButton>
-            {account.profile ? (
-              <button type="button" onClick={() => goToTab("settings")} aria-label="Mon profil" className="ml-1 rounded-full transition active:scale-95">
-                <UserAvatar profile={account.profile} photo={account.photo} className="h-10 w-10 text-sm ring-2 ring-white dark:ring-slate-800" />
-              </button>
-            ) : (
-              <IconButton label="Profil" onClick={() => goToTab("settings")}>
-                <UserRound className="h-6 w-6" />
+      {!adminView && (
+        <header className="sticky top-0 z-30 bg-slate-100/95 dark:bg-slate-950/95">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-3 py-3">
+            <div className="flex min-w-0 items-center gap-1">
+              <IconButton label="Meni" onClick={() => setMenuOpen(true)}>
+                <Menu className="h-6 w-6" />
               </IconButton>
-            )}
+              <button type="button" onClick={() => goToTab("home")} className="flex min-w-0 items-center gap-2" aria-label="Awens Topup, lakay">
+                <Logo className="h-10 w-10 shrink-0 drop-shadow" />
+                <span className="flex items-baseline gap-1.5 leading-none">
+                  <span className="text-[26px] font-black tracking-tight">AWENS</span>
+                  <span className="text-[12px] font-extrabold tracking-[.2em] text-sky-500">TOPUP</span>
+                </span>
+              </button>
+            </div>
+            <div className="flex shrink-0 items-center">
+              <IconButton label="Notifikasyon" onClick={openNotifications}>
+                <Bell className="h-6 w-6" />
+                {unread > 0 && (
+                  <span className="absolute right-0.5 top-0.5 min-w-[22px] rounded-full bg-red-500 px-1.5 text-center text-[11px] font-bold leading-5 text-white ring-2 ring-slate-100 dark:ring-slate-950">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
+                )}
+              </IconButton>
+              {account.profile ? (
+                <button type="button" onClick={() => goToTab("settings")} aria-label="Mon profil" className="ml-1 rounded-full transition active:scale-95">
+                  <UserAvatar profile={account.profile} photo={account.photo} className="h-10 w-10 text-sm ring-2 ring-white dark:ring-slate-800" />
+                </button>
+              ) : (
+                <IconButton label="Profil" onClick={() => goToTab("settings")}>
+                  <UserRound className="h-6 w-6" />
+                </IconButton>
+              )}
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
-      <main className="mx-auto max-w-3xl px-4 pb-36 pt-2">
+      <main className={`mx-auto max-w-3xl px-4 pt-2 ${adminView ? "pb-16" : "pb-36"}`}>
         <Suspense fallback={pageSpinner}>
         {product?.exchange && (
           <ExchangePage
@@ -583,13 +587,13 @@ export default function App() {
             onTutorial={openTutorial}
           />
         )}
-        {!product && tab === "admin" && account.profile?.is_admin && (
-          <AdminPage account={account} onBack={() => setTab("settings")} onToast={setToast} />
+        {adminView && (
+          <AdminPage account={account} catalog={catalog} onBack={() => setTab("settings")} onToast={setToast} />
         )}
         </Suspense>
       </main>
 
-      {!product && (
+      {!product && !adminView && (
         <>
           {/* Bouton WhatsApp la pa kouvri Pwofil la (li gen pwòp bouton Sipò) ni Panneau admin lan */}
           {tab !== "admin" && tab !== "settings" && (

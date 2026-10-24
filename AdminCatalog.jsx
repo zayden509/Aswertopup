@@ -1,10 +1,10 @@
 import React, { useMemo, useRef, useState } from "react";
-import { Search, Plus, Loader2, PackagePlus, Trash2, Pencil, ImagePlus, X, EyeOff, Eye, ChevronRight } from "lucide-react";
+import { Search, Plus, Loader2, PackagePlus, Trash2, Pencil, ImagePlus, X, EyeOff, Eye, ChevronRight, Camera, RotateCcw } from "lucide-react";
 import { PRODUCTS, CATEGORIES } from "./data.js";
 import { backend, errorText } from "./backend.js";
 import { allProducts } from "./catalog.js";
 import { Sheet, ProductArt, ErrorNote, formatPrice, minPrice, packageName } from "./ui.jsx";
-import { Chips, Empty, Field, Toggle, inputClass, normalize } from "./adminUi.jsx";
+import { Chips, Empty, Field, Toggle, AdminButton, panel, inputClass, normalize } from "./adminUi.jsx";
 import { squarePhoto } from "./image.js";
 import { quote } from "./exchange.js";
 
@@ -125,7 +125,7 @@ function AddPackageForm({ product, groups, nextSort, onToast }) {
       <h3 className="flex items-center gap-2 font-bold text-slate-900 dark:text-white"><PackagePlus className="h-5 w-5 text-sky-500" /> Ajoute yon pake</h3>
       <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
         <Field label="Non pake a">
-          <input value={label} onChange={(e) => setLabel(e.target.value)} maxLength={60} placeholder="Egzanp: 1 mwa, 500 dyaman" className={inputClass} />
+          <input value={label} onChange={(e) => setLabel(e.target.value)} maxLength={60} placeholder="Egzanp: 520 + BONUS 52, 1 mwa" className={inputClass} />
         </Field>
         <Field label="Pri (HTG)">
           <input type="number" inputMode="numeric" min="1" step="1" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="500" className={inputClass} />
@@ -353,11 +353,51 @@ function ExchangeEditor({ product, live, onToast }) {
   );
 }
 
-function ProductSheet({ product, prices, exchange, hidden, nextSort, onEdit, onClose, onToast }) {
+// Chanje foto yon pwodwi sit la (pa egzanp STARLINK), oswa remete foto orijinal la
+function PhotoControls({ product, changed, onToast }) {
+  const input = useRef(null);
+  const [busy, setBusy] = useState(false);
+
+  const save = async (image) => {
+    setBusy(true);
+    try {
+      await backend.adminSetProductImage(product.id, image);
+      onToast(image ? "Nouvo foto a sou sit la." : "Foto orijinal la remete.");
+    } catch (error) {
+      onToast(errorText(error));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const pick = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      await save(await squarePhoto(file, 384));
+    } catch (error) {
+      onToast(errorText(error));
+    }
+  };
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <input ref={input} type="file" accept="image/*" onChange={pick} className="hidden" aria-label="Chwazi yon foto" />
+      <AdminButton icon={Camera} busy={busy} disabled={busy} onClick={() => input.current?.click()}>
+        {changed || product.image ? "Chanje foto a" : "Mete yon foto"}
+      </AdminButton>
+      {changed && <AdminButton icon={RotateCcw} disabled={busy} onClick={() => save(null)}>Foto orijinal la</AdminButton>}
+    </div>
+  );
+}
+
+function ProductSheet({ product, prices, exchange, hidden, images, nextSort, onEdit, onClose, onToast }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const builtInIds = (PRODUCTS.find((p) => p.id === product.id)?.groups || []).flatMap((g) => g.items.map((i) => i.id));
-  const added = (product.groups || []).filter((g) => g.style === "offer").flatMap((g) => g.items.map((i) => i.id));
+  // Pake admin nan ajoute sou pwodwi a (yo ka nan seksyon "Diamants" la tou)
+  const added = Object.values(prices).filter((p) => p.product_id === product.id).map((p) => p.id);
   const groupTitles = [...new Set((product.groups || []).map((g) => g.title))];
   const notInDb = builtInIds.filter((id) => !prices[id]);
 
@@ -392,6 +432,7 @@ function ProductSheet({ product, prices, exchange, hidden, nextSort, onEdit, onC
             <Toggle on={!product.hidden} onChange={setVisible} label={product.hidden ? "Kache sou sit la" : "Vizib sou sit la"} />
           </div>
         </div>
+        {!product.custom && <PhotoControls product={product} changed={Boolean(images?.[product.id])} onToast={onToast} />}
         {product.custom && (
           <button type="button" onClick={onEdit} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-2.5 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
             <Pencil className="h-4 w-4" /> Modifye non, foto, kategori
@@ -513,20 +554,19 @@ export default function AdminCatalog({ account, onToast }) {
         </p>
       )}
 
-      <button type="button" onClick={() => setForm({})} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3.5 font-bold text-white shadow-lg shadow-sky-500/25 hover:bg-sky-600">
-        <Plus className="h-5 w-5" /> Nouvo pwodwi
-      </button>
-
-      <label className="flex items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 focus-within:border-sky-400 dark:border-slate-800 dark:bg-slate-900">
-        <Search className="h-5 w-5 shrink-0 text-slate-400" />
-        <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Chèche yon pwodwi" className="w-full bg-transparent focus:outline-none" />
-      </label>
+      <div className="flex gap-2">
+        <label className="flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-xl bg-white px-3.5 ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-sky-500/40 dark:bg-slate-900 dark:ring-slate-800">
+          <Search className="h-[18px] w-[18px] shrink-0 text-slate-400" />
+          <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Chèche yon pwodwi" className="w-full bg-transparent text-[15px] focus:outline-none" />
+        </label>
+        <AdminButton tone="primary" icon={Plus} onClick={() => setForm({})} className="h-11 shrink-0 rounded-xl">Nouvo pwodwi</AdminButton>
+      </div>
       <Chips options={FILTERS} value={filter} onChange={setFilter} label="Kategori" />
 
       {list.length === 0 ? (
         <Empty>{filter === "hidden" ? "Pa gen pwodwi ki kache." : "Pa gen pwodwi ki koresponn."}</Empty>
       ) : (
-        <ul className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+        <ul className={`${panel} overflow-hidden`}>
           {list.map((p) => {
             const count = (p.groups || []).reduce((n, g) => n + g.items.filter((i) => prices[i.id]?.available).length, 0);
             const from = minPrice(p, prices);
@@ -557,13 +597,13 @@ export default function AdminCatalog({ account, onToast }) {
       <p className="flex items-center gap-1.5 px-1 text-xs text-slate-400"><Eye className="h-3.5 w-3.5" /> Yon pwodwi kache pa parèt sou sit la, men ou ka remete l nenpòt lè.</p>
 
       {open && !form && (
-        <ProductSheet product={open} prices={prices} exchange={exchange} hidden={hidden} nextSort={nextSort} onEdit={() => setForm({ product: open })} onClose={() => setOpenId(null)} onToast={onToast} />
+        <ProductSheet product={open} prices={prices} exchange={exchange} hidden={hidden} images={account.catalog.images} nextSort={nextSort} onEdit={() => setForm({ product: open })} onClose={() => setOpenId(null)} onToast={onToast} />
       )}
       {form && (
         <ProductForm
           product={form.product}
           nextSort={nextProductSort}
-          packageIds={(form.product?.groups || []).filter((g) => g.style === "offer").flatMap((g) => g.items.map((i) => i.id))}
+          packageIds={Object.values(prices).filter((p) => form.product && p.product_id === form.product.id).map((p) => p.id)}
           onClose={() => setForm(null)}
           onSaved={(id) => { setForm(null); setOpenId(id); }}
           onToast={onToast}

@@ -29,6 +29,7 @@ swiv gid [`firebase/README.md`](firebase/README.md) (Firebase, plan gratis la).
 - `AdminPage.jsx` ak `Admin*.jsx`, `adminUi.jsx`: Panneau admin nan (estatistik, kòmand, depo,
   kliyan, pwodwi, mesaj, ekip). Li chaje sèlman pou admin yo.
 - `catalog.js`: mete pwodwi ki nan `data.js` ansanm ak sa admin nan kreye yo.
+- `payments.js`: nimewo MonCash/NatCash an dirèk (pwopriyetè a chanje yo nan Panneau admin → Paramèt).
 - `ExchangePage.jsx`, `exchange.js`: paj konvèsyon pwodwi Finans yo (to du jou, frè pa palye).
   Kalkil la menm jan nan `firebase/firestore.rules`.
 - `days.js`: jou yo ak lè Ayiti, pou estatistik yo.
@@ -38,7 +39,7 @@ swiv gid [`firebase/README.md`](firebase/README.md) (Firebase, plan gratis la).
   (Firebase chaje sèlman si `config.js` gen kle yo).
 - `firebase/firestore.rules`: règ sekirite ki pwoteje kòb kliyan yo.
 - `api/`: fonksyon sèvè Vercel pou livrezon otomatik FazerCards (gade `firebase/README.md`).
-  `AdminAuto.jsx` se onglet **Otomatik** la nan Panneau admin.
+  `AdminAuto.jsx` se onglet **Otomatik** la nan Panneau admin, `AdminSettings.jsx` se onglet **Paramèt** la.
 - `config.js`: nimewo WhatsApp, videyo tutoriel ak kle Firebase yo.
 - `ui.jsx`, `orders.js`: pyès ak fonksyon tout paj yo pataje.
 - `img/`: foto pwodwi yo ak logo peman yo.

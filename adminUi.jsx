@@ -1,22 +1,28 @@
 import React from "react";
-import { Copy } from "lucide-react";
+import { Copy, Loader2 } from "lucide-react";
 import { copyText } from "./ui.jsx";
 import { UserAvatar } from "./ProfileWallet.jsx";
 
 // Ti moso ki sèvi nan tout onglet Panneau admin lan
 
 export const inputClass =
-  "w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-white";
+  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white";
 
 export const compact = new Intl.NumberFormat("fr-FR", { notation: "compact", maximumFractionDigits: 1 });
 export const number = new Intl.NumberFormat("fr-FR");
 
-export function Card({ title, action, children, className = "" }) {
+// Fon kat Panneau admin lan (menm stil toupatou)
+export const panel = "rounded-2xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80 dark:bg-slate-900 dark:shadow-none dark:ring-slate-800";
+
+export function Card({ title, subtitle, action, children, className = "" }) {
   return (
-    <section className={`rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 ${className}`}>
+    <section className={`${panel} p-4 sm:p-5 ${className}`}>
       {(title || action) && (
-        <div className="mb-3 flex items-center justify-between gap-3">
-          {title && <h2 className="font-bold text-slate-900 dark:text-white">{title}</h2>}
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            {title && <h2 className="font-semibold text-slate-900 dark:text-white">{title}</h2>}
+            {subtitle && <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>}
+          </div>
           {action}
         </div>
       )}
@@ -25,10 +31,48 @@ export function Card({ title, action, children, className = "" }) {
   );
 }
 
+// Tit chak seksyon Panneau admin lan
+export function SectionHead({ title, sub, children }) {
+  return (
+    <div className="flex items-end justify-between gap-3">
+      <div className="min-w-0">
+        <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{title}</h2>
+        {sub && <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{sub}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// Yon valè ou ka kopye (kòd kòmand, Player ID, tranzaksyon…)
+export function CopyText({ value, onToast, className = "" }) {
+  return (
+    <button type="button" onClick={() => copyText(value, onToast)} className={`inline-flex max-w-full items-center gap-1.5 font-mono text-sm font-medium tabular-nums text-slate-800 hover:text-sky-600 dark:text-slate-100 dark:hover:text-sky-300 ${className}`}>
+      <span className="truncate">{value}</span> <Copy className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+    </button>
+  );
+}
+
+// Bouton Panneau admin lan: `tone` = primary | success | danger | ghost
+const BUTTON_TONES = {
+  primary: "bg-sky-600 text-white hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-400",
+  success: "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400",
+  danger: "bg-white text-red-600 ring-1 ring-red-200 hover:bg-red-50 dark:bg-transparent dark:text-red-300 dark:ring-red-500/30 dark:hover:bg-red-500/10",
+  ghost: "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700 dark:hover:bg-slate-800",
+};
+export function AdminButton({ tone = "ghost", icon: Icon, busy, children, className = "", ...props }) {
+  return (
+    <button type="button" className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition disabled:opacity-60 ${BUTTON_TONES[tone]} ${className}`} {...props}>
+      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : Icon && <Icon className="h-4 w-4" />}
+      {children}
+    </button>
+  );
+}
+
 export function Field({ label, hint, children }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
       {children}
       {hint && <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">{hint}</span>}
     </label>
@@ -57,8 +101,8 @@ export function Chips({ options, value, onChange, label }) {
           role="radio"
           aria-checked={o.id === value}
           onClick={() => onChange(o.id)}
-          className={`flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition ${
-            o.id === value ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900" : "bg-white text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800"
+          className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium transition ${
+            o.id === value ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-800"
           }`}
         >
           {o.label}
@@ -92,7 +136,7 @@ export function CopyChip({ label, value, onToast }) {
 }
 
 export function Empty({ children }) {
-  return <p className="rounded-2xl bg-white p-6 text-center text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800">{children}</p>;
+  return <p className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">{children}</p>;
 }
 
 // Rechèch san aksan ak san majiskil

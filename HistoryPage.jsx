@@ -3,6 +3,7 @@ import { History, ShoppingCart, Clock, KeyRound, Search, Copy, Hash, CalendarDay
 import { PRODUCTS, PAYMENT_METHODS } from "./data.js";
 import { Sheet, ProductArt, WhatsAppIcon, StatusChip, waLink, formatPrice, formatDate, formatDateTime, copyText, orderStatus } from "./ui.jsx";
 import { orderMessage } from "./orders.js";
+import { productForPackage } from "./catalog.js";
 import { LoginPrompt } from "./WalletPage.jsx";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -16,10 +17,6 @@ const FILTERS = [
 ];
 
 // Konvèsyon yo (Meru…) sèvi ak id pwodwi a kòm package_id
-function productForPackage(packageId, catalog) {
-  return catalog.find((p) => p.id === packageId || p.groups?.some((g) => g.items.some((i) => i.id === packageId)));
-}
-
 function EmptyState({ title, text, onShop }) {
   return (
     <div className="rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">

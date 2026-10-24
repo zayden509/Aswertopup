@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Plus, Send, ChevronRight, ChevronLeft, BookOpen, Copy, CheckCircle2, Loader2, Hash, Phone, Banknote, UserRound, AlertTriangle } from "lucide-react";
 import { PAYMENT_METHODS, VIDEO_TUTORIAL_URL } from "./data.js";
 import { backend, errorText } from "./backend.js";
+import { usePaymentMethods } from "./payments.js";
 import { Sheet, ErrorNote, waLink, openExternal, formatPrice, copyText } from "./ui.jsx";
 
 export function Input({ id, label, icon: Icon, hint, ...props }) {
@@ -31,7 +32,9 @@ function Success({ title, text, onClose }) {
 }
 
 // Etap 1 yon peman MonCash/NatCash: nimewo pou kliyan an voye kòb la (ak bouton Kopye)
-export function PayTo({ method, amount, onToast }) {
+export function PayTo({ method: picked, amount, onToast }) {
+  // Nimewo an dirèk (pwopriyetè a ka chanje l nan Panneau admin → Paramèt)
+  const method = usePaymentMethods().find((m) => m.id === picked.id) || picked;
   return (
     <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
       <div className="flex items-center gap-3">
@@ -40,8 +43,11 @@ export function PayTo({ method, amount, onToast }) {
       </div>
       {method.number ? (
         <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
-          <span className="select-all text-xl font-bold tabular-nums tracking-wide text-slate-900 dark:text-white">{method.number}</span>
-          <button type="button" onClick={() => copyText(method.number, onToast)} className="flex items-center gap-1.5 rounded-lg bg-sky-50 px-3 py-1.5 text-sm font-semibold text-sky-600 dark:bg-sky-500/10 dark:text-sky-300">
+          <span className="min-w-0">
+            <span className="block select-all text-xl font-bold tabular-nums tracking-wide text-slate-900 dark:text-white">{method.number}</span>
+            {method.holder && <span className="block truncate text-sm text-slate-500 dark:text-slate-400">{method.holder}</span>}
+          </span>
+          <button type="button" onClick={() => copyText(method.number, onToast)} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-sky-50 px-3 py-1.5 text-sm font-semibold text-sky-600 dark:bg-sky-500/10 dark:text-sky-300">
             <Copy className="h-4 w-4" /> Kopye
           </button>
         </div>

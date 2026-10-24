@@ -1,0 +1,24 @@
+// Nimewo MonCash/NatCash kliyan yo voye kòb la. Valè pa defo yo nan data.js; pwopriyetè a
+// chanje yo nan Panneau admin → Paramèt, epi tout paj yo wè nouvo nimewo a an dirèk.
+import { useSyncExternalStore } from "react";
+import { PAYMENT_METHODS } from "./data.js";
+
+let methods = PAYMENT_METHODS;
+const listeners = new Set();
+
+export function setPaymentSettings(settings) {
+  methods = PAYMENT_METHODS.map((m) => {
+    const live = settings?.[m.id];
+    return live ? { ...m, number: live.number || "", holder: live.name || "" } : m;
+  });
+  listeners.forEach((notify) => notify());
+}
+
+const subscribe = (notify) => {
+  listeners.add(notify);
+  return () => listeners.delete(notify);
+};
+
+export function usePaymentMethods() {
+  return useSyncExternalStore(subscribe, () => methods);
+}
