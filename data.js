@@ -52,7 +52,7 @@ export const RANKS = [
 // `number` se nimewo kote kliyan yo voye kòb la. Si l vid, sit la di kliyan an
 // mande nimewo a sou WhatsApp.
 export const PAYMENT_METHODS = [
-  { id: "moncash", name: "MonCash", logo: moncashImg, number: "", holder: "", recommended: true, note: "Peye ak kont MonCash ou" },
+  { id: "moncash", name: "MonCash", logo: moncashImg, number: "34431664", holder: "Awens Kelly Alexandre", recommended: true, note: "Peye ak kont MonCash ou" },
   { id: "natcash", name: "NatCash", logo: natcashImg, number: "43699262", holder: "Awens Kelly Alexandre", note: "Peye ak kont NatCash ou" },
 ];
 

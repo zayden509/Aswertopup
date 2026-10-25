@@ -65,7 +65,6 @@ function PaymentNumbers({ owner, onToast }) {
                 />
               </Field>
             </div>
-            {!form[m.id]?.number && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">San nimewo, kliyan yo ap wè yon bouton pou mande l sou WhatsApp.</p>}
           </fieldset>
         ))}
         <ErrorNote>{error}</ErrorNote>
