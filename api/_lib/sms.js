@@ -77,9 +77,10 @@ const MAX_CODE_FAILS = 8;
 export async function lookupCode(backend, uid, method, reference) {
   const settings = await backend.adminGetAutomation();
   if (settings.sms_auto !== true) return { auto: false };
-  if ((await backend.adminCodeFails(uid)) >= MAX_CODE_FAILS) return { auto: true, status: "blocked" };
+  // Si règ Firestore yo poko pibliye (koleksyon codeChecks la), verifikasyon an mache kanmenm
+  if ((await backend.adminCodeFails(uid).catch(() => 0)) >= MAX_CODE_FAILS) return { auto: true, status: "blocked" };
   const result = await findPayment(backend, settings, method, normalizeReference(reference));
-  if (result.status !== "ok") await backend.adminAddCodeFail(uid);
+  if (result.status !== "ok") await backend.adminAddCodeFail(uid).catch(() => {});
   return { auto: true, ...result };
 }
 
