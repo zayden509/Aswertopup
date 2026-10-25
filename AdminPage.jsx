@@ -2,12 +2,14 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, ShieldCheck, Crown, Check, X, Loader2, RefreshCw, PackageCheck, Clock, Search,
   LayoutDashboard, ShoppingBag, ArrowDownLeft, Users, Package, MessageSquareText, Zap, Settings,
+  CircleCheck, TriangleAlert, Ban, CircleHelp,
 } from "lucide-react";
 import { PAYMENT_METHODS } from "./data.js";
 import { backend, errorText } from "./backend.js";
 import { StatusChip, ErrorNote, ProductArt, formatPrice, formatDateTime, orderStatus, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
 import { Chips, CopyText, Empty, AdminButton, SectionHead, panel, inputClass, normalize } from "./adminUi.jsx";
 import { productForPackage, packageNameFixes } from "./catalog.js";
+import { duplicateOf, smsTooOld } from "./depositCheck.js";
 import AdminDashboard from "./AdminDashboard.jsx";
 import AdminCustomers from "./AdminCustomers.jsx";
 import AdminCatalog from "./AdminCatalog.jsx";
@@ -270,7 +272,65 @@ function OrderCard({ order, profile, product, auto, onLink, onToast }) {
   );
 }
 
-function DepositCard({ deposit, profile, onToast }) {
+const BAD_REFERENCE_NOTE = "ID tranzaksyon an pa bon oswa li deja itilize. Voye prèv peman an ba nou sou WhatsApp.";
+const methodName = (id) => PAYMENT_METHODS.find((m) => m.id === id)?.name || id;
+const senderKey = (sender) => String(sender || "").replace(/[\s+()-]/g, "").toLowerCase();
+
+// Sa telefòn boutik la (SMS httpSMS) di sou kòd tranzaksyon yon depo: [ton, tèks]
+function depositProblems(deposit, smsList, deposits, automation) {
+  const dup = duplicateOf(deposit, deposits);
+  if (dup) return [["bad", `Kòd sa a deja sèvi pou yon depo ki konfime ${formatDateTime(dup.created_at)}. Pa konfime l.`]];
+  const sms = smsList.find((x) => x.method === deposit.method) || smsList[0];
+  const name = methodName(deposit.method);
+  if (!sms) {
+    const smsOn = automation.sms_auto || (automation.senders || []).length > 0;
+    return smsOn ? [["unknown", `Pa gen SMS ${name} ak kòd sa a sou telefòn boutik la. Kòd la ka pa bon: verifye nan ${name} anvan w konfime.`]] : [];
+  }
+  if (sms.status === "used" && sms.deposit_id !== deposit.id) return [["bad", "SMS kòd sa a deja sèvi pou yon lòt depo. Pa konfime l."]];
+  const out = [];
+  const senders = (automation.senders || []).map(senderKey);
+  if (senders.length && !senders.includes(senderKey(sms.sender))) out.push(["warn", `SMS la soti nan ${sms.sender || "yon nimewo"} ki pa yon nimewo ofisyèl: li ka fo.`]);
+  if (!sms.incoming) out.push(["warn", "SMS la pa di ou resevwa kòb."]);
+  if (sms.method !== deposit.method) out.push(["warn", `SMS la se ${methodName(sms.method)}, men kliyan an chwazi ${name}.`]);
+  if (Number(sms.amount) !== Number(deposit.amount)) out.push(["warn", `SMS la di ${sms.amount ? formatPrice(Number(sms.amount)) : "yon lòt montan"}, kliyan an mete ${formatPrice(Number(deposit.amount))}.`]);
+  if (smsTooOld(deposit, sms)) out.push(["warn", `SMS la rive ${formatDateTime(sms.received_at)}, plis pase 24 è de depo a: se ka yon ansyen kòd.`]);
+  return out.length ? out : [["ok", `SMS ${methodName(sms.method)} la rive ${formatDateTime(sms.received_at)}: menm kòd, menm montan.`]];
+}
+
+const VERDICT_STYLE = {
+  ok: ["text-emerald-700 bg-emerald-50 ring-emerald-200 dark:text-emerald-300 dark:bg-emerald-500/10 dark:ring-emerald-500/30", CircleCheck],
+  warn: ["text-amber-800 bg-amber-50 ring-amber-200 dark:text-amber-200 dark:bg-amber-500/10 dark:ring-amber-500/30", TriangleAlert],
+  bad: ["text-red-700 bg-red-50 ring-red-200 dark:text-red-300 dark:bg-red-500/10 dark:ring-red-500/30", Ban],
+  unknown: ["text-slate-700 bg-white ring-slate-200 dark:text-slate-300 dark:bg-slate-900 dark:ring-slate-700", CircleHelp],
+};
+
+function DepositCheck({ deposit, deposits, automation, onBadNote }) {
+  const [smsList, setSmsList] = useState(null);
+  useEffect(() => backend.subscribeSmsFor(deposit.reference, setSmsList), [deposit.reference]);
+  if (smsList === null) return null;
+  const problems = depositProblems(deposit, smsList, deposits, automation);
+  if (!problems.length) return null;
+  const doubtful = problems.some(([tone]) => tone !== "ok");
+  return (
+    <div className="space-y-1.5" data-testid="deposit-check">
+      {problems.map(([tone, text]) => {
+        const [style, Icon] = VERDICT_STYLE[tone];
+        return (
+          <p key={text} className={`flex gap-2 rounded-lg px-3 py-2 text-sm font-medium ring-1 ${style}`}>
+            <Icon className="mt-0.5 h-4 w-4 shrink-0" /> <span>{text}</span>
+          </p>
+        );
+      })}
+      {doubtful && (
+        <button type="button" onClick={onBadNote} className="text-xs font-semibold text-sky-600 hover:underline dark:text-sky-300">
+          Mete nòt la: "ID tranzaksyon an pa bon"
+        </button>
+      )}
+    </div>
+  );
+}
+
+function DepositCard({ deposit, deposits, automation, profile, onToast }) {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -310,6 +370,7 @@ function DepositCard({ deposit, profile, onToast }) {
       {deposit.status === "pending" && (
         <div className="space-y-2 border-t border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/30">
           <p className="text-sm text-slate-500 dark:text-slate-400">Verifye nan {method?.name} ou ke tranzaksyon sa a rive anvan w konfime.</p>
+          <DepositCheck deposit={deposit} deposits={deposits} automation={automation} onBadNote={() => setNote(BAD_REFERENCE_NOTE)} />
           <input
             id={`dnote-${deposit.id}`}
             value={note}
@@ -406,6 +467,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   const [visits, setVisits] = useState({});
   const [announcements, setAnnouncements] = useState([]);
   const [supplierMap, setSupplierMap] = useState({});
+  const [automation, setAutomation] = useState({});
   const [loading, setLoading] = useState(true);
   const [epoch, setEpoch] = useState(0); // bouton 🔄: rekòmanse koute done yo
   const [orderFilter, setOrderFilter] = useState("all");
@@ -432,6 +494,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
 
   // Ki pake ki otomatik (FazerCards)
   useEffect(() => backend.subscribeSupplierMap(setSupplierMap), [epoch]);
+  useEffect(() => backend.subscribeAutomation(setAutomation), [epoch]);
 
   // Livrezon otomatik san bouton: yon kòmand otomatik ki poko rive kote FazerCards (oswa ki te
   // bloke sou yon erè), oswa ki rete "an kou" twò lontan, voye/verifye poukont li yon fwa
@@ -560,7 +623,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
           <>
             <ul className="space-y-3">
               {sortedDeposits.map((d) => (
-                <DepositCard key={`${d.id}-${d.status}`} deposit={d} profile={profiles[d.user_id]} onToast={onToast} />
+                <DepositCard key={`${d.id}-${d.status}`} deposit={d} deposits={deposits} automation={automation} profile={profiles[d.user_id]} onToast={onToast} />
               ))}
             </ul>
             {!loading && deposits.length === 0 && <Empty>Pa gen depo ankò.</Empty>}

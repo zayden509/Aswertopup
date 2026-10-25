@@ -14,8 +14,8 @@ const NUMBER = String.raw`(\d{1,3}(?:[,.]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,
 const AMOUNT_AFTER = new RegExp(String.raw`(?:HTG|Gdes?|gourdes?)\s*:?\s*` + NUMBER, "i");
 const AMOUNT_BEFORE = new RegExp(NUMBER + String.raw`\s*(?:HTG|Gdes?\b|gourdes?|G\b)`, "i");
 
-// Kòd la vin apre yon mo tankou "TransCode", "Trans ID", "Transaction ID", "Txn ID", "Ref", "Code"
-const REFERENCE = /\b(?:trans(?:action)?\s*(?:code|id|no\.?|n°|#)|transcode|txn\s*(?:id)?|r[ée]f(?:[ée]rence)?|code|id)\b\s*[:#.\-]?\s*([A-Z0-9][A-Z0-9-]{4,39})/gi;
+// Kòd la vin apre yon mo tankou "TransCode", "Trans ID", "Transaction ID", "ID tranzaksyon", "Txn ID", "Ref", "Code"
+const REFERENCE = /\b(?:(?:id|n[o°]\.?|num[ée]ro|nimewo)\s*(?:de\s+)?(?:la\s+)?tran[sz]a[ck]?[st]?[iy]on|trans(?:action)?\s*(?:code|id|no\.?|n°|#)|transcode|txn\s*(?:id)?|r[ée]f(?:[ée]rence)?|code|id)\b\s*[:#.\-]?\s*([A-Z0-9][A-Z0-9-]{4,39})/gi;
 
 function toAmount(raw) {
   let s = raw;
@@ -28,8 +28,8 @@ function toAmount(raw) {
 
 function findReference(text) {
   for (const m of text.matchAll(REFERENCE)) {
-    const ref = m[1].toUpperCase();
-    if (/\d/.test(ref) && ref.replace(/-/g, "").length >= 6) return ref;
+    const ref = m[1].toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (/\d/.test(ref) && ref.length >= 6) return ref;
   }
   // Pa gen mo kle: yon long nimewo (12 chif oswa plis) ki pa ka yon nimewo telefòn
   const long = text.match(/\b\d{12,20}\b/);

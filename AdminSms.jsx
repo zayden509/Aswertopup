@@ -3,6 +3,7 @@ import { MessageSquareText, ShieldCheck, Check, CircleSlash, Clock } from "lucid
 import { backend, errorText } from "./backend.js";
 import { formatPrice, formatDateTime } from "./ui.jsx";
 import { Card, AdminButton, Empty } from "./adminUi.jsx";
+import { SMS_MAX_AGE_MS } from "./depositCheck.js";
 
 const key = (sender) => String(sender || "").replace(/[\s+()-]/g, "").toLowerCase();
 
@@ -10,6 +11,7 @@ const key = (sender) => String(sender || "").replace(/[\s+()-]/g, "").toLowerCas
 function smsState(sms) {
   if (sms.status === "used") return ["Depo konfime otomatikman", "text-emerald-600 dark:text-emerald-400", Check];
   if (!sms.incoming || !sms.reference || !sms.amount || !sms.method) return ["Pa yon peman sit la konprann", "text-slate-400", CircleSlash];
+  if (Date.now() - new Date(sms.received_at).getTime() > SMS_MAX_AGE_MS) return ["Plis pase 24 è: li p ap konfime yon depo otomatikman", "text-slate-400", Clock];
   return ["Ap tann kliyan an mete kòd sa a", "text-amber-600 dark:text-amber-400", Clock];
 }
 

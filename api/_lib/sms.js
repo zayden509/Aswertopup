@@ -5,8 +5,10 @@
 //   - SMS la se kòb ou resevwa, sou menm mòd peman an (NatCash/MonCash)
 //   - kòd tranzaksyon an ak montan an menm jan ak sa kliyan an mete a
 //   - montan an pa depase limit otomatik la
-//   - SMS sa a poko sèvi pou yon lòt depo
+//   - SMS sa a poko sèvi pou yon lòt depo, e okenn lòt depo pa deja konfime ak menm kòd la
+//   - SMS la rive mwens pase 24 è anvan oswa apre depo a (pa yon ansyen tranzaksyon)
 import crypto from "node:crypto";
+import { duplicateOf, smsTooOld } from "../../depositCheck.js";
 
 // Jeton JWT (HS256) httpSMS mete nan chak webhook, siyen ak kle ou mete nan httpSMS la
 export function verifyJwt(token, secret) {
@@ -50,9 +52,11 @@ export async function tryConfirm(backend, sms, deposit) {
     [sms.method === deposit.method && sms.reference === deposit.reference, "reference"],
     [Number(sms.amount) === Number(deposit.amount), "amount"],
     [deposit.amount <= max, "limit"],
+    [!smsTooOld(deposit, sms), "expired"],
   ];
   const failed = checks.find(([ok]) => !ok);
   if (failed) return { confirmed: false, reason: failed[1] };
+  if (duplicateOf(deposit, await backend.adminDepositsByReference(deposit.reference))) return { confirmed: false, reason: "duplicate" };
 
   if (!(await backend.adminClaimSms(sms.id, deposit.id))) return { confirmed: false, reason: "used" };
   try {

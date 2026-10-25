@@ -368,13 +368,14 @@ service cloud.firestore {
         && d.code is string && d.code.matches('^AS-[A-HJ-NP-Z2-9]{6}$')
         && d.created_at == request.time && d.updated_at == request.time
         && validPayment(d.payment)
-        && !exists(ref) && getAfter(ref).data.order_id == id;
+        && refUnused(d.payment.reference)
+        && getAfter(ref).data.order_id == id;
     }
 
     function validPayment(p) {
       return p is map && p.keys().hasOnly(['method', 'reference', 'sender_phone']) && p.keys().hasAll(['method', 'reference'])
         && p.method in ['moncash', 'natcash']
-        && p.reference is string && p.reference.matches('^[A-Z0-9-]{4,40}$')
+        && p.reference is string && p.reference.matches('^[A-Z0-9]{4,40}$')
         && optString(p.get('sender_phone', null), 20);
     }
 
@@ -462,10 +463,16 @@ service cloud.firestore {
         && d.user_id == me() && d.status == 'pending' && d.admin_note == null
         && d.amount is int && d.amount >= 50 && d.amount <= 100000
         && d.method in ['moncash', 'natcash']
-        && d.reference is string && d.reference.matches('^[A-Z0-9-]{4,40}$')
+        && d.reference is string && d.reference.matches('^[A-Z0-9]{4,40}$')
         && optString(d.sender_phone, 20)
         && d.created_at == request.time && d.updated_at == request.time
-        && !exists(ref) && getAfter(ref).data.deposit_id == id;
+        && refUnused(d.reference)
+        && getAfter(ref).data.deposit_id == id;
+    }
+
+    // Yon kòd tranzaksyon sèvi yon sèl fwa, kèlkeswa mòd peman an (NatCash oswa MonCash)
+    function refUnused(reference) {
+      return !exists(depositRefDoc('natcash_' + reference)) && !exists(depositRefDoc('moncash_' + reference));
     }
 
     function validDepositReview() {

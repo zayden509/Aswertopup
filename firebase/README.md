@@ -147,7 +147,17 @@ konfime poukont li, epi kòb la antre nan Wallet li touswit.
 
 Yon depo konfime otomatikman sèlman si: ou limen l nan **Paramèt**, SMS la soti nan yon nimewo
 ou make **ofisyèl**, se kòb ou **resevwa**, kòd la ak montan an menm, montan an pa depase
-**limit otomatik** la, e SMS la poko sèvi. Tout lòt depo yo rete nan **Depo** pou ou.
+**limit otomatik** la, SMS la poko sèvi, e SMS la rive **mwens pase 24 è** de depo a (yon ansyen
+kòd pa janm konfime poukont li). Tout lòt depo yo rete nan **Depo** pou ou.
+
+### Kòd tranzaksyon yo
+- Yon kòd tranzaksyon sèvi **yon sèl fwa**, NatCash kou MonCash. Sit la retire espas, tirè ak pwen
+  (`2607-2853 633942` = `26072853633942`), kidonk yon moun pa ka chanje ti detay pou reitilize l.
+  Règ Firestore yo verifye sa tou.
+- Nan **Panneau admin → Depo**, chak depo ki an atant montre sa SMS telefòn boutik la di:
+  ✅ menm kòd ak menm montan · ⚠️ montan diferan, SMS twò ansyen (plis pase 24 è), nimewo ki pa
+  ofisyèl · ⛔ kòd la deja sèvi · ❔ pa gen SMS pou kòd sa a (kòd la ka pa bon). Bouton
+  **"ID tranzaksyon an pa bon"** ranpli nòt refi a pou kliyan an.
 
 ### Konfigirasyon (yon sèl fwa)
 1. Sou telefòn **Android** ki gen SIM NatCash la: enstale **httpSMS** (Google Play), epi

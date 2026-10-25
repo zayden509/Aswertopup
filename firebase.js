@@ -25,6 +25,9 @@ function randomCode(length) {
 
 const formatHtg = (n) => `${new Intl.NumberFormat("fr-FR").format(n)} HTG`;
 
+// Kòd tranzaksyon an san espas, tirè ni pwen, an majiskil: "2607-2853 633942" = "26072853633942"
+export const normalizeReference = (reference) => String(reference || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+
 // Sou yon rezo fèb (4G), premye demann koneksyon an ka echwe: nou eseye yon dezyèm fwa
 // anvan nou di kliyan an pa gen entènèt
 async function retryOnNetwork(run) {
@@ -83,6 +86,13 @@ export function createBackend(config, options = {}) {
     return uid;
   };
   let signupInFlight = null;
+
+  // Yon kòd tranzaksyon sèvi yon sèl fwa, NatCash kou MonCash (règ Firestore yo verifye l tou)
+  const referenceUsed = async (ref, tx) => {
+    const read = (key) => (tx ? tx.get(doc(db, "depositRefs", key)) : getDoc(doc(db, "depositRefs", key)));
+    const [natcash, moncash] = await Promise.all([read(`natcash_${ref}`), read(`moncash_${ref}`)]);
+    return natcash.exists() || moncash.exists();
+  };
 
   // Kreye pwofil kliyan an (ak AWENS-ID li) premye fwa li konekte
   async function ensureProfile(user, fullName) {
@@ -324,8 +334,8 @@ export function createBackend(config, options = {}) {
       const pid = String(playerId || "").trim() || null;
       if (pid && !/^\d{6,15}$/.test(pid)) throw new UserError("Player ID a dwe gen ant 6 ak 15 chif.");
       if (!METHOD_NAMES[method]) throw new UserError("Chwazi MonCash oswa NatCash.");
-      const ref = String(reference || "").toUpperCase().replace(/\s+/g, "");
-      if (!/^[A-Z0-9-]{4,40}$/.test(ref)) throw new UserError("Mete ID tranzaksyon an (sèlman lèt ak chif, omwen 4).");
+      const ref = normalizeReference(reference);
+      if (!/^[A-Z0-9]{6,40}$/.test(ref)) throw new UserError("Mete ID tranzaksyon an (sèlman lèt ak chif, omwen 6).");
       const phone = String(senderPhone || "").trim().slice(0, 20) || null;
       const refDoc = doc(db, "depositRefs", `${method}_${ref}`);
       const orderRef = doc(collection(db, "orders"));
@@ -335,7 +345,7 @@ export function createBackend(config, options = {}) {
         const pkg = pkgSnap.data();
         if (!pkgSnap.exists() || !pkg.available) throw new UserError("Pake sa a pa disponib.");
         if (pkg.needs_id && !pid) throw new UserError("Mete Player ID ou pou pake sa a.");
-        if ((await tx.get(refDoc)).exists()) throw new UserError("Nimewo tranzaksyon sa a deja itilize.");
+        if (await referenceUsed(ref, tx)) throw new UserError("Nimewo tranzaksyon sa a deja itilize.");
 
         const payment = { method, reference: ref, sender_phone: phone };
         const order = {
@@ -397,12 +407,12 @@ export function createBackend(config, options = {}) {
       if (!Number.isInteger(value)) throw new UserError("Mete montan an san vigil (egzanp 1000).");
       if (value < 50 || value > 100000) throw new UserError("Montan an dwe ant 50 ak 100 000 HTG.");
       if (!METHOD_NAMES[method]) throw new UserError("Mòd peman sa a pa egziste.");
-      const ref = String(reference || "").toUpperCase().replace(/\s+/g, "");
-      if (!/^[A-Z0-9-]{4,40}$/.test(ref)) throw new UserError("Mete ID tranzaksyon an (sèlman lèt ak chif, omwen 4).");
+      const ref = normalizeReference(reference);
+      if (!/^[A-Z0-9]{6,40}$/.test(ref)) throw new UserError("Mete ID tranzaksyon an (sèlman lèt ak chif, omwen 6).");
       const phone = String(senderPhone || "").trim().slice(0, 20) || null;
 
       const refDoc = doc(db, "depositRefs", `${method}_${ref}`);
-      if ((await getDoc(refDoc)).exists()) throw new UserError("Nimewo tranzaksyon sa a deja itilize.");
+      if (await referenceUsed(ref)) throw new UserError("Nimewo tranzaksyon sa a deja itilize.");
       const depositRef = doc(collection(db, "deposits"));
       const deposit = {
         user_id: uid, amount: value, method, reference: ref, sender_phone: phone, status: "pending", admin_note: null,
@@ -591,7 +601,7 @@ export function createBackend(config, options = {}) {
         const snap = await tx.get(ref);
         if (snap.exists()) return toPlain(snap);
         tx.set(ref, { ...data, status: "new", deposit_id: null, received_at: serverTimestamp() });
-        return { id, ...data, status: "new", deposit_id: null };
+        return { id, ...data, status: "new", deposit_id: null, received_at: new Date().toISOString() };
       });
     },
 
@@ -632,11 +642,27 @@ export function createBackend(config, options = {}) {
       return snap.exists() ? toPlain(snap) : null;
     },
 
+    // Lòt depo ki gen menm kòd tranzaksyon an (nenpòt mòd peman)
+    async adminDepositsByReference(reference) {
+      const snap = await getDocs(query(collection(db, "deposits"), where("reference", "==", reference)));
+      return snap.docs.map(toPlain);
+    },
+
     // Panneau admin: dènye SMS yo
     subscribeSms(callback) {
       return onSnapshot(query(collection(db, "smsPayments"), orderBy("received_at", "desc"), limit(40)), (snap) => {
         callback(snap.docs.map(toPlain));
       }, (error) => console.error("sms", error));
+    },
+
+    // Panneau admin: SMS NatCash/MonCash ki gen kòd tranzaksyon sa a (pou verifye yon depo)
+    subscribeSmsFor(reference, callback) {
+      const found = {};
+      const stops = ["natcash", "moncash"].map((method) => onSnapshot(doc(db, "smsPayments", `${method}_${reference}`), (snap) => {
+        found[method] = snap.exists() ? toPlain(snap) : null;
+        if (Object.keys(found).length === 2) callback(Object.values(found).filter(Boolean));
+      }, (error) => console.error("sms", error)));
+      return () => stops.forEach((stop) => stop());
     },
 
     subscribeAutomation(callback) {
