@@ -609,15 +609,25 @@ export function createBackend(config, options = {}) {
 
     /* ---------- SMS peman (httpSMS) ---------- */
     // Sèvè a: anrejistre yon SMS yon sèl fwa (httpSMS ka voye menm SMS la plizyè fwa)
-    async adminSaveSms(id, data) {
+    // (`data.received_at`: lè SMS la te rive vre, pou yon SMS nou li ankò)
+    async adminSaveSms(id, { received_at: at, ...data }) {
       const ref = doc(db, "smsPayments", id);
+      const when = at ? new Date(at) : new Date();
       return runTransaction(db, async (tx) => {
         const snap = await tx.get(ref);
         if (snap.exists()) return toPlain(snap);
-        tx.set(ref, { ...data, status: "new", deposit_id: null, received_at: serverTimestamp() });
-        return { id, ...data, status: "new", deposit_id: null, received_at: new Date().toISOString() };
+        tx.set(ref, { ...data, status: "new", deposit_id: null, received_at: at ? when : serverTimestamp() });
+        return { id, ...data, status: "new", deposit_id: null, received_at: when.toISOString() };
       });
     },
+
+    // SMS ki rive depi `since` (ms), pi resan an anvan
+    async adminRecentSms(since) {
+      const snap = await getDocs(query(collection(db, "smsPayments"), where("received_at", ">=", new Date(since)), orderBy("received_at", "desc"), limit(100)));
+      return snap.docs.map(toPlain);
+    },
+
+    adminDeleteSms: (id) => deleteDoc(doc(db, "smsPayments", id)),
 
     async adminGetSms(id) {
       const snap = await getDoc(doc(db, "smsPayments", id));

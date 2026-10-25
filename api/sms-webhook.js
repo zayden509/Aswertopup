@@ -17,7 +17,7 @@ export async function POST(request) {
 
   try {
     const content = data.encrypted ? "" : String(data.content || "").slice(0, 600);
-    const parsed = parsePaymentSms(content);
+    const parsed = parsePaymentSms(content, data.contact);
     const record = {
       ...parsed,
       message_id: String(data.message_id || data.id || "").slice(0, 100) || crypto.randomUUID(),

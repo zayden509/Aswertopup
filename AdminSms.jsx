@@ -4,6 +4,7 @@ import { backend, errorText } from "./backend.js";
 import { formatPrice, formatDateTime } from "./ui.jsx";
 import { Card, AdminButton, Empty } from "./adminUi.jsx";
 import { SMS_MAX_AGE_MS } from "./depositCheck.js";
+import { OPERATOR_SENDERS, parsePaymentSms } from "./smsParse.js";
 
 const key = (sender) => String(sender || "").replace(/[\s+()-]/g, "").toLowerCase();
 
@@ -21,7 +22,7 @@ export default function AdminSms({ owner, onToast }) {
   const [automation, setAutomation] = useState({});
   useEffect(() => backend.subscribeSms(setList), []);
   useEffect(() => backend.subscribeAutomation(setAutomation), []);
-  const official = (automation.senders || []).map(key);
+  const official = [...OPERATOR_SENDERS, ...(automation.senders || []).map(key)];
 
   const trust = async (sender) => {
     try {
@@ -43,7 +44,9 @@ export default function AdminSms({ owner, onToast }) {
         <Empty>Poko gen SMS. Lè httpSMS konekte, SMS NatCash/MonCash yo ap parèt isit la.</Empty>
       ) : (
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-          {list.map((sms) => {
+          {list.map((saved) => {
+            // Yon SMS sit la pa t konprann anvan: nou li l ankò ak fason sit la li SMS kounye a
+            const sms = saved.id.startsWith("msg_") && saved.status === "new" ? { ...saved, ...parsePaymentSms(saved.content, saved.sender) } : saved;
             const [label, tone, Icon] = smsState(sms);
             const trusted = official.includes(key(sms.sender));
             return (

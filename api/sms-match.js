@@ -1,7 +1,7 @@
 // POST /api/sms-match { depositId } — kliyan an fin voye yon depo: si SMS NatCash/MonCash la
 // deja rive sou telefòn boutik la, depo a konfime touswit.
 import { SetupError, bot, callerId, fail, json, resetBotOnDenied } from "./_lib/autotopup.js";
-import { tryConfirm } from "./_lib/sms.js";
+import { smsFor, tryConfirm } from "./_lib/sms.js";
 
 export async function POST(request) {
   try {
@@ -15,7 +15,7 @@ export async function POST(request) {
     if (!deposit) return fail("Depo sa a pa egziste.", 404);
     if (deposit.user_id !== uid && !(await backend.adminIsAdmin(uid))) return fail("Se pa depo ou.", 403);
 
-    const sms = await backend.adminGetSms(`${deposit.method}_${deposit.reference}`);
+    const sms = (await smsFor(backend, deposit.reference)).find((x) => x.method === deposit.method);
     if (!sms) return json({ ok: true, confirmed: false, reason: "no-sms" });
     return json({ ok: true, ...(await tryConfirm(backend, sms, deposit)) });
   } catch (error) {

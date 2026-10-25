@@ -175,5 +175,6 @@ kòd pa janm konfime poukont li). Tout lòt depo yo rete nan **Depo** pou ou.
 3. **Vercel → Settings → Environment Variables**: `HTTPSMS_SIGNING_KEY` = menm signing key la,
    epi **Redeploy**.
 4. Fè yon ti depo tès. SMS la dwe parèt nan **Panneau admin → Depo → SMS peman**, ak montan
-   an ak kòd la. Peze **Se nimewo ofisyèl NatCash** sou li.
+   an ak kòd la. SMS ki soti nan **NATCOM** (NatCash), **MonCash** oswa **Digicel** ofisyèl
+   otomatikman; pou yon lòt nimewo, peze **Se nimewo ofisyèl** sou li.
 5. **Paramèt → Depo otomatik ak SMS**: limen l, chwazi limit la, epi **Sove**.

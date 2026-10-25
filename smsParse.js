@@ -1,21 +1,36 @@
 // Li yon SMS NatCash/MonCash: ki mòd peman, si se kòb ou resevwa, montan an ak kòd tranzaksyon an.
 // Fòma egzak SMS yo ka chanje: Panneau admin → Depo montre sa sit la konprann nan chak SMS,
 // e konfimasyon otomatik la mache sèlman lè tout enfòmasyon yo la epi yo koresponn ak depo a.
+//
+// Egzanp SMS NatCash (soti nan "NATCOM"):
+//   Vous avez encaisse 100 HTG a 18:09 25/10/2026 de JEAN …, code 207685. Votre solde: 1,438.7 HTG.
+//   TransCode: 26102571206784. Merci
 
 const METHODS = [
   ["natcash", /nat\s*cash|natcom/i],
   ["moncash", /mon\s*cash|digicel/i],
 ];
 
-const INCOMING = /re[çc]u|resevwa|received|cr[ée]dit|depot|d[ée]p[ôo]t|transfert de|de la part|soti nan/i;
+// Non operatè yo voye SMS yo ak li (pa yon nimewo telefòn moun ka itilize)
+export const OPERATOR_SENDERS = ["natcom", "natcash", "moncash", "digicel"];
+
+const INCOMING = /re[çc]u|resevwa|received|cr[ée]dit|depot|d[ée]p[ôo]t|transfert de|de la part|soti nan|vous avez (?:bien )?encaiss/i;
 
 // 1,500.00 · 1.500,00 · 1500 · 1500.50
 const NUMBER = String.raw`(\d{1,3}(?:[,.]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)`;
+const CURRENCY = String.raw`(?:HTG|Gdes?\b|gourdes?|G\b)`;
 const AMOUNT_AFTER = new RegExp(String.raw`(?:HTG|Gdes?|gourdes?)\s*:?\s*` + NUMBER, "i");
-const AMOUNT_BEFORE = new RegExp(NUMBER + String.raw`\s*(?:HTG|Gdes?\b|gourdes?|G\b)`, "i");
+const AMOUNT_BEFORE = new RegExp(NUMBER + String.raw`\s*` + CURRENCY, "i");
+// "Votre solde: 1,438.7 HTG" se sa ki rete sou kont lan, pa kòb ou resevwa a
+const BALANCE = new RegExp(String.raw`\b(?:solde|balance|sold)\b[^0-9]{0,30}` + NUMBER + String.raw`\s*` + CURRENCY + "?", "gi");
 
-// Kòd la vin apre yon mo tankou "TransCode", "Trans ID", "Transaction ID", "ID tranzaksyon", "Txn ID", "Ref", "Code"
-const REFERENCE = /\b(?:(?:id|n[o°]\.?|num[ée]ro|nimewo)\s*(?:de\s+)?(?:la\s+)?tran[sz]a[ck]?[st]?[iy]on|trans(?:action)?\s*(?:code|id|no\.?|n°|#)|transcode|txn\s*(?:id)?|r[ée]f(?:[ée]rence)?|code|id)\b\s*[:#.\-]?\s*([A-Z0-9][A-Z0-9-]{4,39})/gi;
+// Kòd la vin apre "TransCode", "Trans ID", "Transaction ID", "ID tranzaksyon", "Txn ID"…
+const STRONG_LABEL = String.raw`(?:id|n[o°]\.?|num[ée]ro|nimewo)\s*(?:de\s+)?(?:la\s+)?tran[sz]a[ck]?[st]?[iy]on|trans(?:action)?\s*(?:code|id|no\.?|n°|#)|transcode|txn\s*(?:id)?`;
+// …oswa, si pa gen youn nan yo, apre "Ref", "Code", "ID" ("code 207685" se pa kòd tranzaksyon an
+// lè gen yon TransCode nan menm SMS la)
+const WEAK_LABEL = String.raw`r[ée]f(?:[ée]rence)?|code|id`;
+const labelled = (label) => new RegExp(String.raw`\b(?:` + label + String.raw`)\b\s*[:#.\-]?\s*([A-Z0-9][A-Z0-9-]{4,39})`, "gi");
+const REFERENCES = [labelled(STRONG_LABEL), labelled(WEAK_LABEL)];
 
 function toAmount(raw) {
   let s = raw;
@@ -27,19 +42,23 @@ function toAmount(raw) {
 }
 
 function findReference(text) {
-  for (const m of text.matchAll(REFERENCE)) {
-    const ref = m[1].toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (/\d/.test(ref) && ref.length >= 6) return ref;
+  for (const pattern of REFERENCES) {
+    for (const m of text.matchAll(pattern)) {
+      const ref = m[1].toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (/\d/.test(ref) && ref.length >= 6) return ref;
+    }
   }
   // Pa gen mo kle: yon long nimewo (12 chif oswa plis) ki pa ka yon nimewo telefòn
   const long = text.match(/\b\d{12,20}\b/);
   return long ? long[0] : null;
 }
 
-export function parsePaymentSms(content) {
+// `sender`: non oswa nimewo ki voye SMS la (ex. "NATCOM"): li di ki mòd peman lè tèks la pa di l
+export function parsePaymentSms(content, sender = "") {
   const text = String(content || "").replace(/\s+/g, " ").trim();
-  const method = METHODS.find(([, re]) => re.test(text))?.[0] || null;
-  const amountMatch = AMOUNT_AFTER.exec(text) || AMOUNT_BEFORE.exec(text);
+  const method = METHODS.find(([, re]) => re.test(text) || re.test(String(sender)))?.[0] || null;
+  const body = text.replace(BALANCE, " ");
+  const amountMatch = AMOUNT_AFTER.exec(body) || AMOUNT_BEFORE.exec(body);
   return {
     method,
     incoming: INCOMING.test(text),

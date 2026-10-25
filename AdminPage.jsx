@@ -10,6 +10,7 @@ import { StatusChip, ErrorNote, ProductArt, formatPrice, formatDateTime, orderSt
 import { Chips, CopyText, Empty, AdminButton, SectionHead, panel, inputClass, normalize } from "./adminUi.jsx";
 import { productForPackage, packageNameFixes } from "./catalog.js";
 import { duplicateOf, smsAmount, smsTooOld } from "./depositCheck.js";
+import { OPERATOR_SENDERS } from "./smsParse.js";
 import AdminDashboard from "./AdminDashboard.jsx";
 import AdminCustomers from "./AdminCustomers.jsx";
 import AdminCatalog from "./AdminCatalog.jsx";
@@ -288,8 +289,8 @@ function depositProblems(deposit, smsList, deposits, automation) {
   }
   if (sms.status === "used" && sms.deposit_id !== deposit.id) return [["bad", "SMS kòd sa a deja sèvi pou yon lòt depo. Pa konfime l."]];
   const out = [];
-  const senders = (automation.senders || []).map(senderKey);
-  if (senders.length && !senders.includes(senderKey(sms.sender))) out.push(["warn", `SMS la soti nan ${sms.sender || "yon nimewo"} ki pa yon nimewo ofisyèl: li ka fo.`]);
+  const senders = [...OPERATOR_SENDERS, ...(automation.senders || []).map(senderKey)];
+  if (!senders.includes(senderKey(sms.sender))) out.push(["warn", `SMS la soti nan ${sms.sender || "yon nimewo"} ki pa yon nimewo ofisyèl: li ka fo.`]);
   if (!sms.incoming) out.push(["warn", "SMS la pa di ou resevwa kòb."]);
   if (sms.method !== deposit.method) out.push(["warn", `SMS la se ${methodName(sms.method)}, men kliyan an chwazi ${name}.`]);
   if (smsAmount(sms) !== Number(deposit.amount)) out.push(["warn", `SMS la di ${sms.amount ? formatPrice(Number(sms.amount)) : "yon lòt montan"}, kliyan an mete ${formatPrice(Number(deposit.amount))}.`]);
