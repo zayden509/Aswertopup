@@ -10,7 +10,7 @@ import { StatusChip, ErrorNote, ProductArt, formatPrice, formatDateTime, orderSt
 import { Chips, CopyText, Empty, AdminButton, SectionHead, panel, inputClass, normalize } from "./adminUi.jsx";
 import { productForPackage, packageNameFixes } from "./catalog.js";
 import { duplicateOf, smsAmount, smsTooOld } from "./depositCheck.js";
-import { OPERATOR_SENDERS } from "./smsParse.js";
+import { isOperatorSender, senderKey } from "./smsParse.js";
 import AdminDashboard from "./AdminDashboard.jsx";
 import AdminCustomers from "./AdminCustomers.jsx";
 import AdminCatalog from "./AdminCatalog.jsx";
@@ -275,7 +275,6 @@ function OrderCard({ order, profile, product, auto, onLink, onToast }) {
 
 const BAD_REFERENCE_NOTE = "ID tranzaksyon an pa bon oswa li deja itilize. Voye prèv peman an ba nou sou WhatsApp.";
 const methodName = (id) => PAYMENT_METHODS.find((m) => m.id === id)?.name || id;
-const senderKey = (sender) => String(sender || "").replace(/[\s+()-]/g, "").toLowerCase();
 
 // Sa telefòn boutik la (SMS httpSMS) di sou kòd tranzaksyon yon depo: [ton, tèks]
 function depositProblems(deposit, smsList, deposits, automation) {
@@ -289,8 +288,8 @@ function depositProblems(deposit, smsList, deposits, automation) {
   }
   if (sms.status === "used" && sms.deposit_id !== deposit.id) return [["bad", "SMS kòd sa a deja sèvi pou yon lòt depo. Pa konfime l."]];
   const out = [];
-  const senders = [...OPERATOR_SENDERS, ...(automation.senders || []).map(senderKey)];
-  if (!senders.includes(senderKey(sms.sender))) out.push(["warn", `SMS la soti nan ${sms.sender || "yon nimewo"} ki pa yon nimewo ofisyèl: li ka fo.`]);
+  const official = isOperatorSender(sms.sender) || (automation.senders || []).map(senderKey).includes(senderKey(sms.sender));
+  if (!official) out.push(["warn", `SMS la soti nan ${sms.sender || "yon nimewo"} ki pa yon nimewo ofisyèl: li ka fo.`]);
   if (!sms.incoming) out.push(["warn", "SMS la pa di ou resevwa kòb."]);
   if (sms.method !== deposit.method) out.push(["warn", `SMS la se ${methodName(sms.method)}, men kliyan an chwazi ${name}.`]);
   if (smsAmount(sms) !== Number(deposit.amount)) out.push(["warn", `SMS la di ${sms.amount ? formatPrice(Number(sms.amount)) : "yon lòt montan"}, kliyan an mete ${formatPrice(Number(deposit.amount))}.`]);

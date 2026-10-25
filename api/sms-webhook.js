@@ -1,8 +1,7 @@
 // POST /api/sms-webhook — httpSMS voye chak SMS telefòn Android lan resevwa isit la.
 // Si se yon SMS NatCash/MonCash pou kòb ou resevwa, sit la anrejistre l epi li konfime depo ki koresponn lan.
-import { parsePaymentSms } from "../smsParse.js";
 import { SetupError, bot, fail, json, resetBotOnDenied } from "./_lib/autotopup.js";
-import { smsId, tryConfirm, verifyJwt } from "./_lib/sms.js";
+import { readSms, smsId, tryConfirm, verifyJwt } from "./_lib/sms.js";
 
 export async function POST(request) {
   const secret = process.env.HTTPSMS_SIGNING_KEY;
@@ -17,7 +16,8 @@ export async function POST(request) {
 
   try {
     const content = data.encrypted ? "" : String(data.content || "").slice(0, 600);
-    const parsed = parsePaymentSms(content, data.contact);
+    const backend = await bot();
+    const parsed = await readSms(backend, content, data.contact, data.owner);
     const record = {
       ...parsed,
       message_id: String(data.message_id || data.id || "").slice(0, 100) || crypto.randomUUID(),
@@ -25,7 +25,6 @@ export async function POST(request) {
       phone: String(data.owner || "").slice(0, 40),
       content: data.encrypted ? "(SMS chifre: dezaktive chifreman an nan httpSMS)" : content,
     };
-    const backend = await bot();
     const sms = await backend.adminSaveSms(smsId(record), record);
     let result = { confirmed: false, reason: "no-deposit" };
     if (parsed.method && parsed.reference) {

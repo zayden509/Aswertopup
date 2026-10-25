@@ -9,7 +9,10 @@
 //   - SMS la rive mwens pase 24 è anvan oswa apre depo a (pa yon ansyen tranzaksyon)
 import crypto from "node:crypto";
 import { SMS_MAX_AGE_MS, duplicateOf, normalizeReference, smsAmount, smsTooOld } from "../../depositCheck.js";
-import { OPERATOR_SENDERS, parsePaymentSms } from "../../smsParse.js";
+import { isOperatorSender, methodForReceiver, parsePaymentSms, senderKey } from "../../smsParse.js";
+import { accountNumbers } from "../../paymentAccounts.js";
+
+export { senderKey };
 
 // Jeton JWT (HS256) httpSMS mete nan chak webhook, siyen ak kle ou mete nan httpSMS la
 export function verifyJwt(token, secret) {
@@ -34,11 +37,15 @@ export function verifyJwt(token, secret) {
   return payload;
 }
 
-// Nimewo/non ki voye SMS la, san espas ni "+", pou n konpare l ak lis ofisyèl la
-export const senderKey = (sender) => String(sender || "").replace(/[\s+()-]/g, "").toLowerCase();
 
-// SMS ki soti nan operatè a ("NATCOM"…) oswa nan yon nimewo pwopriyetè a make ofisyèl
-export const isOfficial = (settings, sender) => [...OPERATOR_SENDERS, ...(settings.senders || []).map(senderKey)].includes(senderKey(sender));
+// SMS ki soti nan operatè a ("NATCOM", "MonCash"…) oswa nan yon nimewo pwopriyetè a make ofisyèl
+export const isOfficial = (settings, sender) => isOperatorSender(sender) || (settings.senders || []).map(senderKey).includes(senderKey(sender));
+
+// Li SMS la: lè tèks la pa di si se NatCash oswa MonCash, nimewo SIM ki resevwa l la di l
+export async function readSms(backend, content, sender, receiver) {
+  const receiverMethod = methodForReceiver(receiver, accountNumbers(await backend.adminGetPayments()));
+  return parsePaymentSms(content, sender, receiverMethod);
+}
 
 export const smsId = (sms) => (sms.method && sms.reference ? `${sms.method}_${sms.reference}` : `msg_${String(sms.message_id).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80)}`);
 
@@ -100,15 +107,15 @@ async function findPayment(backend, settings, method, ref) {
   return { status: "ok", method: sms.method, amount: smsAmount(sms) };
 }
 
-// SMS peman ki gen kòd sa a. Yon SMS ki te rive anvan sit la te konprann fòma l (anrejistre kòm
-// "msg_…"), nou li l ankò epi nou mete l nan plas li.
+// SMS peman ki gen kòd sa a. Yon SMS sit la te anrejistre anvan li te konprann fòma l (ex. "msg_…",
+// oswa "moncash_003577973060" ak zewo devan), nou li l ankò epi nou mete l nan bon plas li.
 export async function smsFor(backend, ref) {
   const found = (await Promise.all(["natcash", "moncash"].map((m) => backend.adminGetSms(`${m}_${ref}`)))).filter(Boolean);
   if (found.length) return found;
   for (const old of await backend.adminRecentSms(Date.now() - SMS_MAX_AGE_MS)) {
-    if (!old.id.startsWith("msg_") || old.status !== "new" || !normalizeReference(old.content).includes(ref)) continue;
-    const parsed = parsePaymentSms(old.content, old.sender);
-    if (parsed.reference !== ref || !parsed.method) continue;
+    if (old.status !== "new" || !String(old.content || "").toUpperCase().replace(/[^A-Z0-9]/g, "").includes(ref)) continue;
+    const parsed = await readSms(backend, old.content, old.sender, old.phone);
+    if (parsed.reference !== ref || !parsed.method || smsId(parsed) === old.id) continue;
     const { id, status, deposit_id, ...data } = old;
     const sms = await backend.adminSaveSms(smsId(parsed), { ...data, ...parsed });
     await backend.adminDeleteSms(id);

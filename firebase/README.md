@@ -157,7 +157,10 @@ kòd pa janm konfime poukont li). Tout lòt depo yo rete nan **Depo** pou ou.
   yon èdtan, kont lan tann 1 è (pou pèsonn pa ka devine kòd). Lè l etenn, kliyan an mete montan an
   ak kòd la, epi se ou ki konfime.
 - Yon kòd tranzaksyon sèvi **yon sèl fwa**, NatCash kou MonCash. Sit la retire espas, tirè ak pwen
-  (`2607-2853 633942` = `26072853633942`), kidonk yon moun pa ka chanje ti detay pou reitilize l.
+  (`2607-2853 633942` = `26072853633942`), ak zewo ki devan yon kòd MonCash (`003577973060` =
+  `3577973060`), kidonk yon moun pa ka chanje ti detay pou reitilize l.
+- **MonCash:** SIM MonCash la (34431664) dwe nan menm telefòn Android ki gen httpSMS la (telefòn 2
+  SIM mache). Lè yon SMS pa di si se NatCash oswa MonCash, sit la gade ki SIM ki resevwa l.
   Règ Firestore yo verifye sa tou.
 - Nan **Panneau admin → Depo**, chak depo ki an atant montre sa SMS telefòn boutik la di:
   ✅ menm kòd ak menm montan · ⚠️ montan diferan, SMS twò ansyen (plis pase 24 è), nimewo ki pa

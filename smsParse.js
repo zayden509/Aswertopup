@@ -5,6 +5,7 @@
 // Egzanp SMS NatCash (soti nan "NATCOM"):
 //   Vous avez encaisse 100 HTG a 18:09 25/10/2026 de JEAN …, code 207685. Votre solde: 1,438.7 HTG.
 //   TransCode: 26102571206784. Merci
+import { normalizeReference } from "./depositCheck.js";
 
 const METHODS = [
   ["natcash", /nat\s*cash|natcom/i],
@@ -13,6 +14,26 @@ const METHODS = [
 
 // Non operatè yo voye SMS yo ak li (pa yon nimewo telefòn moun ka itilize)
 export const OPERATOR_SENDERS = ["natcom", "natcash", "moncash", "digicel"];
+
+// Nimewo/non ki voye SMS la, san espas ni "+", pou n konpare l ak lis ofisyèl la
+export const senderKey = (sender) => String(sender || "").replace(/[\s+()-]/g, "").toLowerCase();
+
+// "NATCOM", "MonCash", "MONCASH INFO"…: yon non (pa yon nimewo) ki gen non operatè a ladan l
+export function isOperatorSender(sender) {
+  const key = senderKey(sender);
+  return /[a-z]/.test(key) && OPERATOR_SENDERS.some((name) => key.includes(name));
+}
+
+// Ki mòd peman yon nimewo telefòn ye (SIM ki resevwa SMS la): `accounts` = { moncash: "34431664", … }
+export function methodForReceiver(receiver, accounts) {
+  const digits = String(receiver || "").replace(/\D/g, "");
+  if (!digits) return null;
+  const found = Object.entries(accounts || {}).find(([, number]) => {
+    const n = String(number || "").replace(/\D/g, "");
+    return n.length >= 8 && digits.endsWith(n);
+  });
+  return found ? found[0] : null;
+}
 
 const INCOMING = /re[çc]u|resevwa|received|cr[ée]dit|depot|d[ée]p[ôo]t|transfert de|de la part|soti nan|vous avez (?:bien )?encaiss/i;
 
@@ -44,19 +65,20 @@ function toAmount(raw) {
 function findReference(text) {
   for (const pattern of REFERENCES) {
     for (const m of text.matchAll(pattern)) {
-      const ref = m[1].toUpperCase().replace(/[^A-Z0-9]/g, "");
+      const ref = normalizeReference(m[1]);
       if (/\d/.test(ref) && ref.length >= 6) return ref;
     }
   }
   // Pa gen mo kle: yon long nimewo (12 chif oswa plis) ki pa ka yon nimewo telefòn
   const long = text.match(/\b\d{12,20}\b/);
-  return long ? long[0] : null;
+  return long ? normalizeReference(long[0]) : null;
 }
 
-// `sender`: non oswa nimewo ki voye SMS la (ex. "NATCOM"): li di ki mòd peman lè tèks la pa di l
-export function parsePaymentSms(content, sender = "") {
+// `sender`: non oswa nimewo ki voye SMS la (ex. "NATCOM"): li di ki mòd peman lè tèks la pa di l.
+// `receiverMethod`: mòd peman SIM ki resevwa SMS la (methodForReceiver), si ni tèks la ni non an pa di l.
+export function parsePaymentSms(content, sender = "", receiverMethod = null) {
   const text = String(content || "").replace(/\s+/g, " ").trim();
-  const method = METHODS.find(([, re]) => re.test(text) || re.test(String(sender)))?.[0] || null;
+  const method = METHODS.find(([, re]) => re.test(text) || re.test(String(sender)))?.[0] || receiverMethod || null;
   const body = text.replace(BALANCE, " ");
   const amountMatch = AMOUNT_AFTER.exec(body) || AMOUNT_BEFORE.exec(body);
   return {

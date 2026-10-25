@@ -629,6 +629,12 @@ export function createBackend(config, options = {}) {
 
     adminDeleteSms: (id) => deleteDoc(doc(db, "smsPayments", id)),
 
+    // Nimewo MonCash/NatCash ki nan Paramèt ({} si pwopriyetè a poko chanje yo)
+    async adminGetPayments() {
+      const snap = await getDoc(doc(db, "settings", "payments"));
+      return snap.exists() ? snap.data() : {};
+    },
+
     async adminGetSms(id) {
       const snap = await getDoc(doc(db, "smsPayments", id));
       return snap.exists() ? toPlain(snap) : null;

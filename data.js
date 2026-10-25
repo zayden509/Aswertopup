@@ -2,6 +2,7 @@ import {
   Flame, PlayCircle, CreditCard, MessageCircle, CalendarDays, CalendarRange, Ticket, TrendingUp,
 } from "lucide-react";
 import { DEFAULT_TIERS } from "./exchange.js";
+import { DEFAULT_ACCOUNTS } from "./paymentAccounts.js";
 import freeFireImg from "./img/free-fire.jpg";
 import pubgImg from "./img/pubg.jpg";
 import robloxImg from "./img/roblox.jpg";
@@ -52,8 +53,8 @@ export const RANKS = [
 // `number` se nimewo kote kliyan yo voye kòb la. Si l vid, sit la di kliyan an
 // mande nimewo a sou WhatsApp.
 export const PAYMENT_METHODS = [
-  { id: "moncash", name: "MonCash", logo: moncashImg, number: "34431664", holder: "Awens Kelly Alexandre", recommended: true, note: "Peye ak kont MonCash ou" },
-  { id: "natcash", name: "NatCash", logo: natcashImg, number: "43699262", holder: "Awens Kelly Alexandre", note: "Peye ak kont NatCash ou" },
+  { id: "moncash", name: "MonCash", logo: moncashImg, number: DEFAULT_ACCOUNTS.moncash.number, holder: DEFAULT_ACCOUNTS.moncash.name, recommended: true, note: "Peye ak kont MonCash ou" },
+  { id: "natcash", name: "NatCash", logo: natcashImg, number: DEFAULT_ACCOUNTS.natcash.number, holder: DEFAULT_ACCOUNTS.natcash.name, note: "Peye ak kont NatCash ou" },
 ];
 
 /* ============ PWODWI ============ */

@@ -4,9 +4,8 @@ import { backend, errorText } from "./backend.js";
 import { formatPrice, formatDateTime } from "./ui.jsx";
 import { Card, AdminButton, Empty } from "./adminUi.jsx";
 import { SMS_MAX_AGE_MS } from "./depositCheck.js";
-import { OPERATOR_SENDERS, parsePaymentSms } from "./smsParse.js";
-
-const key = (sender) => String(sender || "").replace(/[\s+()-]/g, "").toLowerCase();
+import { isOperatorSender, methodForReceiver, parsePaymentSms, senderKey } from "./smsParse.js";
+import { usePaymentMethods } from "./payments.js";
 
 // Sa sit la konprann nan yon SMS, ak sa l fè avè l
 function smsState(sms) {
@@ -22,7 +21,9 @@ export default function AdminSms({ owner, onToast }) {
   const [automation, setAutomation] = useState({});
   useEffect(() => backend.subscribeSms(setList), []);
   useEffect(() => backend.subscribeAutomation(setAutomation), []);
-  const official = [...OPERATOR_SENDERS, ...(automation.senders || []).map(key)];
+  const methods = usePaymentMethods();
+  const accounts = Object.fromEntries(methods.map((m) => [m.id, m.number]));
+  const official = (automation.senders || []).map(senderKey);
 
   const trust = async (sender) => {
     try {
@@ -46,9 +47,9 @@ export default function AdminSms({ owner, onToast }) {
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
           {list.map((saved) => {
             // Yon SMS sit la pa t konprann anvan: nou li l ankò ak fason sit la li SMS kounye a
-            const sms = saved.id.startsWith("msg_") && saved.status === "new" ? { ...saved, ...parsePaymentSms(saved.content, saved.sender) } : saved;
+            const sms = saved.id.startsWith("msg_") && saved.status === "new" ? { ...saved, ...parsePaymentSms(saved.content, saved.sender, methodForReceiver(saved.phone, accounts)) } : saved;
             const [label, tone, Icon] = smsState(sms);
-            const trusted = official.includes(key(sms.sender));
+            const trusted = isOperatorSender(sms.sender) || official.includes(senderKey(sms.sender));
             return (
               <li key={sms.id} className="space-y-1.5 py-3">
                 <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
