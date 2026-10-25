@@ -31,6 +31,7 @@ swiv gid [`firebase/README.md`](firebase/README.md) (Firebase, plan gratis la).
 - `catalog.js`: mete pwodwi ki nan `data.js` ansanm ak sa admin nan kreye yo.
 - `payments.js`: nimewo MonCash/NatCash an dirèk (pwopriyetè a chanje yo nan Panneau admin → Paramèt).
 - `smsParse.js`, `api/sms-webhook.js`, `api/sms-match.js`, `AdminSms.jsx`: depo otomatik ak SMS (httpSMS).
+- `playerCheck.js`, `api/player-check.js`: verifye Player ID a kote FazerCards epi montre non jwè a.
 - `ExchangePage.jsx`, `exchange.js`: paj konvèsyon pwodwi Finans yo (to du jou, frè pa palye).
   Kalkil la menm jan nan `firebase/firestore.rules`.
 - `days.js`: jou yo ak lè Ayiti, pou estatistik yo.

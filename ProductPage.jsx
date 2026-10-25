@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ArrowLeft, Info, CheckCircle2, Flame, ShoppingCart, User, CreditCard, Package, Hash, MessageCircle,
   ShieldCheck, Wallet, Plus, Loader2, AlertTriangle, LogIn, Phone, Zap,
@@ -8,6 +8,7 @@ import { backend, errorText } from "./backend.js";
 import { Sheet, StepCard, ProductArt, GemIcon, WhatsAppIcon, ErrorNote, formatPrice, packageName, waLink } from "./ui.jsx";
 import { loadPlayerId, savePlayerId, newOrderId, orderMessage } from "./orders.js";
 import { PayTo, Input } from "./WalletSheets.jsx";
+import { checkPlayerId } from "./playerCheck.js";
 
 const ID_PATTERN = /^\d{6,15}$/;
 
@@ -165,6 +166,27 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
   const id = playerId.trim();
   const idValid = ID_PATTERN.test(id);
   const idError = id !== "" && !idValid;
+
+  // Verifikasyon ID a kote FazerCards (non jwè a), yon ti moman apre kliyan an fin tape
+  const [check, setCheck] = useState(null); // { id, status: checking|ok|invalid|unknown|unsupported, name }
+  useEffect(() => {
+    if (!product.playerId || !idValid) {
+      setCheck(null);
+      return undefined;
+    }
+    const abort = new AbortController();
+    const timer = setTimeout(async () => {
+      setCheck({ id, status: "checking" });
+      const result = await checkPlayerId(product.name, id, abort.signal);
+      if (!abort.signal.aborted) setCheck({ id, status: result?.status || "unknown", name: result?.name || null });
+    }, 600);
+    return () => {
+      clearTimeout(timer);
+      abort.abort();
+    };
+  }, [id, idValid, product.playerId, product.name]);
+  const verified = check?.id === id ? check : null;
+  const idUnknown = verified?.status === "invalid";
   const idMissing = Boolean(item?.needsId) && id === "";
   const someNeedId = groups.some((g) => g.items.some((i) => i.needsId));
   const allNeedId = groups.every((g) => g.items.every((i) => i.needsId));
@@ -182,7 +204,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
   let action = { text: "Acheter", run: () => { setError(""); setOrderId(newOrderId()); setConfirming(true); } };
   if (!item) action = { text: "Chwazi yon pake", run: null };
   else if (idMissing) action = { text: "Mete Player ID ou", run: null };
-  else if (idError) action = { text: "Korije Player ID a", run: null };
+  else if (idError || idUnknown) action = { text: "Korije Player ID a", run: null };
   else if (walletMode && !loggedIn) action = { text: "Konekte pou achte", icon: LogIn, run: () => onLogin("login") };
   else if (walletMode && payWith === "wallet" && missing > 0) action = { text: "Recharger mon Wallet", icon: Plus, run: topUp };
 
@@ -335,7 +357,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
               )}
               <div
                 className={`flex items-center gap-2 rounded-2xl border-2 bg-white px-4 transition focus-within:border-sky-400 dark:bg-slate-950 ${
-                  idError ? "border-red-400" : idValid ? "border-emerald-400" : "border-slate-200 dark:border-slate-700"
+                  idError || idUnknown ? "border-red-400" : idValid ? "border-emerald-400" : "border-slate-200 dark:border-slate-700"
                 }`}
               >
                 <input
@@ -345,12 +367,26 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                   placeholder="Ex: 1247665343"
                   value={playerId}
                   onChange={(e) => setPlayerId(e.target.value.replace(/\D/g, ""))}
-                  aria-invalid={idError || idMissing}
+                  aria-invalid={idError || idMissing || idUnknown}
                   aria-describedby="player-id-hint"
                   className="w-full bg-transparent py-3.5 text-lg tabular-nums tracking-wide text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-white"
                 />
-                {idValid && <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />}
+                {verified?.status === "checking" ? (
+                  <Loader2 className="h-5 w-5 shrink-0 animate-spin text-slate-400" />
+                ) : idValid && !idUnknown ? (
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+                ) : null}
               </div>
+              {verified?.status === "ok" && (
+                <p className="mt-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-bold text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20" role="status">
+                  {verified.name ? `Joueur vérifié : ${verified.name}` : "ID a verifye ✅"}
+                </p>
+              )}
+              {idUnknown && (
+                <p className="mt-2 rounded-xl bg-red-50 px-3 py-2.5 text-sm font-bold text-red-700 ring-1 ring-red-100 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20" role="alert">
+                  ID sa a pa egziste. Tcheke l byen nan jwèt la epi tape l ankò.
+                </p>
+              )}
               <p id="player-id-hint" className={`mt-2 text-sm ${idError || idMissing ? "text-red-500" : "text-slate-500 dark:text-slate-400"}`}>
                 {idError
                   ? "UID a dwe gen ant 6 ak 15 chif."
@@ -523,6 +559,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                 <dl className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
                   <SummaryRow icon={Package} label="Produit">{product.name}</SummaryRow>
                   {id && <SummaryRow icon={User} label="Player ID"><span className="tabular-nums">{id}</span></SummaryRow>}
+                  {verified?.status === "ok" && verified.name && <SummaryRow icon={CheckCircle2} label="Jwè">{verified.name}</SummaryRow>}
                   {walletMode && directMethod ? (
                     <SummaryRow icon={CreditCard} label="Paiement">
                       <span className="inline-flex items-center gap-2">
