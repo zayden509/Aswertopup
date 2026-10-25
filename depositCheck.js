@@ -4,7 +4,12 @@
 // Yon SMS ki rive plis pase 24 è anvan (oswa apre) depo a se yon ansyen tranzaksyon: pa otomatik
 export const SMS_MAX_AGE_MS = 24 * 3600 * 1000;
 
-export const sameReference = (a, b) => String(a || "").toUpperCase().replace(/[^A-Z0-9]/g, "") === String(b || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+// Kòd tranzaksyon an san espas, tirè ni pwen, an majiskil: "2607-2853 633942" = "26072853633942"
+export const normalizeReference = (reference) => String(reference || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+export const sameReference = (a, b) => normalizeReference(a) === normalizeReference(b);
+
+// Montan SMS la an goud antye (1 500.50 → 1500): se sa ki antre nan Wallet la
+export const smsAmount = (sms) => Math.floor(Number(sms.amount) || 0);
 
 const time = (value) => new Date(value || Date.now()).getTime();
 

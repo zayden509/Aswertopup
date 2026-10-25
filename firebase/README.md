@@ -151,6 +151,11 @@ ou make **ofisyèl**, se kòb ou **resevwa**, kòd la ak montan an menm, montan 
 kòd pa janm konfime poukont li). Tout lòt depo yo rete nan **Depo** pou ou.
 
 ### Kòd tranzaksyon yo
+- Lè konfimasyon otomatik la limen, kliyan an mete **kòd la sèlman** (tankou BM Prods): sit la
+  tcheke SMS telefòn boutik la touswit (`api/sms-lookup.js`). Si okenn peman pa koresponn, li wè
+  **Vérification impossible** e depo a pa kreye. Montan an soti nan SMS la. Apre 8 move kòd nan
+  yon èdtan, kont lan tann 1 è (pou pèsonn pa ka devine kòd). Lè l etenn, kliyan an mete montan an
+  ak kòd la, epi se ou ki konfime.
 - Yon kòd tranzaksyon sèvi **yon sèl fwa**, NatCash kou MonCash. Sit la retire espas, tirè ak pwen
   (`2607-2853 633942` = `26072853633942`), kidonk yon moun pa ka chanje ti detay pou reitilize l.
   Règ Firestore yo verifye sa tou.

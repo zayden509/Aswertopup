@@ -9,7 +9,7 @@ import { backend, errorText } from "./backend.js";
 import { StatusChip, ErrorNote, ProductArt, formatPrice, formatDateTime, orderStatus, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
 import { Chips, CopyText, Empty, AdminButton, SectionHead, panel, inputClass, normalize } from "./adminUi.jsx";
 import { productForPackage, packageNameFixes } from "./catalog.js";
-import { duplicateOf, smsTooOld } from "./depositCheck.js";
+import { duplicateOf, smsAmount, smsTooOld } from "./depositCheck.js";
 import AdminDashboard from "./AdminDashboard.jsx";
 import AdminCustomers from "./AdminCustomers.jsx";
 import AdminCatalog from "./AdminCatalog.jsx";
@@ -292,7 +292,7 @@ function depositProblems(deposit, smsList, deposits, automation) {
   if (senders.length && !senders.includes(senderKey(sms.sender))) out.push(["warn", `SMS la soti nan ${sms.sender || "yon nimewo"} ki pa yon nimewo ofisyèl: li ka fo.`]);
   if (!sms.incoming) out.push(["warn", "SMS la pa di ou resevwa kòb."]);
   if (sms.method !== deposit.method) out.push(["warn", `SMS la se ${methodName(sms.method)}, men kliyan an chwazi ${name}.`]);
-  if (Number(sms.amount) !== Number(deposit.amount)) out.push(["warn", `SMS la di ${sms.amount ? formatPrice(Number(sms.amount)) : "yon lòt montan"}, kliyan an mete ${formatPrice(Number(deposit.amount))}.`]);
+  if (smsAmount(sms) !== Number(deposit.amount)) out.push(["warn", `SMS la di ${sms.amount ? formatPrice(Number(sms.amount)) : "yon lòt montan"}, kliyan an mete ${formatPrice(Number(deposit.amount))}.`]);
   if (smsTooOld(deposit, sms)) out.push(["warn", `SMS la rive ${formatDateTime(sms.received_at)}, plis pase 24 è de depo a: se ka yon ansyen kòd.`]);
   return out.length ? out : [["ok", `SMS ${methodName(sms.method)} la rive ${formatDateTime(sms.received_at)}: menm kòd, menm montan.`]];
 }

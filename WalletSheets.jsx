@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Plus, Send, ChevronRight, BookOpen, Copy, CheckCircle2, Loader2, Hash, Banknote, UserRound, AlertTriangle, ShieldCheck } from "lucide-react";
 import { PAYMENT_METHODS, VIDEO_TUTORIAL_URL } from "./data.js";
 import { backend, errorText } from "./backend.js";
+import { UserError } from "./errors.js";
 import { usePaymentMethods } from "./payments.js";
 import { Sheet, ErrorNote, waLink, supportMessage, openExternal, formatPrice, copyText } from "./ui.jsx";
 
@@ -170,6 +171,30 @@ export function MethodList({ onPick, onToast }) {
 }
 
 // Depo: chwazi MonCash oswa NatCash, voye kòb la sou kont lan, epi valide l ak kòd tranzaksyon an
+// Sa kliyan an wè lè sit la pa jwenn peman kòd li a (verifikasyon otomatik)
+const CODE_PROBLEMS = {
+  "not-found": "Okenn peman nou resevwa pa koresponn ak kòd sa a. Verifye kòd la. Si w fèk voye kòb la, tann 1 minit epi eseye ankò.",
+  invalid: "Kòd sa a pa bon. Kopye TransCode a jan li ye nan SMS NatCash/MonCash ou a.",
+  used: "Kòd sa a deja itilize. Yon kòd tranzaksyon sèvi yon sèl fwa.",
+  expired: "Peman sa a twò ansyen (plis pase 24 è). Ekri nou sou WhatsApp ak prèv peman an.",
+  blocked: "Twòp kòd ki pa bon. Tann 1 è, oswa ekri nou sou WhatsApp.",
+};
+
+function CodeProblem({ text }) {
+  return (
+    <div role="alert" className="flex items-center gap-3 rounded-2xl bg-red-50 p-3.5 ring-1 ring-red-200 dark:bg-red-500/10 dark:ring-red-500/30">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-red-100 text-lg font-extrabold text-red-600 dark:bg-red-500/20 dark:text-red-300">!</span>
+      <div className="min-w-0">
+        <p className="font-bold text-slate-900 dark:text-white">Vérification impossible</p>
+        <p className="text-sm text-red-700 dark:text-red-300">{text}</p>
+      </div>
+    </div>
+  );
+}
+
+// Èske sit la verifye kòd yo otomatikman (SMS)? Nou sonje repons lan pou pwochen fwa a
+let depositAuto = null;
+
 export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) {
   const methods = usePaymentMethods();
   const [methodId, setMethodId] = useState(() => (methods.find((m) => m.number && m.recommended) || methods.find((m) => m.number) || methods[0]).id);
@@ -179,6 +204,17 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(null);
+  const [auto, setAuto] = useState(depositAuto);
+  const [problem, setProblem] = useState("");
+
+  useEffect(() => {
+    let stale = false;
+    backend.checkDepositCode().then((r) => {
+      depositAuto = Boolean(r?.auto);
+      if (!stale) setAuto(depositAuto);
+    });
+    return () => { stale = true; };
+  }, []);
 
   const openTutorial = () => {
     if (VIDEO_TUTORIAL_URL) openExternal(VIDEO_TUTORIAL_URL);
@@ -195,8 +231,25 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
     e.preventDefault();
     setBusy(true);
     setError("");
+    setProblem("");
     try {
-      const deposit = await backend.requestDeposit({ amount, method: method.id, reference, senderPhone: null });
+      let order = { amount, method: method.id };
+      if (auto) {
+        // Sit la tcheke kòd la ak SMS telefòn boutik la: montan an soti nan SMS la
+        const found = await backend.checkDepositCode(method.id, reference);
+        if (!found) throw new UserError("Nou pa ka verifye kòd la kounye a. Tcheke entènèt ou epi eseye ankò.");
+        if (found.auto === false) {
+          depositAuto = false;
+          setAuto(false);
+          throw new UserError("Mete montan ou voye a, epi peze Valider ankò.");
+        }
+        if (found.status !== "ok") {
+          setProblem(CODE_PROBLEMS[found.status] || CODE_PROBLEMS["not-found"]);
+          return;
+        }
+        order = { amount: found.amount, method: found.method };
+      }
+      const deposit = await backend.requestDeposit({ ...order, reference, senderPhone: null });
       // Si SMS NatCash/MonCash la deja rive sou telefòn boutik la, depo a konfime touswit
       const check = await backend.requestDepositCheck(deposit.id);
       setSent({ ...deposit, confirmed: Boolean(check?.confirmed) });
@@ -227,17 +280,28 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
               </span>
               <div className="min-w-0">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Validation du paiement</h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Voye kòb la sou kont anlè a, epi mete montan an ak kòd tranzaksyon {method.name} ba ou a.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {auto ? `Voye kòb la sou kont anlè a, epi mete kòd tranzaksyon ${method.name} ba ou a. Montan an detekte otomatikman grasa kòd la.` : `Voye kòb la sou kont anlè a, epi mete montan an ak kòd tranzaksyon ${method.name} ba ou a.`}
+                </p>
               </div>
             </div>
-            <Input id="deposit-amount" label="Montant envoyé (HTG)" icon={Banknote} inputMode="numeric" type="number" min="50" max="100000" step="1" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Ex. 1000" />
+            {auto && Number(initialAmount) > 0 && (
+              <p className="rounded-xl bg-sky-50 px-3.5 py-2.5 text-sm text-sky-800 dark:bg-sky-500/10 dark:text-sky-200">
+                Montan pou voye: <span className="font-bold tabular-nums">{formatPrice(Number(initialAmount))}</span>
+              </p>
+            )}
+            {!auto && <Input id="deposit-amount" label="Montant envoyé (HTG)" icon={Banknote} inputMode="numeric" type="number" min="50" max="100000" step="1" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Ex. 1000" />}
+            {problem && <CodeProblem text={problem} />}
             <Input
               id="deposit-reference"
               label="TransCode ou Txn ID"
               icon={Hash}
               required
               value={reference}
-              onChange={(e) => setReference(e.target.value)}
+              onChange={(e) => {
+                setReference(e.target.value);
+                setProblem("");
+              }}
               placeholder="Ex. 26072853633942"
               autoComplete="off"
             />

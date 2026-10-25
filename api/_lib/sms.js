@@ -8,7 +8,7 @@
 //   - SMS sa a poko sèvi pou yon lòt depo, e okenn lòt depo pa deja konfime ak menm kòd la
 //   - SMS la rive mwens pase 24 è anvan oswa apre depo a (pa yon ansyen tranzaksyon)
 import crypto from "node:crypto";
-import { duplicateOf, smsTooOld } from "../../depositCheck.js";
+import { SMS_MAX_AGE_MS, duplicateOf, normalizeReference, smsAmount, smsTooOld } from "../../depositCheck.js";
 
 // Jeton JWT (HS256) httpSMS mete nan chak webhook, siyen ak kle ou mete nan httpSMS la
 export function verifyJwt(token, secret) {
@@ -50,7 +50,7 @@ export async function tryConfirm(backend, sms, deposit) {
     [sms.incoming === true, "not-incoming"],
     [sms.status === "new", "used"],
     [sms.method === deposit.method && sms.reference === deposit.reference, "reference"],
-    [Number(sms.amount) === Number(deposit.amount), "amount"],
+    [smsAmount(sms) === Number(deposit.amount), "amount"],
     [deposit.amount <= max, "limit"],
     [!smsTooOld(deposit, sms), "expired"],
   ];
@@ -67,4 +67,31 @@ export async function tryConfirm(backend, sms, deposit) {
     await backend.adminReleaseSms(sms.id).catch(() => {});
     throw error;
   }
+}
+
+// Yon kliyan ka mete 8 kòd ki pa bon pa èdtan: pi plis, li bloke pou yon ti tan (pou l pa devine kòd)
+const MAX_CODE_FAILS = 8;
+
+// Kliyan an mete kòd tranzaksyon li anvan depo a: èske telefòn boutik la resevwa peman sa a?
+// Retounen { auto: false } si konfimasyon otomatik la etenn (depo a ale kote admin nan kòm anvan).
+export async function lookupCode(backend, uid, method, reference) {
+  const settings = await backend.adminGetAutomation();
+  if (settings.sms_auto !== true) return { auto: false };
+  if ((await backend.adminCodeFails(uid)) >= MAX_CODE_FAILS) return { auto: true, status: "blocked" };
+  const result = await findPayment(backend, settings, method, normalizeReference(reference));
+  if (result.status !== "ok") await backend.adminAddCodeFail(uid);
+  return { auto: true, ...result };
+}
+
+async function findPayment(backend, settings, method, ref) {
+  if (!/^[A-Z0-9]{6,40}$/.test(ref)) return { status: "invalid" };
+  if (await backend.adminReferenceUsed(ref)) return { status: "used" };
+  const official = (settings.senders || []).map(senderKey);
+  const found = (await Promise.all(["natcash", "moncash"].map((m) => backend.adminGetSms(`${m}_${ref}`))))
+    .filter((sms) => sms && sms.incoming && smsAmount(sms) > 0 && official.includes(senderKey(sms.sender)));
+  const sms = found.find((x) => x.method === method) || found[0];
+  if (!sms) return { status: "not-found" };
+  if (sms.status !== "new") return { status: "used" };
+  if (Date.now() - new Date(sms.received_at).getTime() > SMS_MAX_AGE_MS) return { status: "expired" };
+  return { status: "ok", method: sms.method, amount: smsAmount(sms) };
 }

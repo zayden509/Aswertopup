@@ -13,6 +13,7 @@ import {
 import { UserError } from "./errors.js";
 import { dayKey } from "./days.js";
 import { quote } from "./exchange.js";
+import { normalizeReference } from "./depositCheck.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // san 0/O/1/I pou kliyan yo pa konfonn yo
 const METHOD_NAMES = { moncash: "MonCash", natcash: "NatCash" };
@@ -24,9 +25,6 @@ function randomCode(length) {
 }
 
 const formatHtg = (n) => `${new Intl.NumberFormat("fr-FR").format(n)} HTG`;
-
-// Kòd tranzaksyon an san espas, tirè ni pwen, an majiskil: "2607-2853 633942" = "26072853633942"
-export const normalizeReference = (reference) => String(reference || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 
 // Sou yon rezo fèb (4G), premye demann koneksyon an ka echwe: nou eseye yon dezyèm fwa
 // anvan nou di kliyan an pa gen entènèt
@@ -86,6 +84,22 @@ export function createBackend(config, options = {}) {
     return uid;
   };
   let signupInFlight = null;
+
+  // Rele yon fonksyon sèvè (Vercel) kòm kliyan konekte a; null si l pa reponn
+  async function postApi(path, body) {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) return null;
+      const res = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      });
+      return res.ok ? await res.json() : null;
+    } catch {
+      return null;
+    }
+  }
 
   // Yon kòd tranzaksyon sèvi yon sèl fwa, NatCash kou MonCash (règ Firestore yo verifye l tou)
   const referenceUsed = async (ref, tx) => {
@@ -642,6 +656,25 @@ export function createBackend(config, options = {}) {
       return snap.exists() ? toPlain(snap) : null;
     },
 
+    adminReferenceUsed: (reference) => referenceUsed(reference),
+
+    // Konbyen kòd ki pa bon yon kliyan mete nan dènye èdtan an (pou pèsonn pa ka devine kòd)
+    async adminCodeFails(uid) {
+      const snap = await getDoc(doc(db, "codeChecks", uid));
+      const d = snap.exists() ? snap.data() : null;
+      return d && Date.now() - d.since.toMillis() < 3600000 ? d.fails : 0;
+    },
+
+    async adminAddCodeFail(uid) {
+      const ref = doc(db, "codeChecks", uid);
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        const d = snap.exists() ? snap.data() : null;
+        if (d && Date.now() - d.since.toMillis() < 3600000) tx.update(ref, { fails: d.fails + 1 });
+        else tx.set(ref, { fails: 1, since: new Date() });
+      });
+    },
+
     // Lòt depo ki gen menm kòd tranzaksyon an (nenpòt mòd peman)
     async adminDepositsByReference(reference) {
       const snap = await getDocs(query(collection(db, "deposits"), where("reference", "==", reference)));
@@ -678,20 +711,11 @@ export function createBackend(config, options = {}) {
     },
 
     // Kliyan an fin voye depo a: sèvè a gade si SMS NatCash/MonCash la deja rive
-    async requestDepositCheck(depositId) {
-      try {
-        const token = await auth.currentUser?.getIdToken();
-        if (!token) return null;
-        const res = await fetch("/api/sms-match", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ depositId }),
-        });
-        return res.ok ? await res.json() : null;
-      } catch {
-        return null;
-      }
-    },
+    requestDepositCheck: (depositId) => postApi("/api/sms-match", { depositId }),
+
+    // Anvan depo a: èske telefòn boutik la resevwa peman kòd sa a? San kòd: èske verifikasyon
+    // otomatik la limen ({ auto })
+    checkDepositCode: (method, reference) => postApi("/api/sms-lookup", reference === undefined ? {} : { method, reference }),
 
     // Pou fonksyon sèvè yo (bot admin nan)
     async adminIsAdmin(uid) {

@@ -281,6 +281,11 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Kòd ki pa bon chak kliyan eseye (sèvè a sèlman), pou pèsonn pa ka devine kòd tranzaksyon
+    match /codeChecks/{uid} {
+      allow read, write: if isAdmin();
+    }
+
     function validPayAccount(a) {
       return a == null || (a is map && a.keys().hasOnly(['number', 'name'])
         && a.number is string && a.number.matches('^([0-9]{8,15})?$')
