@@ -161,10 +161,10 @@ kòd pa janm konfime poukont li). Tout lòt depo yo rete nan **Depo** pou ou.
   `3577973060`), kidonk yon moun pa ka chanje ti detay pou reitilize l.
 - **MonCash:** SIM MonCash la (34431664) dwe nan menm telefòn Android ki gen httpSMS la (telefòn 2
   SIM mache). Lè yon SMS pa di si se NatCash oswa MonCash, sit la gade ki SIM ki resevwa l.
-- Sit la verifye kòd yon mòd peman otomatikman sèlman si l resevwa yon SMS ofisyèl mòd peman sa a
-  nan **7 dènye jou** yo (SIM nan konekte). Sinon kliyan an mete montan an ak kòd la, epi depo a
-  parèt nan **Panneau admin → Depo** pou w verifye l nan aplikasyon an epi konfime l: yon kliyan ki
-  peye pa janm bloke.
+- Lè konfimasyon otomatik la limen, kliyan an mete **kòd la sèlman**, pou NatCash kou MonCash.
+  **Panneau admin → Paramèt** montre si chak SIM konekte (✅ lè yon SMS ofisyèl rive nan 7 dènye
+  jou yo). Si yon SIM ⏸️, kat la di poukisa: okenn SMS pa rive (httpSMS), oswa SMS la soti nan
+  yon nimewo poko ofisyèl (bouton **Wi, se MonCash** fè l ofisyèl epi depo k ap tann yo pase).
   Règ Firestore yo verifye sa tou.
 - Nan **Panneau admin → Depo**, chak depo ki an atant montre sa SMS telefòn boutik la di:
   ✅ menm kòd ak menm montan · ⚠️ montan diferan, SMS twò ansyen (plis pase 24 è), nimewo ki pa

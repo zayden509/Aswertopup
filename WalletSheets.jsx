@@ -181,20 +181,23 @@ const CODE_PROBLEMS = {
   blocked: "Twòp kòd ki pa bon. Tann 1 è, oswa ekri nou sou WhatsApp.",
 };
 
-function CodeProblem({ text }) {
+function CodeProblem({ text, helpLink }) {
   return (
     <div role="alert" className="flex items-center gap-3 rounded-2xl bg-red-50 p-3.5 ring-1 ring-red-200 dark:bg-red-500/10 dark:ring-red-500/30">
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-red-100 text-lg font-extrabold text-red-600 dark:bg-red-500/20 dark:text-red-300">!</span>
       <div className="min-w-0">
         <p className="font-bold text-slate-900 dark:text-white">Vérification impossible</p>
         <p className="text-sm text-red-700 dark:text-red-300">{text}</p>
+        <a href={helpLink} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-sm font-semibold text-slate-700 underline underline-offset-2 dark:text-slate-200">
+          Ou peye deja? Ekri nou sou WhatsApp
+        </a>
       </div>
     </div>
   );
 }
 
-// Ki mòd peman sit la verifye otomatikman (SMS)? { natcash: true, moncash: false }. Lòt yo:
-// kliyan an mete montan an ak kòd la, epi admin nan konfime. Nou sonje repons lan pou pwochen fwa a.
+// Èske sit la verifye kòd yo otomatikman (SMS)? { natcash: true, moncash: true }: kliyan an mete kòd
+// la sèlman. Sinon li mete montan an ak kòd la, epi admin nan konfime. Nou sonje repons lan.
 let depositModes = null;
 
 export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) {
@@ -294,7 +297,7 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
               </p>
             )}
             {!auto && <Input id="deposit-amount" label="Montant envoyé (HTG)" icon={Banknote} inputMode="numeric" type="number" min="50" max="100000" step="1" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Ex. 1000" />}
-            {problem && <CodeProblem text={problem} />}
+            {problem && <CodeProblem text={problem} helpLink={waLink(supportMessage(problemText, profile))} />}
             <Input
               id="deposit-reference"
               label="TransCode ou Txn ID"

@@ -655,7 +655,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
         {tab === "messages" && <AdminMessages profiles={profiles} announcements={announcements} onToast={onToast} />}
         {tab === "team" && <AdminTeam me={me} profiles={profiles} onToast={onToast} />}
         {tab === "auto" && <AdminAuto account={account} supplierMap={supplierMap} onToast={onToast} />}
-        {tab === "settings" && <AdminSettings account={account} owner={owner} onToast={onToast} />}
+        {tab === "settings" && <AdminSettings account={account} owner={owner} onToast={onToast} onTrusted={recheckDeposits} />}
       </div>
     </div>
   );

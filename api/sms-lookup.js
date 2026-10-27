@@ -12,7 +12,7 @@ export async function POST(request) {
     const backend = await bot();
     if (reference === undefined) {
       const settings = await backend.adminGetAutomation();
-      return json({ ok: true, auto: settings.sms_auto === true, methods: await autoMethods(backend, settings) });
+      return json({ ok: true, auto: settings.sms_auto === true, methods: autoMethods(settings) });
     }
     if (!["natcash", "moncash"].includes(method) || typeof reference !== "string") return fail("Kòd la pa bon.");
     return json({ ok: true, ...(await lookupCode(backend, uid, method, reference.slice(0, 60))) });

@@ -25,11 +25,12 @@ export default function AdminSms({ owner, onToast, onTrusted }) {
   const accounts = Object.fromEntries(methods.map((m) => [m.id, m.number]));
   const official = (automation.senders || []).map(senderKey);
 
-  const trust = async (sender) => {
+  const trust = async (sender, method) => {
     try {
       await backend.adminSetAutomation({
         smsAuto: automation.sms_auto, maxAuto: automation.max_auto ?? 5000, senders: [...(automation.senders || []), sender],
       });
+      if (method) await backend.adminMarkSmsSeen(method);
       onToast(`${sender} se nimewo ofisyèl kounye a.`);
       // Depo ki t ap tann yon SMS nimewo sa a konfime poukont yo kounye a
       onTrusted?.();
@@ -68,7 +69,7 @@ export default function AdminSms({ owner, onToast, onTrusted }) {
                   <span className={`flex items-center gap-1 font-semibold ${tone}`}><Icon className="h-3.5 w-3.5" /> {label}</span>
                 </div>
                 {owner && !trusted && sms.incoming && sms.sender && (
-                  <AdminButton icon={ShieldCheck} onClick={() => trust(sms.sender)} className="h-8 text-xs">Se nimewo ofisyèl {sms.method === "moncash" ? "MonCash" : "NatCash"}</AdminButton>
+                  <AdminButton icon={ShieldCheck} onClick={() => trust(sms.sender, sms.method)} className="h-8 text-xs">Se nimewo ofisyèl {sms.method === "moncash" ? "MonCash" : "NatCash"}</AdminButton>
                 )}
               </li>
             );

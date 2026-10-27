@@ -8,7 +8,7 @@
 //   - SMS sa a poko sèvi pou yon lòt depo, e okenn lòt depo pa deja konfime ak menm kòd la
 //   - SMS la rive mwens pase 24 è anvan oswa apre depo a (pa yon ansyen tranzaksyon)
 import crypto from "node:crypto";
-import { SMS_MAX_AGE_MS, duplicateOf, isPhoneNumber, normalizeReference, smsAmount, smsConnected, smsTooOld } from "../../depositCheck.js";
+import { SMS_MAX_AGE_MS, duplicateOf, isPhoneNumber, normalizeReference, smsAmount, smsTooOld } from "../../depositCheck.js";
 import { isOperatorSender, methodForReceiver, parsePaymentSms, senderKey } from "../../smsParse.js";
 import { accountNumbers } from "../../paymentAccounts.js";
 
@@ -83,25 +83,21 @@ export async function tryConfirm(backend, sms, deposit) {
 // Yon kliyan ka mete 8 kòd ki pa bon pa èdtan: pi plis, li bloke pou yon ti tan (pou l pa devine kòd)
 const MAX_CODE_FAILS = 8;
 
-// Ki mòd peman sit la verifye otomatikman: konfimasyon otomatik limen, e sit la resevwa SMS
-// mòd peman sa a dènyèman (SIM nan konekte nan httpSMS)
-export async function autoMethods(backend, settings) {
-  if (settings.sms_auto !== true) return { natcash: false, moncash: false };
-  const seen = await backend.adminSmsSeen();
-  return { natcash: smsConnected(seen.natcash), moncash: smsConnected(seen.moncash) };
-}
+// Ki mòd peman kliyan an peye ak kòd la sèlman (montan an soti nan SMS la): tout, lè
+// konfimasyon otomatik la limen
+export const autoMethods = (settings) => {
+  const on = settings.sms_auto === true;
+  return { natcash: on, moncash: on };
+};
 
 // Kliyan an mete kòd tranzaksyon li anvan depo a: èske telefòn boutik la resevwa peman sa a?
-// Retounen { auto: false } si sit la pa ka verifye mòd peman sa a: kliyan an mete montan an, epi
-// depo a ale kote admin nan kòm anvan.
+// Retounen { auto: false } si konfimasyon otomatik la etenn (kliyan an mete montan an, admin nan konfime).
 export async function lookupCode(backend, uid, method, reference) {
   const settings = await backend.adminGetAutomation();
   if (settings.sms_auto !== true) return { auto: false };
   // Si règ Firestore yo poko pibliye (koleksyon codeChecks la), verifikasyon an mache kanmenm
   if ((await backend.adminCodeFails(uid).catch(() => 0)) >= MAX_CODE_FAILS) return { auto: true, status: "blocked" };
   const result = await findPayment(backend, settings, method, normalizeReference(reference));
-  // SMS mòd peman sa a pa rive sou sit la (ex. SIM MonCash la pa nan telefòn httpSMS la)
-  if (result.status === "not-found" && !(await autoMethods(backend, settings))[method]) return { auto: false };
   if (result.status !== "ok") await backend.adminAddCodeFail(uid).catch(() => {});
   return { auto: true, ...result };
 }

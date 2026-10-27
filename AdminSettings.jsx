@@ -3,6 +3,7 @@ import { Save, Lock, Eye, MessageSquareText, X, Copy } from "lucide-react";
 import { backend, errorText } from "./backend.js";
 import { ErrorNote, copyText, formatDateTime } from "./ui.jsx";
 import { smsConnected } from "./depositCheck.js";
+import { isOperatorSender, methodForReceiver, parsePaymentSms, senderKey } from "./smsParse.js";
 import { usePaymentMethods } from "./payments.js";
 import { Card, Field, Toggle, AdminButton, inputClass } from "./adminUi.jsx";
 
@@ -106,7 +107,45 @@ function Preview() {
 }
 
 // Depo otomatik ak SMS (httpSMS): limen/etenn, nimewo ofisyèl ki voye SMS yo, limit la
-function SmsAutomation({ owner, onToast }) {
+// Poukisa yon SIM poko otomatik: sa sit la wè nan dènye SMS ki rive sou SIM sa a
+// Dènye SMS ki rive sou SIM yon mòd peman (SMS sit la pa t konprann yo li yo ankò)
+function smsOnSim(recent, id, accounts) {
+  return recent
+    .map((s) => (s.id.startsWith("msg_") && s.status === "new" ? { ...s, ...parsePaymentSms(s.content, s.sender, methodForReceiver(s.phone, accounts)) } : s))
+    .filter((s) => s.method === id || methodForReceiver(s.phone, accounts) === id);
+}
+
+const isTrusted = (sender, official) => isOperatorSender(sender) || official.includes(senderKey(sender));
+
+function SimDiagnosis({ name, number, onSim, official, owner, onTrust, id }) {
+  const untrusted = onSim.find((s) => s.incoming && s.amount && s.reference && !isTrusted(s.sender, official));
+  if (untrusted) {
+    return (
+      <div className="mt-2 space-y-1.5 text-xs">
+        <p>Sit la resevwa SMS {name} soti nan <b>{untrusted.sender || "?"}</b> ({formatDateTime(untrusted.received_at)}), men nimewo sa a poko ofisyèl:</p>
+        <p className="rounded-lg bg-white/70 p-2 text-slate-600 dark:bg-slate-900 dark:text-slate-300">{untrusted.content}</p>
+        {owner && <AdminButton tone="success" onClick={() => onTrust(untrusted.sender, id)} className="h-8 text-xs">Wi, se {name} · fè l otomatik</AdminButton>}
+      </div>
+    );
+  }
+  if (onSim.length) {
+    const last = onSim[0];
+    return (
+      <div className="mt-2 space-y-1.5 text-xs">
+        <p>Dènye SMS sou SIM {name} la ({formatDateTime(last.received_at)}, soti nan {last.sender || "?"}): sit la pa konprann li kòm yon peman. Voye foto SMS sa a bay moun ki fè sit la.</p>
+        <p className="rounded-lg bg-white/70 p-2 text-slate-600 dark:bg-slate-900 dark:text-slate-300">{last.content}</p>
+      </div>
+    );
+  }
+  return (
+    <p className="mt-2 text-xs">
+      Okenn SMS poko rive sou SIM {name} la ({number}). Nan aplikasyon httpSMS la, nimewo SIM sa a dwe anrejistre (SIM1 oswa
+      SIM2), ak "incoming messages" ak "outgoing messages" limen pou SIM sa a; sou httpsms.com, chwazi 2 nimewo yo nan webhook la.
+    </p>
+  );
+}
+
+function SmsAutomation({ owner, onToast, onTrusted }) {
   const [saved, setSaved] = useState(null);
   const [form, setForm] = useState({ smsAuto: false, senders: [], maxAuto: "5000" });
   const [sender, setSender] = useState("");
@@ -115,6 +154,25 @@ function SmsAutomation({ owner, onToast }) {
   const webhook = `${window.location.origin}/api/sms-webhook`;
   const [seen, setSeen] = useState({});
   useEffect(() => backend.subscribeSmsSeen(setSeen), []);
+  const [recent, setRecent] = useState([]);
+  useEffect(() => backend.subscribeSms(setRecent), []);
+  const methods = usePaymentMethods();
+  const accounts = Object.fromEntries(methods.map((m) => [m.id, m.number]));
+
+  // Pwopriyetè a di "se MonCash sa a": nimewo a vin ofisyèl, SIM nan konekte, e depo ki t ap tann
+  // SMS li yo konfime poukont yo
+  const trustSender = async (sender, method) => {
+    try {
+      await backend.adminSetAutomation({
+        smsAuto: Boolean(saved?.sms_auto), maxAuto: saved?.max_auto ?? 5000, senders: [...(saved?.senders || []), sender],
+      });
+      await backend.adminMarkSmsSeen(method);
+      onToast(`${sender} se nimewo ofisyèl kounye a.`);
+      onTrusted?.();
+    } catch (err) {
+      onToast(errorText(err));
+    }
+  };
 
   useEffect(() => backend.subscribeAutomation((a) => {
     setSaved(a);
@@ -149,11 +207,18 @@ function SmsAutomation({ owner, onToast }) {
       <div className="space-y-4">
         <ul className="grid gap-2 sm:grid-cols-2" data-testid="sms-connected">
           {[["natcash", "NatCash"], ["moncash", "MonCash"]].map(([id, name]) => {
-            const on = smsConnected(seen[id]);
+            const official = (saved?.senders || []).map(senderKey);
+            const onSim = smsOnSim(recent, id, accounts);
+            // Dènye SMS ofisyèl: make sit la mete a, oswa yon SMS ofisyèl ki nan lis la
+            const last = [seen[id], onSim.find((x) => isTrusted(x.sender, official))?.received_at].filter(Boolean).sort().pop();
+            const on = smsConnected(last);
             return (
-              <li key={id} className={`rounded-xl px-3 py-2 text-sm ring-1 ${on ? "bg-emerald-50 text-emerald-800 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30" : "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-950/40 dark:text-slate-300 dark:ring-slate-800"}`}>
+              <li key={id} className={`rounded-xl px-3 py-2 text-sm ring-1 ${on ? "bg-emerald-50 text-emerald-800 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30" : "bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-100 dark:ring-amber-500/30"}`}>
                 <span className="font-semibold">{on ? "✅" : "⏸️"} {name}</span>
-                <span className="block text-xs">{on ? `Otomatik · dènye SMS ${formatDateTime(seen[id])}` : "Sit la poko resevwa SMS li: depo yo ale kote ou"}</span>
+                <span className="block text-xs">{on ? `Otomatik · dènye SMS ${formatDateTime(last)}` : "Sit la poko resevwa yon SMS ofisyèl sou SIM sa a: kòd kliyan yo p ap jwenn."}</span>
+                {!on && (
+                  <SimDiagnosis id={id} name={name} number={accounts[id]} onSim={onSim} official={official} owner={owner} onTrust={trustSender} />
+                )}
               </li>
             );
           })}
@@ -210,12 +275,12 @@ function SmsAutomation({ owner, onToast }) {
   );
 }
 
-export default function AdminSettings({ owner, onToast }) {
+export default function AdminSettings({ owner, onToast, onTrusted }) {
   return (
     <div className="space-y-4">
       <PaymentNumbers owner={owner} onToast={onToast} />
       <Preview />
-      <SmsAutomation owner={owner} onToast={onToast} />
+      <SmsAutomation owner={owner} onToast={onToast} onTrusted={onTrusted} />
     </div>
   );
 }
