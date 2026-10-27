@@ -192,8 +192,9 @@ function CodeProblem({ text }) {
   );
 }
 
-// Èske sit la verifye kòd yo otomatikman (SMS)? Nou sonje repons lan pou pwochen fwa a
-let depositAuto = null;
+// Ki mòd peman sit la verifye otomatikman (SMS)? { natcash: true, moncash: false }. Lòt yo:
+// kliyan an mete montan an ak kòd la, epi admin nan konfime. Nou sonje repons lan pou pwochen fwa a.
+let depositModes = null;
 
 export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) {
   const methods = usePaymentMethods();
@@ -204,14 +205,15 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(null);
-  const [auto, setAuto] = useState(depositAuto);
+  const [modes, setModes] = useState(depositModes);
   const [problem, setProblem] = useState("");
+  const auto = Boolean(modes?.[method.id]);
 
   useEffect(() => {
     let stale = false;
     backend.checkDepositCode().then((r) => {
-      depositAuto = Boolean(r?.auto);
-      if (!stale) setAuto(depositAuto);
+      depositModes = r?.methods || { natcash: Boolean(r?.auto), moncash: Boolean(r?.auto) };
+      if (!stale) setModes(depositModes);
     });
     return () => { stale = true; };
   }, []);
@@ -239,8 +241,8 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
         const found = await backend.checkDepositCode(method.id, reference);
         if (!found) throw new UserError("Nou pa ka verifye kòd la kounye a. Tcheke entènèt ou epi eseye ankò.");
         if (found.auto === false) {
-          depositAuto = false;
-          setAuto(false);
+          depositModes = { ...depositModes, [method.id]: false };
+          setModes(depositModes);
           throw new UserError("Mete montan ou voye a, epi peze Valider ankò.");
         }
         if (found.status !== "ok") {

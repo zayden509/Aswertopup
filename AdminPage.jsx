@@ -9,7 +9,7 @@ import { backend, errorText } from "./backend.js";
 import { StatusChip, ErrorNote, ProductArt, formatPrice, formatDateTime, orderStatus, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
 import { Chips, CopyText, Empty, AdminButton, SectionHead, panel, inputClass, normalize } from "./adminUi.jsx";
 import { productForPackage, packageNameFixes } from "./catalog.js";
-import { duplicateOf, smsAmount, smsTooOld } from "./depositCheck.js";
+import { duplicateOf, smsAmount, smsConnected, smsTooOld } from "./depositCheck.js";
 import { isOperatorSender, senderKey } from "./smsParse.js";
 import AdminDashboard from "./AdminDashboard.jsx";
 import AdminCustomers from "./AdminCustomers.jsx";
@@ -277,14 +277,15 @@ const BAD_REFERENCE_NOTE = "ID tranzaksyon an pa bon oswa li deja itilize. Voye 
 const methodName = (id) => PAYMENT_METHODS.find((m) => m.id === id)?.name || id;
 
 // Sa telefòn boutik la (SMS httpSMS) di sou kòd tranzaksyon yon depo: [ton, tèks]
-function depositProblems(deposit, smsList, deposits, automation) {
+// `seen`: dènye fwa sit la resevwa yon SMS chak mòd peman ({ natcash, moncash })
+function depositProblems(deposit, smsList, deposits, automation, seen) {
   const dup = duplicateOf(deposit, deposits);
   if (dup) return [["bad", `Kòd sa a deja sèvi pou yon depo ki konfime ${formatDateTime(dup.created_at)}. Pa konfime l.`]];
   const sms = smsList.find((x) => x.method === deposit.method) || smsList[0];
   const name = methodName(deposit.method);
   if (!sms) {
-    const smsOn = automation.sms_auto || (automation.senders || []).length > 0;
-    return smsOn ? [["unknown", `Pa gen SMS ${name} ak kòd sa a sou telefòn boutik la. Kòd la ka pa bon: verifye nan ${name} anvan w konfime.`]] : [];
+    if (!smsConnected(seen?.[deposit.method])) return [["unknown", `Sit la pa resevwa SMS ${name} yo: gade nan aplikasyon ${name} ou si ID sa a ak montan sa a rive anvan w konfime.`]];
+    return [["unknown", `Pa gen SMS ${name} ak kòd sa a sou telefòn boutik la. Kòd la ka pa bon: verifye nan ${name} anvan w konfime.`]];
   }
   if (sms.status === "used" && sms.deposit_id !== deposit.id) return [["bad", "SMS kòd sa a deja sèvi pou yon lòt depo. Pa konfime l."]];
   const out = [];
@@ -304,11 +305,11 @@ const VERDICT_STYLE = {
   unknown: ["text-slate-700 bg-white ring-slate-200 dark:text-slate-300 dark:bg-slate-900 dark:ring-slate-700", CircleHelp],
 };
 
-function DepositCheck({ deposit, deposits, automation, onBadNote }) {
+function DepositCheck({ deposit, deposits, automation, seen, onBadNote }) {
   const [smsList, setSmsList] = useState(null);
   useEffect(() => backend.subscribeSmsFor(deposit.reference, setSmsList), [deposit.reference]);
   if (smsList === null) return null;
-  const problems = depositProblems(deposit, smsList, deposits, automation);
+  const problems = depositProblems(deposit, smsList, deposits, automation, seen);
   if (!problems.length) return null;
   const doubtful = problems.some(([tone]) => tone !== "ok");
   return (
@@ -330,7 +331,7 @@ function DepositCheck({ deposit, deposits, automation, onBadNote }) {
   );
 }
 
-function DepositCard({ deposit, deposits, automation, profile, onToast }) {
+function DepositCard({ deposit, deposits, automation, seen, profile, onToast }) {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -370,7 +371,7 @@ function DepositCard({ deposit, deposits, automation, profile, onToast }) {
       {deposit.status === "pending" && (
         <div className="space-y-2 border-t border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/30">
           <p className="text-sm text-slate-500 dark:text-slate-400">Verifye nan {method?.name} ou ke tranzaksyon sa a rive anvan w konfime.</p>
-          <DepositCheck deposit={deposit} deposits={deposits} automation={automation} onBadNote={() => setNote(BAD_REFERENCE_NOTE)} />
+          <DepositCheck deposit={deposit} deposits={deposits} automation={automation} seen={seen} onBadNote={() => setNote(BAD_REFERENCE_NOTE)} />
           <input
             id={`dnote-${deposit.id}`}
             value={note}
@@ -468,6 +469,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   const [announcements, setAnnouncements] = useState([]);
   const [supplierMap, setSupplierMap] = useState({});
   const [automation, setAutomation] = useState({});
+  const [smsSeen, setSmsSeen] = useState({});
   const [loading, setLoading] = useState(true);
   const [epoch, setEpoch] = useState(0); // bouton 🔄: rekòmanse koute done yo
   const [orderFilter, setOrderFilter] = useState("all");
@@ -495,6 +497,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   // Ki pake ki otomatik (FazerCards)
   useEffect(() => backend.subscribeSupplierMap(setSupplierMap), [epoch]);
   useEffect(() => backend.subscribeAutomation(setAutomation), [epoch]);
+  useEffect(() => backend.subscribeSmsSeen(setSmsSeen), [epoch]);
 
   // Livrezon otomatik san bouton: yon kòmand otomatik ki poko rive kote FazerCards (oswa ki te
   // bloke sou yon erè), oswa ki rete "an kou" twò lontan, voye/verifye poukont li yon fwa
@@ -623,7 +626,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
           <>
             <ul className="space-y-3">
               {sortedDeposits.map((d) => (
-                <DepositCard key={`${d.id}-${d.status}`} deposit={d} deposits={deposits} automation={automation} profile={profiles[d.user_id]} onToast={onToast} />
+                <DepositCard key={`${d.id}-${d.status}`} deposit={d} deposits={deposits} automation={automation} seen={smsSeen} profile={profiles[d.user_id]} onToast={onToast} />
               ))}
             </ul>
             {!loading && deposits.length === 0 && <Empty>Pa gen depo ankò.</Empty>}

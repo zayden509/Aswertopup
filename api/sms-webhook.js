@@ -1,7 +1,7 @@
 // POST /api/sms-webhook — httpSMS voye chak SMS telefòn Android lan resevwa isit la.
 // Si se yon SMS NatCash/MonCash pou kòb ou resevwa, sit la anrejistre l epi li konfime depo ki koresponn lan.
 import { SetupError, bot, fail, json, resetBotOnDenied } from "./_lib/autotopup.js";
-import { readSms, smsId, tryConfirm, verifyJwt } from "./_lib/sms.js";
+import { isOfficial, readSms, smsId, tryConfirm, verifyJwt } from "./_lib/sms.js";
 
 export async function POST(request) {
   const secret = process.env.HTTPSMS_SIGNING_KEY;
@@ -26,6 +26,8 @@ export async function POST(request) {
       content: data.encrypted ? "(SMS chifre: dezaktive chifreman an nan httpSMS)" : content,
     };
     const sms = await backend.adminSaveSms(smsId(record), record);
+    // Yon SMS ofisyèl NatCash/MonCash rive: SIM sa a konekte, sit la ka verifye kòd li yo
+    if (parsed.method && isOfficial(await backend.adminGetAutomation(), record.sender)) await backend.adminMarkSmsSeen(parsed.method);
     let result = { confirmed: false, reason: "no-deposit" };
     if (parsed.method && parsed.reference) {
       const deposit = await backend.adminFindDepositByRef(parsed.method, parsed.reference);

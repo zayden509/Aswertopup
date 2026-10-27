@@ -629,6 +629,24 @@ export function createBackend(config, options = {}) {
 
     adminDeleteSms: (id) => deleteDoc(doc(db, "smsPayments", id)),
 
+    // Dènye fwa sit la resevwa yon SMS ofisyèl NatCash/MonCash (SIM nan konekte nan httpSMS).
+    // Dokiman "seen_…" yo pa gen received_at: yo pa parèt nan lis SMS yo.
+    adminMarkSmsSeen: (method) => setDoc(doc(db, "smsPayments", `seen_${method}`), { last_at: serverTimestamp() }),
+
+    async adminSmsSeen() {
+      const snaps = await Promise.all(["natcash", "moncash"].map((m) => getDoc(doc(db, "smsPayments", `seen_${m}`))));
+      return { natcash: snaps[0].exists() ? toPlain(snaps[0]).last_at : null, moncash: snaps[1].exists() ? toPlain(snaps[1]).last_at : null };
+    },
+
+    subscribeSmsSeen(callback) {
+      const seen = {};
+      const stops = ["natcash", "moncash"].map((m) => onSnapshot(doc(db, "smsPayments", `seen_${m}`), (snap) => {
+        seen[m] = snap.exists() ? toPlain(snap).last_at : null;
+        callback({ ...seen });
+      }, (error) => console.error("sms seen", error)));
+      return () => stops.forEach((stop) => stop());
+    },
+
     // Nimewo MonCash/NatCash ki nan Paramèt ({} si pwopriyetè a poko chanje yo)
     async adminGetPayments() {
       const snap = await getDoc(doc(db, "settings", "payments"));
