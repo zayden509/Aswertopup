@@ -32,6 +32,8 @@ import tiktokImg from "./img/tiktok.jpg";
 import paypalImg from "./img/paypal.jpg";
 import moncashImg from "./img/moncash.jpg";
 import natcashImg from "./img/natcash.jpg";
+import moncashGuide from "./img/guide-moncash.jpg";
+import natcashGuide from "./img/guide-natcash.jpg";
 import bannerTutoriel from "./img/banners/tutoriel.jpg";
 import bannerFreeFire from "./img/banners/free-fire.jpg";
 import bannerPeman from "./img/banners/peman.jpg";
@@ -51,10 +53,10 @@ export const RANKS = [
 
 /* ============ PEMAN ============ */
 // `number` se nimewo kote kliyan yo voye kòb la. Si l vid, sit la di kliyan an
-// mande nimewo a sou WhatsApp.
+// mande nimewo a sou WhatsApp. `guide`: foto ki montre kote kòd tranzaksyon an ye nan SMS la.
 export const PAYMENT_METHODS = [
-  { id: "moncash", name: "MonCash", logo: moncashImg, number: DEFAULT_ACCOUNTS.moncash.number, holder: DEFAULT_ACCOUNTS.moncash.name, recommended: true, note: "Peye ak kont MonCash ou" },
-  { id: "natcash", name: "NatCash", logo: natcashImg, number: DEFAULT_ACCOUNTS.natcash.number, holder: DEFAULT_ACCOUNTS.natcash.name, note: "Peye ak kont NatCash ou" },
+  { id: "moncash", name: "MonCash", logo: moncashImg, number: DEFAULT_ACCOUNTS.moncash.number, holder: DEFAULT_ACCOUNTS.moncash.name, recommended: true, note: "Peye ak kont MonCash ou", guide: moncashGuide },
+  { id: "natcash", name: "NatCash", logo: natcashImg, number: DEFAULT_ACCOUNTS.natcash.number, holder: DEFAULT_ACCOUNTS.natcash.name, note: "Peye ak kont NatCash ou", guide: natcashGuide },
 ];
 
 /* ============ PWODWI ============ */

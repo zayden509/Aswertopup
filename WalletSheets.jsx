@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Plus, Send, ChevronRight, BookOpen, Copy, CheckCircle2, Loader2, Hash, Banknote, UserRound, AlertTriangle, ShieldCheck } from "lucide-react";
 import { PAYMENT_METHODS, VIDEO_TUTORIAL_URL } from "./data.js";
 import { backend, errorText } from "./backend.js";
@@ -222,8 +222,12 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
     return () => { stale = true; };
   }, []);
 
+  // Foto egzanp lan (kote kòd tranzaksyon an ye nan SMS la), anba fòm lan
+  const guideRef = useRef(null);
+  const showGuide = () => guideRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   const openTutorial = () => {
     if (VIDEO_TUTORIAL_URL) openExternal(VIDEO_TUTORIAL_URL);
+    else if (method.guide) showGuide();
     else onToast("Videyo a poko disponib, li ap vini byento.");
   };
 
@@ -311,6 +315,11 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
               placeholder="Ex. 26072853633942"
               autoComplete="off"
             />
+            {method.guide && (
+              <button type="button" onClick={showGuide} className="-mt-2 text-sm font-semibold text-sky-600 hover:underline dark:text-sky-400">
+                Kote m jwenn kòd la? Gade egzanp lan
+              </button>
+            )}
             <ErrorNote>{error}</ErrorNote>
             <button type="submit" disabled={busy || !method.number} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 hover:bg-sky-600 disabled:opacity-60">
               {busy && <Loader2 className="h-5 w-5 animate-spin" />} Valider mon dépôt
@@ -330,6 +339,18 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
               Yon pwoblèm?
             </a>
           </div>
+
+          {method.guide && (
+            <img
+              ref={guideRef}
+              src={method.guide}
+              alt={`Kijan pou w jwenn kòd tranzaksyon ${method.name} la nan SMS la`}
+              width="853"
+              height="1280"
+              loading="lazy"
+              className="w-full scroll-mt-4 rounded-2xl ring-1 ring-slate-200 dark:ring-slate-800"
+            />
+          )}
         </form>
       )}
     </Sheet>
