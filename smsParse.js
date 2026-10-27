@@ -18,9 +18,11 @@ export const OPERATOR_SENDERS = ["natcom", "natcash", "moncash", "digicel"];
 // Nimewo/non ki voye SMS la, san espas ni "+", pou n konpare l ak lis ofisyèl la
 export const senderKey = (sender) => String(sender || "").replace(/[\s+()-]/g, "").toLowerCase();
 
-// "NATCOM", "MonCash", "MONCASH INFO"…: yon non (pa yon nimewo) ki gen non operatè a ladan l
+// "NATCOM", "MonCash", "MONCASH INFO"…: yon non (pa yon nimewo) ki gen non operatè a ladan l,
+// oswa yon kout nimewo operatè (3 a 6 chif, ex. "202"): yon telefòn moun gen 8 chif oswa plis
 export function isOperatorSender(sender) {
   const key = senderKey(sender);
+  if (/^\d{3,6}$/.test(key)) return true;
   return /[a-z]/.test(key) && OPERATOR_SENDERS.some((name) => key.includes(name));
 }
 
@@ -44,6 +46,8 @@ const AMOUNT_AFTER = new RegExp(String.raw`(?:HTG|Gdes?|gourdes?)\s*:?\s*` + NUM
 const AMOUNT_BEFORE = new RegExp(NUMBER + String.raw`\s*` + CURRENCY, "i");
 // "Votre solde: 1,438.7 HTG" se sa ki rete sou kont lan, pa kòb ou resevwa a
 const BALANCE = new RegExp(String.raw`\b(?:solde|balance|sold)\b[^0-9]{0,30}` + NUMBER + String.raw`\s*` + CURRENCY + "?", "gi");
+// "Frais: HTG 0.00", "Taxe 0.00 HTG": se pa kòb ou resevwa a non plis
+const FEES = new RegExp(String.raw`\b(?:frais|fees?|taxes?|komisyon)\b[^0-9]{0,15}` + NUMBER + String.raw`\s*` + CURRENCY + "?", "gi");
 
 // Kòd la vin apre "TransCode", "Trans ID", "Transaction ID", "ID tranzaksyon", "Txn ID"…
 const STRONG_LABEL = String.raw`(?:id|n[o°]\.?|num[ée]ro|nimewo)\s*(?:de\s+)?(?:la\s+)?tran[sz]a[ck]?[st]?[iy]on|trans(?:action)?\s*(?:code|id|no\.?|n°|#)|transcode|txn\s*(?:id)?`;
@@ -79,7 +83,7 @@ function findReference(text) {
 export function parsePaymentSms(content, sender = "", receiverMethod = null) {
   const text = String(content || "").replace(/\s+/g, " ").trim();
   const method = METHODS.find(([, re]) => re.test(text) || re.test(String(sender)))?.[0] || receiverMethod || null;
-  const body = text.replace(BALANCE, " ");
+  const body = text.replace(BALANCE, " ").replace(FEES, " ");
   const amountMatch = AMOUNT_AFTER.exec(body) || AMOUNT_BEFORE.exec(body);
   return {
     method,

@@ -15,6 +15,7 @@ import Footer from "./Footer.jsx";
 import AuthSheet from "./AuthSheet.jsx";
 import { DepositSheet, TransferSheet } from "./WalletSheets.jsx";
 import { NotificationsSheet, LiveToast } from "./Notifications.jsx";
+import { newVersionAvailable } from "./updateCheck.js";
 
 // Si yon nouvo vèsyon sit la soti pandan paj la louvri, ansyen fichye yo pa egziste ankò:
 // nou rechaje paj la (yon fwa pa minit) olye nou kite l kase
@@ -293,6 +294,19 @@ export default function App() {
   const [localOrders, setLocalOrders] = useState(loadOrders);
   const [panel, setPanel] = useState(null); // "notifications" | "deposit" | "transfer" | "install"
   const [menuOpen, setMenuOpen] = useState(false);
+  // Vercel pibliye yon nouvo vèsyon pandan paj la louvri: nou mande moun nan rechaje
+  const [updateReady, setUpdateReady] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      if (document.visibilityState === "visible") newVersionAvailable().then((yes) => yes && setUpdateReady(true));
+    };
+    const timer = setInterval(check, 10 * 60000);
+    document.addEventListener("visibilitychange", check);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", check);
+    };
+  }, []);
   // AWENS-ID ki soti nan yon kòd QR (?pay=XXXXXXXX): nou louvri "Envoyer" ak ID a deja ekri
   const [payCode, setPayCode] = useState(() => {
     const code = new URLSearchParams(window.location.search).get("pay")?.toUpperCase() || "";
@@ -445,6 +459,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-white">
+      {updateReady && (
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="fixed inset-x-0 top-2 z-50 mx-auto flex w-fit items-center gap-2 rounded-full bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-lg"
+        >
+          Nouvo vèsyon sit la disponib · <span className="underline underline-offset-2">Rechaje</span>
+        </button>
+      )}
       {/* Pa gen flou (backdrop-blur) sou ba ki rete fiks yo: sa fè paj la woule pi lis sou telefòn */}
       {!adminView && (
         <header className="sticky top-0 z-30 bg-slate-100/95 dark:bg-slate-950/95">

@@ -522,6 +522,22 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
     });
   }, [orders, supplierMap]);
 
+  // Depo ki an atant (mwens pase 24 è): sèvè a tcheke ankò si SMS yo a rive, oswa si nimewo ki
+  // voye l la fèk vin ofisyèl. Si tout bagay koresponn, depo a konfime poukont li, san bouton.
+  const rechecked = useRef(new Set());
+  const [recheckRound, setRecheckRound] = useState(0);
+  useEffect(() => {
+    deposits.forEach((d) => {
+      if (d.status !== "pending" || rechecked.current.has(d.id) || Date.now() - Date.parse(d.created_at) > 86400000) return;
+      rechecked.current.add(d.id);
+      backend.requestDepositCheck(d.id);
+    });
+  }, [deposits, recheckRound]);
+  const recheckDeposits = () => {
+    rechecked.current.clear();
+    setRecheckRound((n) => n + 1);
+  };
+
   // Lè non yon pwodwi chanje sou sit la, pake li yo nan baz done a swiv li (kòmand ki deja fèt yo pa chanje)
   const nameFixes = useMemo(() => packageNameFixes(account.prices, account.catalog.products), [account.prices, account.catalog.products]);
   useEffect(() => {
@@ -631,7 +647,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
               ))}
             </ul>
             {!loading && deposits.length === 0 && <Empty>Pa gen depo ankò.</Empty>}
-            <AdminSms owner={owner} onToast={onToast} />
+            <AdminSms owner={owner} onToast={onToast} onTrusted={recheckDeposits} />
           </>
         )}
         {tab === "customers" && <AdminCustomers profiles={profiles} orders={allOrders} deposits={deposits} onToast={onToast} />}

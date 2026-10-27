@@ -16,7 +16,7 @@ function smsState(sms) {
 }
 
 // Dènye SMS NatCash/MonCash telefòn boutik la resevwa (httpSMS)
-export default function AdminSms({ owner, onToast }) {
+export default function AdminSms({ owner, onToast, onTrusted }) {
   const [list, setList] = useState(null);
   const [automation, setAutomation] = useState({});
   useEffect(() => backend.subscribeSms(setList), []);
@@ -31,6 +31,8 @@ export default function AdminSms({ owner, onToast }) {
         smsAuto: automation.sms_auto, maxAuto: automation.max_auto ?? 5000, senders: [...(automation.senders || []), sender],
       });
       onToast(`${sender} se nimewo ofisyèl kounye a.`);
+      // Depo ki t ap tann yon SMS nimewo sa a konfime poukont yo kounye a
+      onTrusted?.();
     } catch (error) {
       onToast(errorText(error));
     }
