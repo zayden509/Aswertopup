@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Save, Lock, Eye, MessageSquareText, X, Copy } from "lucide-react";
 import { backend, errorText } from "./backend.js";
-import { ErrorNote, copyText } from "./ui.jsx";
+import { ErrorNote, copyText, formatDateTime } from "./ui.jsx";
+import { smsConnected } from "./depositCheck.js";
 import { usePaymentMethods } from "./payments.js";
 import { Card, Field, Toggle, AdminButton, inputClass } from "./adminUi.jsx";
 
@@ -112,6 +113,8 @@ function SmsAutomation({ owner, onToast }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const webhook = `${window.location.origin}/api/sms-webhook`;
+  const [seen, setSeen] = useState({});
+  useEffect(() => backend.subscribeSmsSeen(setSeen), []);
 
   useEffect(() => backend.subscribeAutomation((a) => {
     setSaved(a);
@@ -144,11 +147,23 @@ function SmsAutomation({ owner, onToast }) {
       subtitle="Ak httpSMS sou telefòn Android ki gen SIM NatCash/MonCash la, sit la li SMS peman yo epi li konfime depo yo poukont li."
     >
       <div className="space-y-4">
+        <ul className="grid gap-2 sm:grid-cols-2" data-testid="sms-connected">
+          {[["natcash", "NatCash"], ["moncash", "MonCash"]].map(([id, name]) => {
+            const on = smsConnected(seen[id]);
+            return (
+              <li key={id} className={`rounded-xl px-3 py-2 text-sm ring-1 ${on ? "bg-emerald-50 text-emerald-800 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30" : "bg-slate-50 text-slate-600 ring-slate-200 dark:bg-slate-950/40 dark:text-slate-300 dark:ring-slate-800"}`}>
+                <span className="font-semibold">{on ? "✅" : "⏸️"} {name}</span>
+                <span className="block text-xs">{on ? `Otomatik · dènye SMS ${formatDateTime(seen[id])}` : "Sit la poko resevwa SMS li: depo yo ale kote ou"}</span>
+              </li>
+            );
+          })}
+        </ul>
         <div className="rounded-xl bg-slate-50 p-3 text-sm ring-1 ring-slate-200 dark:bg-slate-950/40 dark:ring-slate-800">
           <p className="font-medium text-slate-700 dark:text-slate-200">Adrès webhook la (pou httpSMS)</p>
           <button type="button" onClick={() => copyText(webhook, onToast)} className="mt-1 flex max-w-full items-center gap-2 font-mono text-sky-600 dark:text-sky-400">
             <span className="truncate">{webhook}</span> <Copy className="h-4 w-4 shrink-0" />
           </button>
+          <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Sou httpsms.com, webhook la dwe gen <b>2 nimewo yo</b> (NatCash ak MonCash) nan "Phone numbers".</p>
         </div>
 
         <fieldset disabled={!owner} className="space-y-4">

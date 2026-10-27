@@ -172,16 +172,23 @@ kòd pa janm konfime poukont li). Tout lòt depo yo rete nan **Depo** pou ou.
   **"ID tranzaksyon an pa bon"** ranpli nòt refi a pou kliyan an.
 
 ### Konfigirasyon (yon sèl fwa)
-1. Sou telefòn **Android** ki gen SIM NatCash la: enstale **httpSMS** (Google Play), epi
-   konekte l ak kont ou sou httpsms.com (kle API ki nan **Settings** sit httpsms.com la).
-   Kite aplikasyon an li SMS yo, epi retire l nan "optimisation batterie".
+1. Sou telefòn **Android** ki gen SIM NatCash ak SIM MonCash yo: enstale **httpSMS** (Google
+   Play), epi konekte l ak kont ou sou httpsms.com (kle API ki nan **Settings** sit httpsms.com la).
+   Lè 2 SIM yo nan telefòn nan, ekran koneksyon an mande **Phone number (SIM1)** ak **Phone number
+   (SIM2)**: mete 2 nimewo yo (+509…), chak nan bon plas li. Si SIM2 a pa anrejistre, httpSMS
+   pa voye SMS li yo. Nan paramèt aplikasyon an, limen **Enable SIM2 incoming messages** ak
+   **Enable SIM2 outgoing messages**. Kite aplikasyon an li SMS yo, epi retire l nan
+   "optimisation batterie".
 2. Sou httpsms.com → **Settings → Webhooks → Add webhook**:
    - **Callback URL**: adrès ki nan **Panneau admin → Paramèt → Depo otomatik ak SMS**
    - **Signing key**: yon modpas long ou envante
    - **Events**: `message.phone.received`
+   - **Phone numbers**: chwazi **2 nimewo yo** (NatCash ak MonCash). httpSMS voye SMS yon nimewo
+     bay sit la sèlman si nimewo a nan lis sa a.
 3. **Vercel → Settings → Environment Variables**: `HTTPSMS_SIGNING_KEY` = menm signing key la,
    epi **Redeploy**.
 4. Fè yon ti depo tès. SMS la dwe parèt nan **Panneau admin → Depo → SMS peman**, ak montan
    an ak kòd la. SMS ki soti nan **NATCOM** (NatCash), **MonCash** oswa **Digicel** ofisyèl
    otomatikman; pou yon lòt nimewo, peze **Se nimewo ofisyèl** sou li.
-5. **Paramèt → Depo otomatik ak SMS**: limen l, chwazi limit la, epi **Sove**.
+5. **Paramèt → Depo otomatik ak SMS**: limen l, chwazi limit la, epi **Sove**. Kat NatCash ak
+   MonCash yo vin ✅ lè sit la resevwa yon SMS ofisyèl chak SIM.

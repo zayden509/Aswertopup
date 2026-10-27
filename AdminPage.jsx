@@ -9,7 +9,7 @@ import { backend, errorText } from "./backend.js";
 import { StatusChip, ErrorNote, ProductArt, formatPrice, formatDateTime, orderStatus, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
 import { Chips, CopyText, Empty, AdminButton, SectionHead, panel, inputClass, normalize } from "./adminUi.jsx";
 import { productForPackage, packageNameFixes } from "./catalog.js";
-import { duplicateOf, smsAmount, smsConnected, smsTooOld } from "./depositCheck.js";
+import { duplicateOf, isPhoneNumber, smsAmount, smsConnected, smsTooOld } from "./depositCheck.js";
 import { isOperatorSender, senderKey } from "./smsParse.js";
 import AdminDashboard from "./AdminDashboard.jsx";
 import AdminCustomers from "./AdminCustomers.jsx";
@@ -279,6 +279,7 @@ const methodName = (id) => PAYMENT_METHODS.find((m) => m.id === id)?.name || id;
 // Sa telefòn boutik la (SMS httpSMS) di sou kòd tranzaksyon yon depo: [ton, tèks]
 // `seen`: dènye fwa sit la resevwa yon SMS chak mòd peman ({ natcash, moncash })
 function depositProblems(deposit, smsList, deposits, automation, seen) {
+  if (isPhoneNumber(deposit.reference)) return [["bad", "Sa se yon nimewo telefòn, pa yon ID tranzaksyon. Mande kliyan an ID ki nan SMS la."]];
   const dup = duplicateOf(deposit, deposits);
   if (dup) return [["bad", `Kòd sa a deja sèvi pou yon depo ki konfime ${formatDateTime(dup.created_at)}. Pa konfime l.`]];
   const sms = smsList.find((x) => x.method === deposit.method) || smsList[0];

@@ -13,7 +13,7 @@ import {
 import { UserError } from "./errors.js";
 import { dayKey } from "./days.js";
 import { quote } from "./exchange.js";
-import { normalizeReference } from "./depositCheck.js";
+import { isPhoneNumber, normalizeReference } from "./depositCheck.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // san 0/O/1/I pou kliyan yo pa konfonn yo
 const METHOD_NAMES = { moncash: "MonCash", natcash: "NatCash" };
@@ -23,6 +23,8 @@ function randomCode(length) {
   crypto.getRandomValues(values);
   return Array.from(values, (v) => CODE_CHARS[v % CODE_CHARS.length]).join("");
 }
+
+const PHONE_NOT_REFERENCE = "Sa se yon nimewo telefòn. Mete ID tranzaksyon ki nan SMS MonCash/NatCash la.";
 
 const formatHtg = (n) => `${new Intl.NumberFormat("fr-FR").format(n)} HTG`;
 
@@ -350,6 +352,7 @@ export function createBackend(config, options = {}) {
       if (!METHOD_NAMES[method]) throw new UserError("Chwazi MonCash oswa NatCash.");
       const ref = normalizeReference(reference);
       if (!/^[A-Z0-9]{6,40}$/.test(ref)) throw new UserError("Mete ID tranzaksyon an (sèlman lèt ak chif, omwen 6).");
+      if (isPhoneNumber(ref)) throw new UserError(PHONE_NOT_REFERENCE);
       const phone = String(senderPhone || "").trim().slice(0, 20) || null;
       const refDoc = doc(db, "depositRefs", `${method}_${ref}`);
       const orderRef = doc(collection(db, "orders"));
@@ -423,6 +426,7 @@ export function createBackend(config, options = {}) {
       if (!METHOD_NAMES[method]) throw new UserError("Mòd peman sa a pa egziste.");
       const ref = normalizeReference(reference);
       if (!/^[A-Z0-9]{6,40}$/.test(ref)) throw new UserError("Mete ID tranzaksyon an (sèlman lèt ak chif, omwen 6).");
+      if (isPhoneNumber(ref)) throw new UserError(PHONE_NOT_REFERENCE);
       const phone = String(senderPhone || "").trim().slice(0, 20) || null;
 
       const refDoc = doc(db, "depositRefs", `${method}_${ref}`);

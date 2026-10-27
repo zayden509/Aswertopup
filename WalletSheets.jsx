@@ -175,6 +175,7 @@ export function MethodList({ onPick, onToast }) {
 const CODE_PROBLEMS = {
   "not-found": "Okenn peman nou resevwa pa koresponn ak kòd sa a. Verifye kòd la. Si w fèk voye kòb la, tann 1 minit epi eseye ankò.",
   invalid: "Kòd sa a pa bon. Kopye TransCode a jan li ye nan SMS NatCash/MonCash ou a.",
+  phone: "Sa se yon nimewo telefòn. Mete ID tranzaksyon ki nan SMS MonCash/NatCash la.",
   used: "Kòd sa a deja itilize. Yon kòd tranzaksyon sèvi yon sèl fwa.",
   expired: "Peman sa a twò ansyen (plis pase 24 è). Ekri nou sou WhatsApp ak prèv peman an.",
   blocked: "Twòp kòd ki pa bon. Tann 1 è, oswa ekri nou sou WhatsApp.",

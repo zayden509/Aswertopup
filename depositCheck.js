@@ -12,6 +12,9 @@ export function normalizeReference(reference) {
 }
 export const sameReference = (a, b) => normalizeReference(a) === normalizeReference(b);
 
+// Yon nimewo telefòn ayisyen (50934431664 oswa 34431664) se pa yon ID tranzaksyon
+export const isPhoneNumber = (reference) => /^(?:509)?[2-5]\d{7}$/.test(normalizeReference(reference));
+
 // Yon mòd peman verifye otomatikman sèlman si sit la resevwa yon SMS li nan 7 dènye jou yo, sa
 // vle di SIM li a konekte nan httpSMS. Sinon depo yo ale kote admin nan (kliyan an pa janm bloke).
 export const SMS_SEEN_MS = 7 * 86400000;

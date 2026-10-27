@@ -8,7 +8,7 @@
 //   - SMS sa a poko sèvi pou yon lòt depo, e okenn lòt depo pa deja konfime ak menm kòd la
 //   - SMS la rive mwens pase 24 è anvan oswa apre depo a (pa yon ansyen tranzaksyon)
 import crypto from "node:crypto";
-import { SMS_MAX_AGE_MS, duplicateOf, normalizeReference, smsAmount, smsConnected, smsTooOld } from "../../depositCheck.js";
+import { SMS_MAX_AGE_MS, duplicateOf, isPhoneNumber, normalizeReference, smsAmount, smsConnected, smsTooOld } from "../../depositCheck.js";
 import { isOperatorSender, methodForReceiver, parsePaymentSms, senderKey } from "../../smsParse.js";
 import { accountNumbers } from "../../paymentAccounts.js";
 
@@ -108,6 +108,7 @@ export async function lookupCode(backend, uid, method, reference) {
 
 async function findPayment(backend, settings, method, ref) {
   if (!/^[A-Z0-9]{6,40}$/.test(ref)) return { status: "invalid" };
+  if (isPhoneNumber(ref)) return { status: "phone" };
   if (await backend.adminReferenceUsed(ref)) return { status: "used" };
   const found = (await smsFor(backend, ref))
     .filter((sms) => sms.incoming && smsAmount(sms) > 0 && isOfficial(settings, sms.sender));
