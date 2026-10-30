@@ -3,9 +3,14 @@ import { Zap, RefreshCw, Loader2, Link2, Search, CheckCircle2, AlertTriangle, We
 import { backend, errorText } from "./backend.js";
 import { Sheet, ErrorNote, formatPrice, formatDate } from "./ui.jsx";
 import { Card, Chips, Empty, Field, Toggle, AdminButton, inputClass, normalize } from "./adminUi.jsx";
-import { matchOffer } from "./fazerMatch.js";
+import { matchOffer, searchWords } from "./fazerMatch.js";
 
 const usd = (v) => `$${Number(v).toFixed(2)}`;
+// "Free Fire LATAM" → "LATAM" lè n ap chèche "free fire"
+const regionLabel = (name, word) => {
+  const w = word.trim().toLowerCase();
+  return (name.toLowerCase().startsWith(w) ? name.slice(w.length).trim() : "") || name;
+};
 
 // Balans, plan ak webhook FazerCards la
 function FazerStatus({ onToast }) {
@@ -256,8 +261,31 @@ function MappingSheet({ pkg, current, onClose, onToast }) {
   );
 }
 
-// Konekte tout pake Free Fire yo ak FazerCards an yon sèl kou (100 + BONUS 10 → 110 Diamonds…)
-function AutoLink({ packages, supplierMap, onToast }) {
+// Pake sit la grenpe pa pwodwi FazerCards: "Free Fire Pin USA/LATAM" ak "Abonnement Free Fire"
+// ale ansanm ("free fire"). Free Fire an premye.
+function linkGroups(prices) {
+  const groups = new Map();
+  for (const p of Object.values(prices)) {
+    const key = searchWords(p.product_name);
+    if (!key) continue;
+    if (!groups.has(key)) {
+      const at = String(p.product_name).toLowerCase().indexOf(key);
+      groups.set(key, { key, label: at >= 0 ? p.product_name.slice(at, at + key.length) : p.product_name, packages: [] });
+    }
+    groups.get(key).packages.push(p);
+  }
+  return [...groups.values()]
+    .map((g) => ({ ...g, packages: g.packages.sort((a, b) => a.price - b.price) }))
+    .sort((a, b) => Number(b.key === "free fire") - Number(a.key === "free fire") || a.label.localeCompare(b.label));
+}
+
+// Konekte tout pake yon pwodwi ak FazerCards an yon sèl kou (100 + BONUS 10 → 110 Diamonds, 60 UC → 60 UC…)
+function AutoLink({ prices, supplierMap, onToast }) {
+  const groups = linkGroups(prices);
+  const [groupKey, setGroupKey] = useState(groups[0]?.key || "");
+  const group = groups.find((g) => g.key === groupKey) || groups[0];
+  const packages = group?.packages || [];
+  const [keyword, setKeyword] = useState(groupKey);
   const [regions, setRegions] = useState(null);
   const [region, setRegion] = useState(null);
   const [offers, setOffers] = useState(null);
@@ -288,8 +316,19 @@ function AutoLink({ packages, supplierMap, onToast }) {
     }
   };
 
+  const pickGroup = (key) => {
+    setGroupKey(key);
+    setKeyword(key);
+    setRegions(null);
+    setRegion(null);
+    setOffers(null);
+    setSkip({});
+  };
+
   const start = () => run(async () => {
-    const items = (await backend.adminFazer("categories", { q: "free fire" })).items || [];
+    setRegion(null);
+    setOffers(null);
+    const items = (await backend.adminFazer("categories", { q: keyword.trim() })).items || [];
     setRegions(items);
     const preferred = items.find((c) => /latam/i.test(c.name)) || items[0];
     if (preferred) await loadRegion(preferred);
@@ -315,19 +354,32 @@ function AutoLink({ packages, supplierMap, onToast }) {
 
   return (
     <Card
-      title={<span className="flex items-center gap-2"><Zap className="h-5 w-5 text-violet-500" /> Konekte Free Fire an yon sèl kou</span>}
-      subtitle="Sit la jwenn pake FazerCards ki menm ak pa w yo (100 + BONUS 10 = 110 Diamonds…). Tcheke lis la, epi konfime."
+      title={<span className="flex items-center gap-2"><Zap className="h-5 w-5 text-violet-500" /> Konekte yon pwodwi an yon sèl kou</span>}
+      subtitle="Chwazi yon pwodwi: sit la jwenn pake FazerCards ki menm ak pa w yo (100 + BONUS 10 = 110 Diamonds, 60 UC = 60 UC…). Tcheke lis la, epi konfime."
     >
-      {!regions ? (
-        <AdminButton tone="primary" icon={Search} busy={busy} disabled={busy} onClick={start} className="bg-violet-600 hover:bg-violet-700 dark:bg-violet-500">
-          Chèche pake FazerCards yo
-        </AdminButton>
+      {groups.length === 0 ? (
+        <Empty>Pa gen pake. Ajoute yo nan Pwodwi an premye.</Empty>
       ) : (
+        <div className="mb-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end" data-testid="autolink-form">
+          <Field label="Pwodwi">
+            <select value={group.key} onChange={(e) => pickGroup(e.target.value)} className={inputClass} aria-label="Pwodwi pou konekte">
+              {groups.map((g) => <option key={g.key} value={g.key}>{g.label} ({g.packages.length} pake)</option>)}
+            </select>
+          </Field>
+          <Field label="Non li kote FazerCards">
+            <input value={keyword} onChange={(e) => setKeyword(e.target.value)} className={inputClass} aria-label="Non kote FazerCards" />
+          </Field>
+          <AdminButton tone="primary" icon={Search} busy={busy} disabled={busy || !keyword.trim()} onClick={start} className="bg-violet-600 hover:bg-violet-700 dark:bg-violet-500">
+            Chèche
+          </AdminButton>
+        </div>
+      )}
+      {regions && (
         <div className="space-y-3">
-          {regions.length === 0 && <Empty>FazerCards pa jwenn Free Fire.</Empty>}
+          {regions.length === 0 && <Empty>FazerCards pa jwenn "{keyword}". Eseye yon lòt non (egzanp "pubg" oswa "call of duty").</Empty>}
           {regions.length > 1 && (
             <Chips
-              options={regions.map((c) => ({ id: c.category_id, label: c.name.replace(/^Free Fire\s*/i, "") || c.name }))}
+              options={regions.map((c) => ({ id: c.category_id, label: regionLabel(c.name, keyword) }))}
               value={region?.category_id}
               onChange={(id) => run(() => loadRegion(regions.find((c) => c.category_id === id)))}
               label="Rejyon"
@@ -399,11 +451,7 @@ export default function AdminAuto({ account, supplierMap, onToast }) {
     <div className="space-y-4">
       <FazerStatus onToast={onToast} />
 
-      <AutoLink
-        packages={Object.values(account.prices).filter((p) => /free fire/i.test(p.product_name)).sort((a, b) => a.price - b.price)}
-        supplierMap={supplierMap}
-        onToast={onToast}
-      />
+      <AutoLink prices={account.prices} supplierMap={supplierMap} onToast={onToast} />
 
       <Card title={`Pake yo (${autoCount} otomatik)`}>
         <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">

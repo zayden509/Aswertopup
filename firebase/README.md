@@ -143,7 +143,12 @@ Sa ki fè l mache: 3 fonksyon sou Vercel (`api/fulfill.js`, `api/fazer.js`,
    - `BOT_PASSWORD`: modpas kont bot la
    Apre sa, **Deployments → ⋯ → Redeploy** pou varyab yo pran efè.
 4. **Panneau admin → Otomatik**: verifye balans lan, epi peze **Konekte** pou webhook la.
-5. Peze chak pake, chwazi pwodwi FazerCards ki koresponn lan, epi **Sove**.
+5. **Konekte yon pwodwi an yon sèl kou**: chwazi pwodwi a (Free Fire, PUBG Mobile, Call of Duty…),
+   peze **Chèche**, tcheke lis la (sit la jwenn `100 + BONUS 10` → `110 Diamonds`,
+   `300 + 25 UC` → `325 UC`, `3 MOIS` → `3 Months`…), epi peze **Konekte**. Si FazerCards pa
+   jwenn pwodwi a, chanje **Non li kote FazerCards** (egzanp `pubg` oswa `call of duty`).
+   Pou yon pake sit la pa jwenn, peze l nan lis **Pake yo**, chwazi pwodwi FazerCards lan alamen,
+   epi **Sove**.
 
 Teste ak pwòp kont jwèt ou anvan (pi piti pake a). Kenbe kòb sou balans FazerCards ou
 (USDT oswa Binance Pay, minimòm 10 $) ak yon abònman FazerCards aktif.
