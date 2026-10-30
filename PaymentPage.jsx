@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Wallet, ChevronRight, BookOpen, Copy } from "lucide-react";
-import { PAYMENT_METHODS, VIDEO_TUTORIAL_URL } from "./data.js";
+import { PAYMENT_METHODS } from "./data.js";
+import { openTutorial } from "./Tutorial.jsx";
 import { Sheet, WhatsAppIcon, waLink, openExternal } from "./ui.jsx";
 
 function MethodSheet({ method, onClose, onToast }) {
@@ -60,10 +61,6 @@ function MethodSheet({ method, onClose, onToast }) {
 export default function PaymentPage({ onToast }) {
   const [method, setMethod] = useState(null);
 
-  const openTutorial = () => {
-    if (VIDEO_TUTORIAL_URL) openExternal(VIDEO_TUTORIAL_URL);
-    else onToast("Videyo a poko disponib, li ap vini byento.");
-  };
 
   return (
     <div className="space-y-4">

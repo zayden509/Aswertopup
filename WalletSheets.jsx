@@ -3,6 +3,7 @@ import { Plus, Send, ChevronRight, BookOpen, Copy, CheckCircle2, Loader2, Hash, 
 import { PAYMENT_METHODS, VIDEO_TUTORIAL_URL } from "./data.js";
 import { backend, errorText } from "./backend.js";
 import { UserError } from "./errors.js";
+import { openTutorial as openGuide } from "./Tutorial.jsx";
 import { usePaymentMethods } from "./payments.js";
 import { Sheet, ErrorNote, waLink, supportMessage, openExternal, formatPrice, copyText } from "./ui.jsx";
 
@@ -124,11 +125,7 @@ export function PayTo({ method: picked, amount, onToast }) {
   );
 }
 
-export function MethodList({ onPick, onToast }) {
-  const openTutorial = () => {
-    if (VIDEO_TUTORIAL_URL) openExternal(VIDEO_TUTORIAL_URL);
-    else onToast("Videyo a poko disponib, li ap vini byento.");
-  };
+export function MethodList({ onPick }) {
   return (
     <div className="space-y-3">
       <p className="text-sm text-slate-500 dark:text-slate-400">Choisissez votre moyen de paiement :</p>
@@ -150,7 +147,7 @@ export function MethodList({ onPick, onToast }) {
           <ChevronRight className={`h-6 w-6 shrink-0 ${m.recommended ? "text-emerald-500" : "text-slate-400"}`} />
         </button>
       ))}
-      <button type="button" onClick={openTutorial} className="flex w-full items-center gap-4 rounded-2xl border-2 border-sky-100 bg-sky-50/70 p-4 text-left dark:border-sky-500/20 dark:bg-sky-500/10">
+      <button type="button" onClick={openGuide} className="flex w-full items-center gap-4 rounded-2xl border-2 border-sky-100 bg-sky-50/70 p-4 text-left dark:border-sky-500/20 dark:bg-sky-500/10">
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-sky-100 text-sky-500 dark:bg-sky-500/20"><BookOpen className="h-6 w-6" /></span>
         <span className="min-w-0 flex-1">
           <span className="block font-bold text-sky-600 dark:text-sky-300">Tutoriel de dépôt</span>

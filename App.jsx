@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bell, Menu, UserRound, Search, Home, ShoppingCart, Tag, History, Wallet, ArrowRight, Loader2, Share, MoreVertical } from "lucide-react";
-import { CATEGORIES, HOME_SECTIONS, SLIDES, NOTIFICATIONS, VIDEO_TUTORIAL_URL } from "./data.js";
+import { CATEGORIES, HOME_SECTIONS, SLIDES, NOTIFICATIONS } from "./data.js";
 import { waLink, supportMessage, openExternal, Logo, WhatsAppIcon, IconButton, ProductCard, ProductTile, Sheet } from "./ui.jsx";
 import { loadOrders, saveOrder } from "./orders.js";
 import { useAccount } from "./account.js";
@@ -16,6 +16,7 @@ import AuthSheet from "./AuthSheet.jsx";
 import { DepositSheet, TransferSheet } from "./WalletSheets.jsx";
 import { NotificationsSheet, LiveToast } from "./Notifications.jsx";
 import { newVersionAvailable } from "./updateCheck.js";
+import { TutorialSheet, openTutorial, useTutorialRequests } from "./Tutorial.jsx";
 
 // Si yon nouvo vèsyon sit la soti pandan paj la louvri, ansyen fichye yo pa egziste ankò:
 // nou rechaje paj la (yon fwa pa minit) olye nou kite l kase
@@ -424,10 +425,8 @@ export default function App() {
     }
   };
 
-  const openTutorial = () => {
-    if (VIDEO_TUTORIAL_URL) openExternal(VIDEO_TUTORIAL_URL);
-    else setToast("Videyo a poko disponib, li ap vini byento.");
-  };
+  // Gid etap pa etap la (oswa videyo a): nenpòt paj ka mande l ak openTutorial()
+  useTutorialRequests(useCallback(() => setPanel("tutorial"), []));
   const install = () => (installPrompt ? installPrompt.prompt() : setPanel("install"));
   // Ale nan rang lan (Pwogram fidelite) sou paj pwofil la
   const showRank = () => {
@@ -645,6 +644,7 @@ export default function App() {
       {panel === "notifications" && (
         <NotificationsSheet account={account} onClose={() => setPanel(null)} onLogin={(m) => { setPanel(null); needLogin(m); }} onOpen={openNotification} />
       )}
+      {panel === "tutorial" && <TutorialSheet onClose={() => setPanel(null)} />}
       {panel === "deposit" && signedIn && <DepositSheet initialAmount={depositAmount} profile={account.profile} onClose={() => setPanel(null)} onToast={setToast} />}
       {panel === "transfer" && signedIn && (
         <TransferSheet profile={account.profile} initialCode={payCode || ""} onClose={() => { setPanel(null); setPayCode(null); }} />
