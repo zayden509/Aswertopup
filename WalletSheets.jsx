@@ -180,6 +180,10 @@ const CODE_PROBLEMS = {
 
 // 5 kòd ki pa bon: kliyan an tann 30 minit (sèvè a konte yo)
 function codeProblemText(found) {
+  if (found.status === "amount") {
+    const sum = formatPrice(Number(found.amount));
+    return t(`Nou jwenn peman ${sum} ou a, men yon depo dwe ant 50 ak 100 000 HTG. Ekri nou sou WhatsApp, n ap ranje l pou ou.`, `Nous avons trouvé votre paiement de ${sum}, mais un dépôt doit être entre 50 et 100 000 HTG. Écrivez-nous sur WhatsApp, nous allons régler cela.`);
+  }
   if (found.status === "blocked") return t(`Ou mete 5 kòd ki pa bon. Eseye ankò nan ${found.wait_minutes || 30} minit.`, `Vous avez saisi 5 codes incorrects. Réessayez dans ${found.wait_minutes || 30} minutes.`);
   const text = CODE_PROBLEMS[found.status] || CODE_PROBLEMS["not-found"];
   if (found.attempts_left === 0) return `${text} ${t("Ou mete 5 kòd ki pa bon: tann 30 minit anvan w eseye ankò.", "5 codes incorrects : attendez 30 minutes avant de réessayer.")}`;

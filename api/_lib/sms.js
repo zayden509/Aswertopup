@@ -8,10 +8,11 @@
 //   - SMS sa a poko sèvi pou yon lòt depo, e okenn lòt depo pa deja konfime ak menm kòd la
 //   - SMS la rive mwens pase 24 è anvan oswa apre depo a (pa yon ansyen tranzaksyon)
 import crypto from "node:crypto";
-import { SMS_MAX_AGE_MS, duplicateOf, isPhoneNumber, normalizeReference, smsAmount, smsTooOld } from "../../depositCheck.js";
+import { DEPOSIT_MAX, DEPOSIT_MIN, SMS_MAX_AGE_MS, duplicateOf, isPhoneNumber, normalizeReference, smsAmount, smsTooOld } from "../../depositCheck.js";
 import { isOperatorSender, methodForReceiver, parsePaymentSms, senderKey } from "../../smsParse.js";
 import { accountNumbers } from "../../paymentAccounts.js";
 import { alert, checkSmsSilence } from "./alert.js";
+import { httpsmsApiReady, httpsmsMessagesWithCode } from "./httpsmsApi.js";
 
 export { senderKey };
 
@@ -49,6 +50,24 @@ export async function readSms(backend, content, sender, receiver) {
 }
 
 export const smsId = (sms) => (sms.method && sms.reference ? `${sms.method}_${sms.reference}` : `msg_${String(sms.message_id).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80)}`);
+
+// Anrejistre yon SMS telefòn boutik la resevwa (webhook httpSMS la, oswa rekiperasyon dirèk la).
+// Si se yon SMS ofisyèl NatCash/MonCash, SIM sa a make konekte.
+export async function saveIncomingSms(backend, { content, contact, owner, messageId, receivedAt = null, encrypted = false }) {
+  const text = encrypted ? "" : String(content || "").slice(0, 600);
+  const parsed = await readSms(backend, text, contact, owner);
+  const record = {
+    ...parsed,
+    message_id: String(messageId || "").slice(0, 100) || crypto.randomUUID(),
+    sender: String(contact || "").slice(0, 40),
+    phone: String(owner || "").slice(0, 40),
+    content: encrypted ? "(SMS chifre: dezaktive chifreman an nan httpSMS)" : text,
+  };
+  const id = smsId(record);
+  const sms = await backend.adminSaveSms(id, receivedAt ? { ...record, received_at: receivedAt } : record);
+  if (parsed.method && isOfficial(await backend.adminGetAutomation(), record.sender)) await backend.adminMarkSmsSeen(parsed.method);
+  return { ...sms, id, parsed };
+}
 
 // Eseye konfime depo a ak SMS la. Retounen rezon an si li pa ka fèt (pou Panneau admin lan).
 export async function tryConfirm(backend, sms, deposit) {
@@ -98,7 +117,8 @@ export async function lookupCode(backend, uid, method, reference) {
   const wait = await backend.adminCodeWait(uid).catch(() => 0);
   if (wait > 0) return { status: "blocked", wait_minutes: Math.ceil(wait / 60000) };
   const result = await findPayment(backend, settings, method, normalizeReference(reference));
-  if (result.status === "ok") {
+  // Bon kòd (menm si montan an pa ka antre otomatikman): li pa konte kòm yon erè
+  if (result.status === "ok" || result.status === "amount") {
     await backend.adminClearCodeFails(uid).catch(() => {});
     return result;
   }
@@ -112,13 +132,42 @@ async function findPayment(backend, settings, method, ref) {
   if (!/^[A-Z0-9]{6,40}$/.test(ref)) return { status: "invalid" };
   if (isPhoneNumber(ref)) return { status: "phone" };
   if (await backend.adminReferenceUsed(ref)) return { status: "used" };
-  const found = (await smsFor(backend, ref))
-    .filter((sms) => sms.incoming && smsAmount(sms) > 0 && isOfficial(settings, sms.sender));
+  const usable = (list) => list.filter((sms) => sms.incoming && smsAmount(sms) > 0 && isOfficial(settings, sms.sender));
+  let found = usable(await smsFor(backend, ref));
+  // Webhook la pa t voye SMS la sou sit la: nou al chèche l dirèkteman sou httpSMS
+  if (!found.length && (await pullFromHttpsms(backend, ref))) found = usable(await smsFor(backend, ref));
   const sms = found.find((x) => x.method === method) || found[0];
   if (!sms) return { status: "not-found" };
   if (sms.status !== "new") return { status: "used" };
   if (Date.now() - new Date(sms.received_at).getTime() > SMS_MAX_AGE_MS) return { status: "expired" };
-  return { status: "ok", method: sms.method, amount: smsAmount(sms) };
+  const amount = smsAmount(sms);
+  // Peman an rive, men montan an pa ka fè yon depo otomatik (ex. 31 HTG < 50): pwopriyetè a ranje l alamen
+  if (amount < DEPOSIT_MIN || amount > DEPOSIT_MAX) return { status: "amount", method: sms.method, amount };
+  return { status: "ok", method: sms.method, amount };
+}
+
+// Rekiperasyon dirèk: SMS ki gen kòd sa a sou httpSMS (ak HTTPSMS_API_KEY). Retounen true si nou
+// jwenn epi anrejistre youn: sa vle di webhook la pa t voye l, pwopriyetè a resevwa yon alèt.
+async function pullFromHttpsms(backend, ref) {
+  if (!httpsmsApiReady()) return false;
+  try {
+    const owners = Object.values(accountNumbers(await backend.adminGetPayments()));
+    const messages = await httpsmsMessagesWithCode(owners, ref);
+    for (const m of messages) {
+      await saveIncomingSms(backend, {
+        content: m.content, contact: m.contact, owner: m.owner, messageId: m.id,
+        receivedAt: m.received_at || m.request_received_at || m.created_at || null,
+      });
+    }
+    if (!messages.length) return false;
+    await backend.adminSetHookStatus({ missed_at: new Date() }).catch(() => {});
+    await alert(backend, "⚠️ Webhook httpSMS la pa voye SMS yo sou sit la: sit la te oblije al chèche yon SMS peman dirèkteman sou httpSMS. Tcheke webhook la (Panneau admin → Paramèt).", { key: "hook_missed", everyMs: 6 * 3600000 });
+    return true;
+  } catch (error) {
+    console.error("httpsms pull", error);
+    await backend.adminSetHookStatus({ pull_error: String(error.message || error).slice(0, 120), pull_error_at: new Date() }).catch(() => {});
+    return false;
+  }
 }
 
 // SMS peman ki gen kòd sa a. Yon SMS sit la te anrejistre anvan li te konprann fòma l (ex. "msg_…",

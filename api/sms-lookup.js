@@ -3,14 +3,15 @@
 // Montan an soti nan SMS la; kliyan an pa janm tape l.
 import { SetupError, bot, callerId, fail, json, resetBotOnDenied } from "./_lib/autotopup.js";
 import { lookupCode } from "./_lib/sms.js";
+import { httpsmsApiReady } from "./_lib/httpsmsApi.js";
 
 export async function POST(request) {
   try {
     const uid = await callerId(request);
     if (!uid) return fail("Konekte anvan.", 401);
     const { method, reference } = await request.json().catch(() => ({}));
-    // Ansyen vèsyon paj la mande si kòd la sèlman ase: toujou wi
-    if (reference === undefined) return json({ ok: true, auto: true, methods: { natcash: true, moncash: true } });
+    // Ansyen vèsyon paj la mande si kòd la sèlman ase: toujou wi. `pull`: rekiperasyon dirèk sou httpSMS aktive
+    if (reference === undefined) return json({ ok: true, auto: true, methods: { natcash: true, moncash: true }, pull: httpsmsApiReady() });
     const backend = await bot();
     if (!["natcash", "moncash"].includes(method) || typeof reference !== "string") return fail("Kòd la pa bon.");
     return json({ ok: true, ...(await lookupCode(backend, uid, method, reference.slice(0, 60))) });

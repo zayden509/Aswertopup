@@ -208,6 +208,15 @@ kòd pa janm konfime poukont li). Tout lòt depo yo rete nan **Depo** pou ou.
    ofisyèl** sou li: depo ki t ap tann SMS sa a konfime poukont yo touswit.
 5. **Paramèt → Depo otomatik ak SMS**: chwazi limit otomatik la (yon depo ki pi gwo rete pou ou),
    epi **Sove**. Kat NatCash ak MonCash yo vin ✅ lè sit la resevwa yon SMS ofisyèl chak SIM.
+6. **Rekiperasyon dirèk (rekòmande)**: sou httpsms.com → **Settings**, kopye **API Key** la, epi
+   mete l nan Vercel kòm `HTTPSMS_API_KEY`, epi **Redeploy**. Si webhook la rate yon SMS (kle
+   siyati a chanje, yon nimewo manke nan webhook la…), lè kliyan an mete kòd li, sit la al chèche
+   SMS la dirèkteman sou httpSMS, e depo a pase kanmenm. Pa voye kle sa a bay pèsonn.
+
+Panneau admin → Paramèt montre si webhook la mache (✅ dènye SMS), si kle siyati a pa menm (❌),
+si sit la te oblije al chèche yon SMS dirèkteman (⚠️), epi si rekiperasyon dirèk la aktive.
+Yon depo dwe ant 50 ak 100 000 HTG: si kliyan an voye mwens (ex. 31 HTG), sit la jwenn peman an
+men li di kliyan an ekri w sou WhatsApp pou w ranje l alamen.
 
 ## Alèt sou Telegram (pwopriyetè a)
 Sit la voye yon mesaj sou Telegram ou lè: yon kòmand FazerCards echwe oswa pa ka voye, balans

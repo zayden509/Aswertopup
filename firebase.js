@@ -15,7 +15,7 @@ import { UserError } from "./errors.js";
 import { t } from "./i18n.js";
 import { dayKey } from "./days.js";
 import { quote } from "./exchange.js";
-import { isPhoneNumber, normalizeReference } from "./depositCheck.js";
+import { DEPOSIT_MAX, DEPOSIT_MIN, isPhoneNumber, normalizeReference } from "./depositCheck.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // san 0/O/1/I pou kliyan yo pa konfonn yo
 const METHOD_NAMES = { moncash: "MonCash", natcash: "NatCash" };
@@ -468,7 +468,7 @@ export function createBackend(config, options = {}) {
       const uid = currentUid();
       const value = Number(amount);
       if (!Number.isInteger(value)) throw new UserError(t("Mete montan an san vigil (egzanp 1000).", "Entrez un montant sans virgule (exemple 1000)."));
-      if (value < 50 || value > 100000) throw new UserError(t("Montan an dwe ant 50 ak 100 000 HTG.", "Le montant doit être entre 50 et 100 000 HTG."));
+      if (value < DEPOSIT_MIN || value > DEPOSIT_MAX) throw new UserError(t("Montan an dwe ant 50 ak 100 000 HTG.", "Le montant doit être entre 50 et 100 000 HTG."));
       if (!METHOD_NAMES[method]) throw new UserError(t("Mòd peman sa a pa egziste.", "Ce mode de paiement n'existe pas."));
       const ref = normalizeReference(reference);
       if (!/^[A-Z0-9]{6,40}$/.test(ref)) throw new UserError(t("Mete ID tranzaksyon an (sèlman lèt ak chif, omwen 6).", "Entrez l'ID de transaction (lettres et chiffres, au moins 6)."));
@@ -807,6 +807,13 @@ export function createBackend(config, options = {}) {
     // Dènye fwa sit la resevwa yon SMS ofisyèl NatCash/MonCash (SIM nan konekte nan httpSMS).
     // Dokiman "seen_…" yo pa gen received_at: yo pa parèt nan lis SMS yo.
     adminMarkSmsSeen: (method) => setDoc(doc(db, "smsPayments", `seen_${method}`), { last_at: serverTimestamp() }),
+
+    // Tras webhook httpSMS la (sms-webhook ak rekiperasyon dirèk la): last_at, result, last_ok_at, missed_at…
+    adminSetHookStatus: (fields) => setDoc(doc(db, "smsPayments", "hook_status"), fields, { merge: true }),
+
+    subscribeHookStatus(callback) {
+      return onSnapshot(doc(db, "smsPayments", "hook_status"), (snap) => callback(snap.exists() ? toPlain(snap) : {}), (error) => console.error("hook status", error));
+    },
 
     async adminSmsSeen() {
       const snaps = await Promise.all(["natcash", "moncash"].map((m) => getDoc(doc(db, "smsPayments", `seen_${m}`))));

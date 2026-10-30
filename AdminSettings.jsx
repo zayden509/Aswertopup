@@ -145,6 +145,43 @@ function SimDiagnosis({ name, number, onSim, official, owner, onTrust, id }) {
   );
 }
 
+// Èske webhook httpSMS la rive sou sit la? Ak rekiperasyon dirèk la (HTTPSMS_API_KEY), si l aktive.
+const newer = (a, b) => Boolean(a) && (!b || Date.parse(a) > Date.parse(b));
+function WebhookHealth() {
+  const [hook, setHook] = useState({});
+  const [pull, setPull] = useState(null);
+  useEffect(() => backend.subscribeHookStatus(setHook), []);
+  useEffect(() => {
+    backend.checkDepositCode().then((r) => setPull(Boolean(r?.pull)), () => setPull(null));
+  }, []);
+  const bad = hook.result === "bad-signature" && newer(hook.last_at, hook.last_ok_at);
+  const lines = [];
+  if (bad) {
+    lines.push(["bad", `❌ ${formatDateTime(hook.last_at)}: httpSMS voye yon SMS, men kle siyati a pa menm. Sou httpsms.com, "Signing key" webhook la dwe egzakteman menm ak HTTPSMS_SIGNING_KEY nan Vercel (apre sa, Redeploy).`]);
+  } else if (hook.last_ok_at) {
+    lines.push(["ok", `✅ Webhook la mache · dènye SMS ${formatDateTime(hook.last_ok_at)}`]);
+  } else {
+    lines.push(["wait", "Poko gen SMS ki rive pa webhook la depi mizajou sa a."]);
+  }
+  if (newer(hook.missed_at, hook.last_ok_at)) {
+    lines.push(["warn", `⚠️ ${formatDateTime(hook.missed_at)}: yon SMS peman pa t rive pa webhook la. Sit la al chèche l dirèkteman sou httpSMS. Tcheke adrès webhook la, "Signing key" a ak 2 nimewo yo sou httpsms.com.`]);
+  }
+  if (pull === false) {
+    lines.push(["warn", "Rekiperasyon dirèk la poko aktive: sou httpsms.com → Settings, kopye \"API Key\" a epi mete l nan Vercel kòm HTTPSMS_API_KEY (apre sa, Redeploy). Konsa sit la jwenn SMS yo menm lè webhook la pa mache."]);
+  } else if (pull) {
+    lines.push(["ok", "🔁 Rekiperasyon dirèk aktive: si webhook la rate yon SMS, sit la al chèche l sou httpSMS."]);
+  }
+  if (hook.pull_error && newer(hook.pull_error_at, hook.missed_at)) {
+    lines.push(["bad", `❌ ${formatDateTime(hook.pull_error_at)}: rekiperasyon an pa mache (${hook.pull_error}). Si se 401, kle API a pa bon.`]);
+  }
+  const tone = { ok: "text-emerald-700 dark:text-emerald-300", wait: "text-slate-500 dark:text-slate-400", warn: "text-amber-700 dark:text-amber-300", bad: "text-red-600 dark:text-red-400" };
+  return (
+    <ul className="mt-2 space-y-1 text-xs" data-testid="webhook-health">
+      {lines.map(([kind, text]) => <li key={text} className={tone[kind]}>{text}</li>)}
+    </ul>
+  );
+}
+
 function SmsAutomation({ owner, onToast, onTrusted }) {
   const [saved, setSaved] = useState(null);
   const [form, setForm] = useState({ senders: [], maxAuto: "5000" });
@@ -229,6 +266,7 @@ function SmsAutomation({ owner, onToast, onTrusted }) {
             <span className="truncate">{webhook}</span> <Copy className="h-4 w-4 shrink-0" />
           </button>
           <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Sou httpsms.com, webhook la dwe gen <b>2 nimewo yo</b> (NatCash ak MonCash) nan "Phone numbers".</p>
+          <WebhookHealth />
         </div>
 
         <fieldset disabled={!owner} className="space-y-4">
