@@ -193,3 +193,16 @@ kòd pa janm konfime poukont li). Tout lòt depo yo rete nan **Depo** pou ou.
    ofisyèl** sou li: depo ki t ap tann SMS sa a konfime poukont yo touswit.
 5. **Paramèt → Depo otomatik ak SMS**: chwazi limit otomatik la (yon depo ki pi gwo rete pou ou),
    epi **Sove**. Kat NatCash ak MonCash yo vin ✅ lè sit la resevwa yon SMS ofisyèl chak SIM.
+
+## Alèt sou Telegram (pwopriyetè a)
+Sit la voye yon mesaj sou Telegram ou lè: yon kòmand FazerCards echwe oswa pa ka voye, balans
+FazerCards la anba 10 $, sit la pa resevwa SMS NatCash/MonCash depi plizyè èdtan (telefòn httpSMS
+la etenn?), oswa yon depo pi gwo pase limit otomatik la ap tann ou. Chak maten (Vercel Cron,
+`api/daily-check.js`), yon rezime 24 dènye è yo.
+
+1. Nan Telegram, louvri **@BotFather**, voye `/newbot`, chwazi yon non: li ba ou yon **token**.
+2. **Vercel → Settings → Environment Variables**: `TELEGRAM_BOT_TOKEN` = token an. Si w vle, ajoute
+   `CRON_SECRET` (yon modpas long) pou se sèlman Vercel ki ka rele rezime chak maten an. **Redeploy**.
+3. Louvri bot ou a nan Telegram, peze **Start**.
+4. **Panneau admin → Paramèt → Alèt sou Telegram → Konekte Telegram**. Yon mesaj tès rive sou
+   Telegram ou. Règ Firestore yo dwe pibliye (koleksyon `private`).

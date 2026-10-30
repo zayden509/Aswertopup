@@ -788,6 +788,42 @@ export function createBackend(config, options = {}) {
       return snap.exists() && snap.data().is_admin === true;
     },
 
+    // Pwopriyetè a: admin ke okenn lòt admin pa nonmen
+    async adminIsOwner(uid) {
+      const snap = await getDoc(userRef(uid));
+      return snap.exists() && snap.data().is_admin === true && !snap.data().admin_by;
+    },
+
+    /* ---------- Alèt Telegram (private/alerts) ---------- */
+    async adminGetAlerts() {
+      const snap = await getDoc(doc(db, "private", "alerts"));
+      return snap.exists() ? snap.data() : {};
+    },
+
+    adminSetAlerts: (data) => setDoc(doc(db, "private", "alerts"), data, { merge: true }),
+
+    // Dènye fwa yon alèt (kle) te voye, pou pa voye menm alèt la twòp fwa
+    adminMarkAlertSent: (key) => setDoc(doc(db, "private", "alerts"), { sent: { [key]: Date.now() } }, { merge: true }),
+
+    subscribeAlerts(callback) {
+      return onSnapshot(doc(db, "private", "alerts"), (snap) => callback(snap.exists() ? toPlain(snap) : {}), (error) => console.error("alerts", error));
+    },
+
+    // Pwopriyetè a: konekte Telegram oswa voye yon tès ({ ok } oswa { ok: false, error })
+    async alertsAction(action) {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        const res = await fetch("/api/alerts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ action }),
+        });
+        return await res.json();
+      } catch {
+        return { ok: false, error: "Pa gen koneksyon entènèt. Eseye ankò." };
+      }
+    },
+
     async adminGetOrder(id) {
       const snap = await getDoc(doc(db, "orders", id));
       return snap.exists() ? toPlain(snap) : null;

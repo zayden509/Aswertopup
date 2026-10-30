@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { DatabaseBackup, FileSpreadsheet, Lock } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { DatabaseBackup, FileSpreadsheet, Lock, BellRing, Send } from "lucide-react";
 import { backend, errorText } from "./backend.js";
 import { ErrorNote, formatPrice, orderStatus, isPaidOrder, DEPOSIT_STATUS } from "./ui.jsx";
 import { Card, AdminButton, inputClass } from "./adminUi.jsx";
@@ -170,6 +170,55 @@ export function ReportsCard({ profiles, onToast }) {
           </div>
         </div>
       )}
+    </Card>
+  );
+}
+
+// Alèt Telegram: pwopriyetè a resevwa yon mesaj lè yon bagay bezwen l
+export function AlertsCard({ owner, onToast }) {
+  const [settings, setSettings] = useState(null);
+  const [busy, setBusy] = useState("");
+  const [error, setError] = useState("");
+  useEffect(() => backend.subscribeAlerts(setSettings), []);
+
+  const run = async (action) => {
+    setBusy(action);
+    setError("");
+    const r = await backend.alertsAction(action);
+    setBusy("");
+    if (!r?.ok) return setError(r?.error || "Sa pa mache. Eseye ankò.");
+    onToast(action === "connect" ? `Telegram konekte (${r.chat_name}). Gade mesaj tès la.` : "Mesaj tès la voye sou Telegram.");
+  };
+
+  const connected = Boolean(settings?.chat_id);
+  return (
+    <Card
+      title={<span className="flex items-center gap-2"><BellRing className="h-5 w-5 text-amber-500" /> Alèt sou Telegram</span>}
+      subtitle="Sit la voye yon mesaj ba ou lè: yon kòmand FazerCards echwe, balans FazerCards ap fini, telefòn httpSMS la pa voye SMS ankò, oswa yon gwo depo ap tann ou. Chak maten, yon rezime jounen an."
+    >
+      {connected ? (
+        <p className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30" data-testid="alerts-status">
+          ✅ Konekte ak {settings.chat_name}{settings.bot_name ? ` (bot @${settings.bot_name})` : ""}
+        </p>
+      ) : (
+        <ol className="mb-3 list-decimal space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300" data-testid="alerts-status">
+          <li>Nan Telegram, louvri <b>@BotFather</b>, voye <b>/newbot</b>, epi chwazi yon non. Li ba ou yon <b>token</b>.</li>
+          <li>Nan <b>Vercel → Settings → Environment Variables</b>, ajoute <b>TELEGRAM_BOT_TOKEN</b> = token an, epi fè <b>Redeploy</b>. Pa voye token an bay pèsonn.</li>
+          <li>Louvri bot ou fèk kreye a nan Telegram, epi peze <b>Start</b>.</li>
+          <li>Peze <b>Konekte Telegram</b> anba a.</li>
+        </ol>
+      )}
+      {owner ? (
+        <div className="flex flex-wrap gap-2">
+          <AdminButton tone={connected ? "ghost" : "primary"} icon={BellRing} busy={busy === "connect"} disabled={Boolean(busy)} onClick={() => run("connect")}>
+            {connected ? "Konekte ankò" : "Konekte Telegram"}
+          </AdminButton>
+          {connected && <AdminButton icon={Send} busy={busy === "test"} disabled={Boolean(busy)} onClick={() => run("test")}>Voye yon tès</AdminButton>}
+        </div>
+      ) : (
+        <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400"><Lock className="h-4 w-4" /> Se pwopriyetè a sèlman ki ka konekte alèt yo.</p>
+      )}
+      <ErrorNote>{error}</ErrorNote>
     </Card>
   );
 }

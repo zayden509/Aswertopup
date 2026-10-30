@@ -286,6 +286,11 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Paramèt prive sèvè a (ex. alèt Telegram pwopriyetè a): admin yo sèlman
+    match /private/{id} {
+      allow read, write: if isAdmin();
+    }
+
     function validPayAccount(a) {
       return a == null || (a is map && a.keys().hasOnly(['number', 'name'])
         && a.number is string && a.number.matches('^([0-9]{8,15})?$')

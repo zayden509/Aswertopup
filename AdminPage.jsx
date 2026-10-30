@@ -19,7 +19,7 @@ import AdminTeam, { isOwner } from "./AdminTeam.jsx";
 import AdminAuto from "./AdminAuto.jsx";
 import AdminSettings from "./AdminSettings.jsx";
 import AdminSms from "./AdminSms.jsx";
-import { BackupCard, ReportsCard } from "./AdminTools.jsx";
+import { AlertsCard, BackupCard, ReportsCard } from "./AdminTools.jsx";
 
 const TABS = [
   { id: "dashboard", label: "Tablo", Icon: LayoutDashboard, title: "Tablo" },
@@ -664,6 +664,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
         {tab === "settings" && (
           <>
             <AdminSettings account={account} owner={owner} onToast={onToast} onTrusted={recheckDeposits} />
+            <AlertsCard owner={owner} onToast={onToast} />
             <BackupCard owner={owner} onToast={onToast} />
           </>
         )}

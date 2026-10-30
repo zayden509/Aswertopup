@@ -6,6 +6,7 @@
 import { FazerCardsClient, FazerCardsAuthError, FazerCardsError, TERMINAL_ORDER_STATUSES } from "fazercards";
 import { createBackend } from "../../firebase.js";
 import { FIREBASE_CONFIG } from "../../config.js";
+import { alert, checkFazerBalance, HOUR } from "./alert.js";
 
 const env = process.env;
 const firebaseConfig = env.TEST_FIREBASE_CONFIG ? JSON.parse(env.TEST_FIREBASE_CONFIG) : FIREBASE_CONFIG;
@@ -113,6 +114,7 @@ export async function applyStatus(backend, order, fz) {
     // FazerCards remèt nou kòb la: nou remèt kliyan an pa l tou
     const note = `Livrezon otomatik la pa mache${reason ? ` (${reason})` : ""}. Verifye Player ID ou epi eseye ankò.`;
     await backend.adminUpdateOrder(order, "refused", "", note.slice(0, 300), supplier);
+    await alert(backend, `⚠️ Kòmand ${order.code} (${order.product_name} ${order.package_label}) echwe kote FazerCards${reason ? `: ${reason}` : ""}. Kliyan an ranbouse.`, { key: `fail_${order.id}`, everyMs: 24 * HOUR });
   } else if (!isTerminal(fz.status) && order.status === "pending") {
     await backend.adminUpdateOrder(order, "processing", "", null, supplier);
   } else {
@@ -161,10 +163,12 @@ export async function fulfill(orderId) {
       idempotencyKey: `awens-${order.id}`,
     });
     await applyStatus(backend, { ...claimed, supplier: { provider: PROVIDER, status: "sending" } }, { offer_name: map.offer_name, ...fz });
+    await checkFazerBalance(backend, fazer);
     return { ok: true, status: fz.status };
   } catch (error) {
     const message = fazerError(error);
     await backend.adminSetSupplier(order.id, { provider: PROVIDER, status: "error", error: message.slice(0, 300), offer_name: map.offer_name ?? null });
+    await alert(backend, `⚠️ Pa ka voye kòmand ${order.code} (${order.product_name} ${order.package_label}) bay FazerCards: ${message}`, { key: `send_${order.id}`, everyMs: 6 * HOUR });
     return { ok: false, error: message };
   }
 }

@@ -11,6 +11,7 @@ import crypto from "node:crypto";
 import { SMS_MAX_AGE_MS, duplicateOf, isPhoneNumber, normalizeReference, smsAmount, smsTooOld } from "../../depositCheck.js";
 import { isOperatorSender, methodForReceiver, parsePaymentSms, senderKey } from "../../smsParse.js";
 import { accountNumbers } from "../../paymentAccounts.js";
+import { alert, checkSmsSilence } from "./alert.js";
 
 export { senderKey };
 
@@ -65,6 +66,10 @@ export async function tryConfirm(backend, sms, deposit) {
     [!smsTooOld(deposit, sms), "expired"],
   ];
   const failed = checks.find(([ok]) => !ok);
+  if (failed?.[1] === "limit") {
+    const name = deposit.method === "natcash" ? "NatCash" : "MonCash";
+    await alert(backend, `💰 Yon depo ${deposit.amount} HTG (${name}, kòd ${deposit.reference}) ap tann ou: li pi gwo pase limit otomatik la (${max} HTG). Konfime l nan Panneau admin → Depo.`, { key: `limit_${deposit.id}`, everyMs: 24 * 3600000 });
+  }
   if (failed) return { confirmed: false, reason: failed[1] };
   if (duplicateOf(deposit, await backend.adminDepositsByReference(deposit.reference))) return { confirmed: false, reason: "duplicate" };
 
@@ -95,6 +100,8 @@ export async function lookupCode(backend, uid, method, reference) {
     await backend.adminClearCodeFails(uid).catch(() => {});
     return result;
   }
+  // Kòd la pa jwenn: petèt telefòn httpSMS la pa voye SMS yo ankò (pwopriyetè a resevwa yon alèt)
+  if (result.status === "not-found") await checkSmsSilence(backend);
   const left = await backend.adminAddCodeFail(uid, CODE_MAX_FAILS, CODE_WAIT_MS).catch(() => null);
   return left === null ? result : { ...result, attempts_left: left };
 }
