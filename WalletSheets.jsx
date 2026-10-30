@@ -178,8 +178,16 @@ const CODE_PROBLEMS = {
   phone: "Sa se yon nimewo telefòn. Mete ID tranzaksyon ki nan SMS MonCash/NatCash la.",
   used: "Kòd sa a deja itilize. Yon kòd tranzaksyon sèvi yon sèl fwa.",
   expired: "Peman sa a twò ansyen (plis pase 24 è). Ekri nou sou WhatsApp ak prèv peman an.",
-  blocked: "Twòp kòd ki pa bon. Tann 1 è, oswa ekri nou sou WhatsApp.",
 };
+
+// 5 kòd ki pa bon: kliyan an tann 30 minit (sèvè a konte yo)
+function codeProblemText(found) {
+  if (found.status === "blocked") return `Ou mete 5 kòd ki pa bon. Eseye ankò nan ${found.wait_minutes || 30} minit.`;
+  const text = CODE_PROBLEMS[found.status] || CODE_PROBLEMS["not-found"];
+  if (found.attempts_left === 0) return `${text} Ou mete 5 kòd ki pa bon: tann 30 minit anvan w eseye ankò.`;
+  if (found.attempts_left > 0) return `${text} Ou rete ${found.attempts_left} chans.`;
+  return text;
+}
 
 function CodeProblem({ text, helpLink }) {
   return (
@@ -196,31 +204,15 @@ function CodeProblem({ text, helpLink }) {
   );
 }
 
-// Èske sit la verifye kòd yo otomatikman (SMS)? { natcash: true, moncash: true }: kliyan an mete kòd
-// la sèlman. Sinon li mete montan an ak kòd la, epi admin nan konfime. Nou sonje repons lan.
-let depositModes = null;
-
 export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) {
   const methods = usePaymentMethods();
   const [methodId, setMethodId] = useState(() => (methods.find((m) => m.number && m.recommended) || methods.find((m) => m.number) || methods[0]).id);
   const method = methods.find((m) => m.id === methodId) || methods[0];
-  const [amount, setAmount] = useState(initialAmount);
   const [reference, setReference] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(null);
-  const [modes, setModes] = useState(depositModes);
   const [problem, setProblem] = useState("");
-  const auto = Boolean(modes?.[method.id]);
-
-  useEffect(() => {
-    let stale = false;
-    backend.checkDepositCode().then((r) => {
-      depositModes = r?.methods || { natcash: Boolean(r?.auto), moncash: Boolean(r?.auto) };
-      if (!stale) setModes(depositModes);
-    });
-    return () => { stale = true; };
-  }, []);
 
   // Foto egzanp lan (kote kòd tranzaksyon an ye nan SMS la), anba fòm lan
   const guideRef = useRef(null);
@@ -233,7 +225,7 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
 
   // Mesaj WhatsApp "Yon pwoblèm?" la ak tout enfòmasyon depo a, pou ekip la jwenn li vit
   const problemLines = ["Bonjou Awens Topup, mwen gen yon pwoblèm ak depo mwen.", "", `Mòd: ${method.name}`];
-  if (amount) problemLines.push(`Montan: ${amount} HTG`);
+  if (Number(initialAmount) > 0) problemLines.push(`Montan: ${initialAmount} HTG`);
   if (reference.trim()) problemLines.push(`TransCode: ${reference.trim()}`);
   const problemText = problemLines.join("\n");
 
@@ -243,23 +235,14 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
     setError("");
     setProblem("");
     try {
-      let order = { amount, method: method.id };
-      if (auto) {
-        // Sit la tcheke kòd la ak SMS telefòn boutik la: montan an soti nan SMS la
-        const found = await backend.checkDepositCode(method.id, reference);
-        if (!found) throw new UserError("Nou pa ka verifye kòd la kounye a. Tcheke entènèt ou epi eseye ankò.");
-        if (found.auto === false) {
-          depositModes = { ...depositModes, [method.id]: false };
-          setModes(depositModes);
-          throw new UserError("Mete montan ou voye a, epi peze Valider ankò.");
-        }
-        if (found.status !== "ok") {
-          setProblem(CODE_PROBLEMS[found.status] || CODE_PROBLEMS["not-found"]);
-          return;
-        }
-        order = { amount: found.amount, method: found.method };
+      // Kliyan an mete kòd la sèlman: sit la tcheke l ak SMS telefòn boutik la, montan an soti nan SMS la
+      const found = await backend.checkDepositCode(method.id, reference);
+      if (!found) throw new UserError("Nou pa ka verifye kòd la kounye a. Tcheke entènèt ou epi eseye ankò.");
+      if (found.status !== "ok") {
+        setProblem(codeProblemText(found));
+        return;
       }
-      const deposit = await backend.requestDeposit({ ...order, reference, senderPhone: null });
+      const deposit = await backend.requestDeposit({ amount: found.amount, method: found.method, reference, senderPhone: null });
       // Si SMS NatCash/MonCash la deja rive sou telefòn boutik la, depo a konfime touswit
       const check = await backend.requestDepositCheck(deposit.id);
       setSent({ ...deposit, confirmed: Boolean(check?.confirmed) });
@@ -291,16 +274,15 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
               <div className="min-w-0">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Validation du paiement</h4>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {auto ? `Voye kòb la sou kont anlè a, epi mete kòd tranzaksyon ${method.name} ba ou a. Montan an detekte otomatikman grasa kòd la.` : `Voye kòb la sou kont anlè a, epi mete montan an ak kòd tranzaksyon ${method.name} ba ou a.`}
+                  Voye kòb la sou kont anlè a, epi mete kòd tranzaksyon {method.name} ba ou a. Montan an detekte otomatikman grasa kòd la.
                 </p>
               </div>
             </div>
-            {auto && Number(initialAmount) > 0 && (
+            {Number(initialAmount) > 0 && (
               <p className="rounded-xl bg-sky-50 px-3.5 py-2.5 text-sm text-sky-800 dark:bg-sky-500/10 dark:text-sky-200">
                 Montan pou voye: <span className="font-bold tabular-nums">{formatPrice(Number(initialAmount))}</span>
               </p>
             )}
-            {!auto && <Input id="deposit-amount" label="Montant envoyé (HTG)" icon={Banknote} inputMode="numeric" type="number" min="50" max="100000" step="1" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Ex. 1000" />}
             {problem && <CodeProblem text={problem} helpLink={waLink(supportMessage(problemText, profile))} />}
             <Input
               id="deposit-reference"

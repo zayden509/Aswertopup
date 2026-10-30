@@ -696,22 +696,32 @@ export function createBackend(config, options = {}) {
 
     adminReferenceUsed: (reference) => referenceUsed(reference),
 
-    // Konbyen kòd ki pa bon yon kliyan mete nan dènye èdtan an (pou pèsonn pa ka devine kòd)
-    async adminCodeFails(uid) {
+    // Kòd ki pa bon yon kliyan mete (pou pèsonn pa ka devine kòd): konbyen ms li rete pou l tann
+    async adminCodeWait(uid) {
       const snap = await getDoc(doc(db, "codeChecks", uid));
-      const d = snap.exists() ? snap.data() : null;
-      return d && Date.now() - d.since.toMillis() < 3600000 ? d.fails : 0;
+      const until = snap.exists() ? snap.data().blocked_until?.toMillis() || 0 : 0;
+      return Math.max(0, until - Date.now());
     },
 
-    async adminAddCodeFail(uid) {
+    // Yon lòt kòd ki pa bon: apre `max` nan `waitMs`, kliyan an tann `waitMs`. Retounen chans ki rete.
+    async adminAddCodeFail(uid, max, waitMs) {
       const ref = doc(db, "codeChecks", uid);
-      await runTransaction(db, async (tx) => {
+      return runTransaction(db, async (tx) => {
         const snap = await tx.get(ref);
         const d = snap.exists() ? snap.data() : null;
-        if (d && Date.now() - d.since.toMillis() < 3600000) tx.update(ref, { fails: d.fails + 1 });
-        else tx.set(ref, { fails: 1, since: new Date() });
+        const now = Date.now();
+        const fresh = !d || now - d.since.toMillis() > waitMs || (d.blocked_until && d.blocked_until.toMillis() <= now);
+        const fails = fresh ? 1 : d.fails + 1;
+        tx.set(ref, {
+          fails,
+          since: fresh ? new Date(now) : d.since,
+          blocked_until: fails >= max ? new Date(now + waitMs) : null,
+        });
+        return Math.max(0, max - fails);
       });
     },
+
+    adminClearCodeFails: (uid) => deleteDoc(doc(db, "codeChecks", uid)),
 
     // Lòt depo ki gen menm kòd tranzaksyon an (nenpòt mòd peman)
     async adminDepositsByReference(reference) {
@@ -741,11 +751,12 @@ export function createBackend(config, options = {}) {
     },
 
     // Pwopriyetè a sèlman: limen/etenn konfimasyon otomatik la, nimewo ofisyèl ki voye SMS yo, limit la
-    async adminSetAutomation({ smsAuto, senders, maxAuto }) {
+    async adminSetAutomation({ senders, maxAuto }) {
       const max = Number(maxAuto);
       if (!Number.isInteger(max) || max < 0 || max > 100000) throw new UserError("Limit la dwe yon chif san vigil ant 0 ak 100 000.");
       const list = [...new Set((senders || []).map((x) => String(x).trim()).filter(Boolean))].slice(0, 10);
-      await setDoc(doc(db, "settings", "automation"), { sms_auto: Boolean(smsAuto), senders: list, max_auto: max });
+      // Depo yo toujou konfime otomatikman (sms_auto rete nan dokiman an pou règ Firestore yo)
+      await setDoc(doc(db, "settings", "automation"), { sms_auto: true, senders: list, max_auto: max });
     },
 
     // Kliyan an fin voye depo a: sèvè a gade si SMS NatCash/MonCash la deja rive

@@ -28,7 +28,7 @@ export default function AdminSms({ owner, onToast, onTrusted }) {
   const trust = async (sender, method) => {
     try {
       await backend.adminSetAutomation({
-        smsAuto: automation.sms_auto, maxAuto: automation.max_auto ?? 5000, senders: [...(automation.senders || []), sender],
+        maxAuto: automation.max_auto ?? 5000, senders: [...(automation.senders || []), sender],
       });
       if (method) await backend.adminMarkSmsSeen(method);
       onToast(`${sender} se nimewo ofisyèl kounye a.`);
@@ -42,7 +42,7 @@ export default function AdminSms({ owner, onToast, onTrusted }) {
   return (
     <Card
       title={<span className="flex items-center gap-2"><MessageSquareText className="h-5 w-5 text-sky-500" /> SMS peman (httpSMS)</span>}
-      subtitle={automation.sms_auto ? "Konfimasyon otomatik limen: yon depo konfime poukont li lè SMS li a rive." : "Konfimasyon otomatik etenn (Paramèt). SMS yo anrejistre pou w verifye yo."}
+      subtitle="Yon depo konfime poukont li lè SMS li a rive."
     >
       {list === null ? null : list.length === 0 ? (
         <Empty>Poko gen SMS. Lè httpSMS konekte, SMS NatCash/MonCash yo ap parèt isit la.</Empty>

@@ -56,7 +56,6 @@ export async function tryConfirm(backend, sms, deposit) {
   const settings = await backend.adminGetAutomation();
   const max = Number.isInteger(settings.max_auto) ? settings.max_auto : 5000;
   const checks = [
-    [settings.sms_auto === true, "off"],
     [isOfficial(settings, sms.sender), "sender"],
     [sms.incoming === true, "not-incoming"],
     [sms.status === "new", "used"],
@@ -80,26 +79,24 @@ export async function tryConfirm(backend, sms, deposit) {
   }
 }
 
-// Yon kliyan ka mete 8 kòd ki pa bon pa èdtan: pi plis, li bloke pou yon ti tan (pou l pa devine kòd)
-const MAX_CODE_FAILS = 8;
+// 5 kòd ki pa bon nan 30 minit: kliyan an tann 30 minit anvan l eseye ankò (pou l pa devine kòd)
+const CODE_MAX_FAILS = 5;
+const CODE_WAIT_MS = 30 * 60000;
 
-// Ki mòd peman kliyan an peye ak kòd la sèlman (montan an soti nan SMS la): tout, lè
-// konfimasyon otomatik la limen
-export const autoMethods = (settings) => {
-  const on = settings.sms_auto === true;
-  return { natcash: on, moncash: on };
-};
-
-// Kliyan an mete kòd tranzaksyon li anvan depo a: èske telefòn boutik la resevwa peman sa a?
-// Retounen { auto: false } si konfimasyon otomatik la etenn (kliyan an mete montan an, admin nan konfime).
+// Kliyan an mete kòd tranzaksyon li (sèl sa li mete): èske telefòn boutik la resevwa peman sa a?
+// Si wi, montan an soti nan SMS la.
 export async function lookupCode(backend, uid, method, reference) {
   const settings = await backend.adminGetAutomation();
-  if (settings.sms_auto !== true) return { auto: false };
   // Si règ Firestore yo poko pibliye (koleksyon codeChecks la), verifikasyon an mache kanmenm
-  if ((await backend.adminCodeFails(uid).catch(() => 0)) >= MAX_CODE_FAILS) return { auto: true, status: "blocked" };
+  const wait = await backend.adminCodeWait(uid).catch(() => 0);
+  if (wait > 0) return { status: "blocked", wait_minutes: Math.ceil(wait / 60000) };
   const result = await findPayment(backend, settings, method, normalizeReference(reference));
-  if (result.status !== "ok") await backend.adminAddCodeFail(uid).catch(() => {});
-  return { auto: true, ...result };
+  if (result.status === "ok") {
+    await backend.adminClearCodeFails(uid).catch(() => {});
+    return result;
+  }
+  const left = await backend.adminAddCodeFail(uid, CODE_MAX_FAILS, CODE_WAIT_MS).catch(() => null);
+  return left === null ? result : { ...result, attempts_left: left };
 }
 
 async function findPayment(backend, settings, method, ref) {

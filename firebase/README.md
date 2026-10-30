@@ -142,27 +142,27 @@ Teste ak pwòp kont jwèt ou anvan (pi piti pake a). Kenbe kòb sou balans Fazer
 ## Depo otomatik ak SMS (httpSMS)
 Lè yon kliyan voye kòb sou NatCash (oswa MonCash) ou, telefòn ou resevwa yon SMS ak montan
 an ak kòd tranzaksyon an. Aplikasyon **httpSMS** voye SMS sa a bay sit la
-(`api/sms-webhook.js`). Lè kliyan an mete menm kòd la ak menm montan an nan depo li, depo a
-konfime poukont li, epi kòb la antre nan Wallet li touswit.
+(`api/sms-webhook.js`). Kliyan an mete **kòd tranzaksyon an sèlman**: sit la jwenn montan an nan
+SMS la, depo a konfime poukont li, epi kòb la antre nan Wallet li touswit.
 
-Yon depo konfime otomatikman sèlman si: ou limen l nan **Paramèt**, SMS la soti nan yon nimewo
-ou make **ofisyèl**, se kòb ou **resevwa**, kòd la ak montan an menm, montan an pa depase
+Yon depo konfime otomatikman sèlman si: SMS la soti nan operatè a oswa nan yon nimewo ou make
+**ofisyèl**, se kòb ou **resevwa**, kòd la ak montan an menm, montan an pa depase
 **limit otomatik** la, SMS la poko sèvi, e SMS la rive **mwens pase 24 è** de depo a (yon ansyen
 kòd pa janm konfime poukont li). Tout lòt depo yo rete nan **Depo** pou ou.
 
 ### Kòd tranzaksyon yo
-- Lè konfimasyon otomatik la limen, kliyan an mete **kòd la sèlman** (tankou BM Prods): sit la
-  tcheke SMS telefòn boutik la touswit (`api/sms-lookup.js`). Si okenn peman pa koresponn, li wè
-  **Vérification impossible** e depo a pa kreye. Montan an soti nan SMS la. Apre 8 move kòd nan
-  yon èdtan, kont lan tann 1 è (pou pèsonn pa ka devine kòd). Lè l etenn, kliyan an mete montan an
-  ak kòd la, epi se ou ki konfime.
+- Kliyan an mete **kòd la sèlman** (tankou BM Prods), NatCash kou MonCash: sit la tcheke SMS
+  telefòn boutik la touswit (`api/sms-lookup.js`). Si okenn peman pa koresponn, li wè
+  **Vérification impossible** e depo a pa kreye. Montan an soti nan SMS la.
+- **5 kòd ki pa bon** nan 30 minit: kliyan an tann **30 minit** anvan l ka eseye ankò (pou pèsonn
+  pa ka devine kòd). Li wè konbyen chans ki rete l. Yon bon kòd mete kontè a a zewo.
+- Yon kòd **ekspire apre 24 è**: yon SMS ki gen plis pase 24 è pa konfime okenn depo.
 - Yon kòd tranzaksyon sèvi **yon sèl fwa**, NatCash kou MonCash. Sit la retire espas, tirè ak pwen
   (`2607-2853 633942` = `26072853633942`), ak zewo ki devan yon kòd MonCash (`003577973060` =
   `3577973060`), kidonk yon moun pa ka chanje ti detay pou reitilize l.
 - **MonCash:** SIM MonCash la (34431664) dwe nan menm telefòn Android ki gen httpSMS la (telefòn 2
   SIM mache). Lè yon SMS pa di si se NatCash oswa MonCash, sit la gade ki SIM ki resevwa l.
-- Lè konfimasyon otomatik la limen, kliyan an mete **kòd la sèlman**, pou NatCash kou MonCash.
-  **Panneau admin → Paramèt** montre si chak SIM konekte (✅ lè yon SMS ofisyèl rive nan 7 dènye
+- **Panneau admin → Paramèt** montre si chak SIM konekte (✅ lè yon SMS ofisyèl rive nan 7 dènye
   jou yo). Si yon SIM ⏸️, kat la di poukisa: okenn SMS pa rive (httpSMS), oswa SMS la soti nan
   yon nimewo poko ofisyèl (bouton **Wi, se MonCash** fè l ofisyèl epi depo k ap tann yo pase).
   Règ Firestore yo verifye sa tou.
@@ -191,5 +191,5 @@ kòd pa janm konfime poukont li). Tout lòt depo yo rete nan **Depo** pou ou.
    an ak kòd la. SMS ki soti nan **NATCOM** (NatCash), **MonCash**, **Digicel** oswa yon kout
    nimewo operatè (3 a 6 chif) ofisyèl otomatikman; pou yon lòt nimewo, peze **Se nimewo
    ofisyèl** sou li: depo ki t ap tann SMS sa a konfime poukont yo touswit.
-5. **Paramèt → Depo otomatik ak SMS**: limen l, chwazi limit la, epi **Sove**. Kat NatCash ak
-   MonCash yo vin ✅ lè sit la resevwa yon SMS ofisyèl chak SIM.
+5. **Paramèt → Depo otomatik ak SMS**: chwazi limit otomatik la (yon depo ki pi gwo rete pou ou),
+   epi **Sove**. Kat NatCash ak MonCash yo vin ✅ lè sit la resevwa yon SMS ofisyèl chak SIM.

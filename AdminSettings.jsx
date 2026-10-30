@@ -5,7 +5,7 @@ import { ErrorNote, copyText, formatDateTime } from "./ui.jsx";
 import { smsConnected } from "./depositCheck.js";
 import { isOperatorSender, methodForReceiver, parsePaymentSms, senderKey } from "./smsParse.js";
 import { usePaymentMethods } from "./payments.js";
-import { Card, Field, Toggle, AdminButton, inputClass } from "./adminUi.jsx";
+import { Card, Field, AdminButton, inputClass } from "./adminUi.jsx";
 
 // Nimewo MonCash/NatCash kliyan yo voye kòb la (depo ak peman dirèk).
 // Se pwopriyetè a sèlman ki ka chanje yo: yon lòt admin pa ka voye peman yo sou nimewo pa l.
@@ -147,7 +147,7 @@ function SimDiagnosis({ name, number, onSim, official, owner, onTrust, id }) {
 
 function SmsAutomation({ owner, onToast, onTrusted }) {
   const [saved, setSaved] = useState(null);
-  const [form, setForm] = useState({ smsAuto: false, senders: [], maxAuto: "5000" });
+  const [form, setForm] = useState({ senders: [], maxAuto: "5000" });
   const [sender, setSender] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -164,7 +164,7 @@ function SmsAutomation({ owner, onToast, onTrusted }) {
   const trustSender = async (sender, method) => {
     try {
       await backend.adminSetAutomation({
-        smsAuto: Boolean(saved?.sms_auto), maxAuto: saved?.max_auto ?? 5000, senders: [...(saved?.senders || []), sender],
+        maxAuto: saved?.max_auto ?? 5000, senders: [...(saved?.senders || []), sender],
       });
       await backend.adminMarkSmsSeen(method);
       onToast(`${sender} se nimewo ofisyèl kounye a.`);
@@ -176,14 +176,14 @@ function SmsAutomation({ owner, onToast, onTrusted }) {
 
   useEffect(() => backend.subscribeAutomation((a) => {
     setSaved(a);
-    setForm({ smsAuto: Boolean(a.sms_auto), senders: a.senders || [], maxAuto: String(a.max_auto ?? 5000) });
+    setForm({ senders: a.senders || [], maxAuto: String(a.max_auto ?? 5000) });
   }), []);
 
   const save = async (next = form) => {
     setBusy(true);
     setError("");
     try {
-      await backend.adminSetAutomation({ smsAuto: next.smsAuto, senders: next.senders, maxAuto: Number(next.maxAuto) });
+      await backend.adminSetAutomation({ senders: next.senders, maxAuto: Number(next.maxAuto) });
       onToast("Paramèt SMS yo anrejistre.");
     } catch (err) {
       setError(errorText(err));
@@ -202,7 +202,7 @@ function SmsAutomation({ owner, onToast, onTrusted }) {
   return (
     <Card
       title={<span className="flex items-center gap-2"><MessageSquareText className="h-5 w-5 text-sky-500" /> Depo otomatik ak SMS</span>}
-      subtitle="Ak httpSMS sou telefòn Android ki gen SIM NatCash/MonCash la, sit la li SMS peman yo epi li konfime depo yo poukont li."
+      subtitle="Kliyan an mete TransCode a sèlman. Ak httpSMS sou telefòn Android ki gen SIM NatCash/MonCash yo, sit la jwenn montan an nan SMS la epi li konfime depo a poukont li. 5 kòd ki pa bon: kliyan an tann 30 minit."
     >
       <div className="space-y-4">
         <ul className="grid gap-2 sm:grid-cols-2" data-testid="sms-connected">
@@ -232,11 +232,6 @@ function SmsAutomation({ owner, onToast, onTrusted }) {
         </div>
 
         <fieldset disabled={!owner} className="space-y-4">
-          <Toggle
-            on={form.smsAuto}
-            onChange={(on) => setForm((f) => ({ ...f, smsAuto: on }))}
-            label={form.smsAuto ? "Konfime depo yo otomatikman" : "Otomatik etenn: ou konfime depo yo alamen"}
-          />
           <Field label="Nimewo ofisyèl ki voye SMS NatCash/MonCash yo" hint="Se sèlman SMS ki soti nan nimewo sa yo ki ka konfime yon depo. Ou ka ajoute yo dirèkteman nan lis SMS yo (Depo).">
             <div className="flex flex-wrap gap-2">
               {form.senders.map((x) => (
