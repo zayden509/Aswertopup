@@ -6,6 +6,7 @@ import { orderMessage } from "./orders.js";
 import { productForPackage } from "./catalog.js";
 import { LoginPrompt } from "./WalletPage.jsx";
 import { ReceiptButton } from "./Receipt.jsx";
+import { ReviewBox } from "./Reviews.jsx";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
@@ -142,6 +143,7 @@ export function OrderSheet({ order, catalog = PRODUCTS, profile, onClose, onToas
             </div>
           ))}
       </dl>
+      {order.status === "delivered" && profile && order.user_id && <ReviewBox order={order} profile={profile} onToast={onToast} />}
       {order.status !== "unpaid" && (
         <ReceiptButton className="mt-4" receipt={() => orderReceipt(order, profile)} name={`resi-${order.code}.png`} onToast={onToast} />
       )}

@@ -320,6 +320,36 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ---------- Avi kliyan yo: yon avi pou chak kòmand ki livre ----------
+    // Kliyan an ekri l; li parèt sou sit la sèlman lè yon admin apwouve l.
+    match /reviews/{orderId} {
+      allow read: if resource == null || resource.data.approved == true
+        || (signedIn() && (resource.data.user_id == me() || isAdmin()));
+      allow create: if signedIn() && validNewReview(orderId);
+      allow update: if isAdmin() && changedOnly(['approved']) && request.resource.data.approved is bool;
+      allow delete: if isAdmin();
+    }
+
+    function validNewReview(orderId) {
+      let d = request.resource.data;
+      let order = get(/databases/$(database)/documents/orders/$(orderId)).data;
+      return exactKeys(['user_id', 'name', 'product_name', 'rating', 'text', 'approved', 'created_at'])
+        && d.user_id == me() && order.user_id == me() && order.status == 'delivered'
+        && d.product_name == order.product_name
+        && d.name is string && d.name.size() >= 1 && d.name.size() <= 40
+        && d.rating is int && d.rating >= 1 && d.rating <= 5
+        && d.text is string && d.text.size() <= 300
+        && d.approved == false && d.created_at == request.time;
+    }
+
+    // Kantite kòmand ki livre (paj akèy la): admin yo mete l ajou
+    match /stats/{id} {
+      allow read: if true;
+      allow write: if isAdmin() && id == 'public'
+        && request.resource.data.keys().hasOnly(['delivered'])
+        && request.resource.data.delivered is int && request.resource.data.delivered >= 0;
+    }
+
     // ---------- Vizitè yo: yon kontè pa jou (AAAA-MM-JJ, lè Ayiti) ----------
     // Chak vizitè ka sèlman ajoute 1; se admin yo sèlman ki ka li l.
     match /visits/{day} {

@@ -20,6 +20,7 @@ import AdminAuto from "./AdminAuto.jsx";
 import AdminSettings from "./AdminSettings.jsx";
 import AdminSms from "./AdminSms.jsx";
 import { AlertsCard, BackupCard, ReportsCard } from "./AdminTools.jsx";
+import { AdminReviews } from "./Reviews.jsx";
 
 const TABS = [
   { id: "dashboard", label: "Tablo", Icon: LayoutDashboard, title: "Tablo" },
@@ -496,6 +497,11 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
     });
   }, [epoch]);
 
+  // Kantite kòmand livre ki parèt sou paj akèy la (si règ Firestore yo pibliye)
+  useEffect(() => {
+    backend.adminSyncDeliveredCount().catch(() => {});
+  }, []);
+
   // Ki pake ki otomatik (FazerCards)
   useEffect(() => backend.subscribeSupplierMap(setSupplierMap), [epoch]);
   useEffect(() => backend.subscribeAutomation(setAutomation), [epoch]);
@@ -658,7 +664,12 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
         )}
         {tab === "customers" && <AdminCustomers profiles={profiles} orders={allOrders} deposits={deposits} onToast={onToast} />}
         {tab === "catalog" && <AdminCatalog account={account} onToast={onToast} />}
-        {tab === "messages" && <AdminMessages profiles={profiles} announcements={announcements} onToast={onToast} />}
+        {tab === "messages" && (
+          <>
+            <AdminMessages profiles={profiles} announcements={announcements} onToast={onToast} />
+            <AdminReviews onToast={onToast} />
+          </>
+        )}
         {tab === "team" && <AdminTeam me={me} profiles={profiles} onToast={onToast} />}
         {tab === "auto" && <AdminAuto account={account} supplierMap={supplierMap} onToast={onToast} />}
         {tab === "settings" && (

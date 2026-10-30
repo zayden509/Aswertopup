@@ -9,6 +9,7 @@ import {
 import {
   getFirestore, connectFirestoreEmulator, doc, collection, query, where, orderBy, limit, onSnapshot,
   getDoc, getDocs, setDoc, addDoc, deleteDoc, runTransaction, writeBatch, updateDoc, increment, serverTimestamp, documentId,
+  getCountFromServer,
 } from "firebase/firestore";
 import { UserError } from "./errors.js";
 import { dayKey } from "./days.js";
@@ -546,6 +547,56 @@ export function createBackend(config, options = {}) {
         if (text) batch.set(newNotificationRef(order.user_id), notification("order", text[0], text[1], order.code));
       }
       await batch.commit();
+    },
+
+    /* ---------- Avi kliyan yo ak kantite kòmand livre ---------- */
+    // Avi admin yo apwouve (paj akèy la), pi resan an anvan
+    subscribeReviews(callback) {
+      return onSnapshot(query(collection(db, "reviews"), where("approved", "==", true), limit(30)), (snap) => {
+        callback(newestFirst(snap.docs.map(toPlain)));
+      }, (error) => console.error("reviews", error));
+    },
+
+    subscribePublicStats(callback) {
+      return onSnapshot(doc(db, "stats", "public"), (snap) => callback(snap.data() || {}), (error) => console.error("stats", error));
+    },
+
+    // Avi kliyan an te deja bay pou kòmand sa a (null si poko)
+    async getMyReview(orderId) {
+      try {
+        const snap = await getDoc(doc(db, "reviews", orderId));
+        return snap.exists() ? toPlain(snap) : null;
+      } catch {
+        return null;
+      }
+    },
+
+    async createReview(order, rating, text, name) {
+      const uid = auth.currentUser?.uid;
+      if (!uid) throw new UserError("Konekte anvan.");
+      if (!Number.isInteger(rating) || rating < 1 || rating > 5) throw new UserError("Chwazi kantite etwal yo.");
+      const clean = String(text || "").trim().slice(0, 300);
+      await setDoc(doc(db, "reviews", order.id), {
+        user_id: uid, name: String(name || "Kliyan").trim().slice(0, 40) || "Kliyan", product_name: order.product_name,
+        rating, text: clean, approved: false, created_at: serverTimestamp(),
+      });
+    },
+
+    adminSubscribeReviews(callback) {
+      return onSnapshot(query(collection(db, "reviews"), orderBy("created_at", "desc"), limit(60)), (snap) => {
+        callback(snap.docs.map(toPlain));
+      }, (error) => console.error("admin reviews", error));
+    },
+
+    adminSetReviewApproved: (id, approved) => updateDoc(doc(db, "reviews", id), { approved }),
+    adminDeleteReview: (id) => deleteDoc(doc(db, "reviews", id)),
+
+    // Mete kantite kòmand livre yo ajou (paj akèy la li l)
+    async adminSyncDeliveredCount() {
+      const count = (await getCountFromServer(query(collection(db, "orders"), where("status", "==", "delivered")))).data().count;
+      const snap = await getDoc(doc(db, "stats", "public"));
+      if (!snap.exists() || snap.data().delivered !== count) await setDoc(doc(db, "stats", "public"), { delivered: count });
+      return count;
     },
 
     // Admin nan resevwa peman dirèk la: kòmand lan vin "pending" (pare pou FazerCards oswa pou livre)

@@ -17,6 +17,7 @@ import { DepositSheet, TransferSheet } from "./WalletSheets.jsx";
 import { NotificationsSheet, LiveToast } from "./Notifications.jsx";
 import { newVersionAvailable } from "./updateCheck.js";
 import { TutorialSheet, openTutorial, useTutorialRequests } from "./Tutorial.jsx";
+import { ReviewsSection } from "./Reviews.jsx";
 
 // Si yon nouvo vèsyon sit la soti pandan paj la louvri, ansyen fichye yo pa egziste ankò:
 // nou rechaje paj la (yon fwa pa minit) olye nou kite l kase
@@ -548,6 +549,7 @@ export default function App() {
                 {HOME_SECTIONS.map((s, i) => (
                   <ProductRail key={s.category} section={s} index={i} catalog={catalog} prices={account.prices} onOpen={openProduct} onSeeAll={seeAll} />
                 ))}
+                <ReviewsSection />
                 <Footer email={account.profile?.email} onGo={goToTab} onTutorial={openTutorial} onRank={showRank} />
               </>
             )}

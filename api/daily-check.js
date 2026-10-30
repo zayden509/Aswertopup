@@ -29,6 +29,7 @@ export async function GET(request) {
     // Yon sèl rezime pa jou, menm si yo rele paj la plizyè fwa
     const sent = await alert(backend, lines.join("\n"), { key: "daily", everyMs: 20 * HOUR });
     await checkSmsSilence(backend, 12);
+    await backend.adminSyncDeliveredCount().catch(() => {});
     if (process.env.FAZER_API_KEY) await checkFazerBalance(backend, fazer);
     return json({ ok: true, sent });
   } catch (error) {
