@@ -4,6 +4,7 @@ import { backend, errorText } from "./backend.js";
 import { SITE_URL } from "./data.js";
 import { ErrorNote, copyText, formatPrice } from "./ui.jsx";
 import { Card, Field, AdminButton, inputClass } from "./adminUi.jsx";
+import { t } from "./i18n.js";
 
 // Parennaj: yon kliyan pataje lyen li (?ref=AWENS-ID). Lè zanmi an fè premye depo li (omwen
 // min_deposit), yo chak jwenn bonis pwopriyetè a chwazi a (sèvè a oswa admin nan bay li).
@@ -45,7 +46,7 @@ export function InviteCard({ profile, onToast }) {
   useEffect(() => backend.subscribeMyReferrals(setFriends), []);
   if (!settings || !(settings.bonus > 0) || !profile) return null;
   const link = `${SITE_URL}/?ref=${profile.wallet_code}`;
-  const message = `Mwen achte dyaman Free Fire ak lòt bagay sou Awens Topup, peye ak MonCash oswa NatCash. Kreye kont ou ak lyen mwen an: ${link}`;
+  const message = t(`Mwen achte dyaman Free Fire ak lòt bagay sou Awens Topup, peye ak MonCash oswa NatCash. Kreye kont ou ak lyen mwen an: ${link}`, `J'achète des diamants Free Fire et plus sur Awens Topup, payés avec MonCash ou NatCash. Créez votre compte avec mon lien : ${link}`);
   const share = async () => {
     if (navigator.share) {
       try {
@@ -61,19 +62,19 @@ export function InviteCard({ profile, onToast }) {
 
   return (
     <section className="rounded-3xl bg-gradient-to-br from-fuchsia-500 to-sky-500 p-5 text-white shadow-lg" data-testid="invite">
-      <p className="flex items-center gap-2 text-lg font-extrabold"><Gift className="h-6 w-6" /> Envite zanmi w yo</p>
+      <p className="flex items-center gap-2 text-lg font-extrabold"><Gift className="h-6 w-6" /> {t("Envite zanmi w yo", "Invitez vos amis")}</p>
       <p className="mt-1 text-sm text-white/90">
-        Lè yon zanmi kreye kont li ak lyen ou a epi l fè premye depo li (omwen {formatPrice(settings.min_deposit)}),
-        nou ba nou chak <b>{formatPrice(settings.bonus)}</b> nan Wallet.
+        {t(`Lè yon zanmi kreye kont li ak lyen ou a epi l fè premye depo li (omwen ${formatPrice(settings.min_deposit)}), nou ba nou chak`, `Quand un ami crée son compte avec votre lien et fait son premier dépôt (au moins ${formatPrice(settings.min_deposit)}), vous recevez chacun`)}{" "}
+        <b>{formatPrice(settings.bonus)}</b> {t("nan Wallet.", "dans votre Wallet.")}
       </p>
       <div className="mt-3 flex items-center gap-2 rounded-2xl bg-white/15 p-2 pl-3">
         <span className="min-w-0 flex-1 truncate font-mono text-sm">{link}</span>
-        <button type="button" onClick={() => copyText(link, onToast)} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/20" aria-label="Kopye lyen an"><Copy className="h-4 w-4" /></button>
-        <button type="button" onClick={share} className="flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-white px-3 text-sm font-bold text-fuchsia-600"><Share2 className="h-4 w-4" /> Pataje</button>
+        <button type="button" onClick={() => copyText(link, onToast)} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/20" aria-label={t("Kopye lyen an", "Copier le lien")}><Copy className="h-4 w-4" /></button>
+        <button type="button" onClick={share} className="flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-white px-3 text-sm font-bold text-fuchsia-600"><Share2 className="h-4 w-4" /> {t("Pataje", "Partager")}</button>
       </div>
       {friends.length > 0 && (
         <p className="mt-3 flex items-center gap-2 text-sm font-semibold">
-          <Users className="h-4 w-4" /> {friends.length} zanmi envite · {rewarded} bonis resevwa
+          <Users className="h-4 w-4" /> {t(`${friends.length} zanmi envite · ${rewarded} bonis resevwa`, `${friends.length} ami(s) invité(s) · ${rewarded} bonus reçu(s)`)}
         </p>
       )}
     </section>

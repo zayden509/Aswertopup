@@ -3,6 +3,7 @@ import { Wallet, ChevronRight, BookOpen, Copy } from "lucide-react";
 import { PAYMENT_METHODS } from "./data.js";
 import { openTutorial } from "./Tutorial.jsx";
 import { Sheet, WhatsAppIcon, waLink, openExternal } from "./ui.jsx";
+import { t } from "./i18n.js";
 
 function MethodSheet({ method, onClose, onToast }) {
   const copy = () => {
@@ -12,27 +13,27 @@ function MethodSheet({ method, onClose, onToast }) {
   };
 
   const steps = [
-    "Pase kòmand ou sou sit la, epi voye l sou WhatsApp.",
+    t("Pase kòmand ou sou sit la, epi voye l sou WhatsApp.", "Passez votre commande sur le site, puis envoyez-la sur WhatsApp."),
     method.number
-      ? `Voye kòb la sou nimewo ${method.name} nou an.`
-      : `N ap ba w nimewo ${method.name} nou an sou WhatsApp. Voye kòb la sou li.`,
-    "Voye yon screenshot resi a sou WhatsApp, ak nimewo kòmand ou (AS-…).",
+      ? t(`Voye kòb la sou nimewo ${method.name} nou an.`, `Envoyez l'argent sur notre numéro ${method.name}.`)
+      : t(`N ap ba w nimewo ${method.name} nou an sou WhatsApp. Voye kòb la sou li.`, `Nous vous donnons notre numéro ${method.name} sur WhatsApp. Envoyez l'argent dessus.`),
+    t("Voye yon screenshot resi a sou WhatsApp, ak nimewo kòmand ou (AS-…).", "Envoyez une capture du reçu sur WhatsApp, avec votre numéro de commande (AS-…)."),
   ];
 
   return (
     <Sheet
       open
       onClose={onClose}
-      title={`Peye ak ${method.name}`}
+      title={t(`Peye ak ${method.name}`, `Payer avec ${method.name}`)}
       icon={<img src={method.logo} alt="" className="h-11 w-11 rounded-2xl object-cover" />}
       footer={
         <a
-          href={waLink(`Bonjou Awens Topup, men resi peman ${method.name} mwen an. Nimewo kòmand mwen: `)}
+          href={waLink(t(`Bonjou Awens Topup, men resi peman ${method.name} mwen an. Nimewo kòmand mwen: `, `Bonjour Awens Topup, voici mon reçu de paiement ${method.name}. Mon numéro de commande : `))}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] py-3.5 font-bold text-white hover:brightness-95"
         >
-          <WhatsAppIcon className="h-5 w-5" /> Voye resi a sou WhatsApp
+          <WhatsAppIcon className="h-5 w-5" /> {t("Voye resi a sou WhatsApp", "Envoyer le reçu sur WhatsApp")}
         </a>
       }
     >
@@ -70,7 +71,7 @@ export default function PaymentPage({ onToast }) {
         </span>
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">Moyens de paiement</h1>
-          <p className="text-slate-500 dark:text-slate-400">Peye an goud, apre w fin pase kòmand ou.</p>
+          <p className="text-slate-500 dark:text-slate-400">{t("Peye an goud, apre w fin pase kòmand ou.", "Payez en gourdes, après avoir passé votre commande.")}</p>
         </div>
       </div>
 
@@ -107,18 +108,18 @@ export default function PaymentPage({ onToast }) {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block font-bold text-sky-600 dark:text-sky-300">Tutoriel de paiement</span>
-            <span className="block text-sm text-slate-500 dark:text-slate-400">Kijan pou peye ak MonCash oswa NatCash</span>
+            <span className="block text-sm text-slate-500 dark:text-slate-400">{t("Kijan pou peye ak MonCash oswa NatCash", "Comment payer avec MonCash ou NatCash")}</span>
           </span>
           <ChevronRight className="h-6 w-6 shrink-0 text-sky-500" />
         </button>
 
         <a
-          href={waLink("Bonjou Awens Topup, mwen gen yon pwoblèm ak peman mwen.")}
+          href={waLink(t("Bonjou Awens Topup, mwen gen yon pwoblèm ak peman mwen.", "Bonjour Awens Topup, j'ai un problème avec mon paiement."))}
           target="_blank"
           rel="noopener noreferrer"
           className="block py-2 text-center text-sm font-medium text-slate-500 underline underline-offset-4 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
         >
-          Mwen gen yon pwoblèm ak peman mwen
+          {t("Mwen gen yon pwoblèm ak peman mwen", "J'ai un problème avec mon paiement")}
         </a>
       </section>
 

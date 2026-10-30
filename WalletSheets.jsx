@@ -6,6 +6,7 @@ import { UserError } from "./errors.js";
 import { openTutorial as openGuide } from "./Tutorial.jsx";
 import { usePaymentMethods } from "./payments.js";
 import { Sheet, ErrorNote, waLink, supportMessage, openExternal, formatPrice, copyText } from "./ui.jsx";
+import { t } from "./i18n.js";
 
 export function Input({ id, label, icon: Icon, hint, ...props }) {
   return (
@@ -28,7 +29,7 @@ function Success({ title, text, onClose }) {
       </span>
       <h4 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">{title}</h4>
       <p className="mx-auto mt-2 max-w-sm text-slate-500 dark:text-slate-400">{text}</p>
-      <button type="button" onClick={onClose} className="mt-6 rounded-2xl bg-sky-500 px-8 py-3 font-bold text-white hover:bg-sky-600">Fini</button>
+      <button type="button" onClick={onClose} className="mt-6 rounded-2xl bg-sky-500 px-8 py-3 font-bold text-white hover:bg-sky-600">{t("Fini", "Terminé")}</button>
     </div>
   );
 }
@@ -79,9 +80,9 @@ export function AccountCard({ method, onToast }) {
       <p className="flex gap-2 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
         <AlertTriangle className="h-5 w-5 shrink-0" />
         <span>
-          Nimewo {method.name} nou an poko sou sit la.{" "}
-          <a href={waLink(`Bonjou Awens Topup, ki nimewo ${method.name} pou m peye a?`)} target="_blank" rel="noopener noreferrer" className="font-bold underline">
-            Mande l sou WhatsApp
+          {t(`Nimewo ${method.name} nou an poko sou sit la.`, `Notre numéro ${method.name} n'est pas encore en ligne.`)}{" "}
+          <a href={waLink(t(`Bonjou Awens Topup, ki nimewo ${method.name} pou m peye a?`, `Bonjour Awens Topup, quel numéro ${method.name} dois-je payer ?`))} target="_blank" rel="noopener noreferrer" className="font-bold underline">
+            {t("Mande l sou WhatsApp", "Demandez-le sur WhatsApp")}
           </a>
           .
         </span>
@@ -119,7 +120,7 @@ export function PayTo({ method: picked, amount, onToast }) {
   const method = usePaymentMethods().find((m) => m.id === picked.id) || picked;
   return (
     <div className="space-y-2">
-      <p className="font-bold text-slate-900 dark:text-white">1. Voye {amount ? formatPrice(amount) : "kòb la"} sou {method.name}</p>
+      <p className="font-bold text-slate-900 dark:text-white">{t(`1. Voye ${amount ? formatPrice(amount) : "kòb la"} sou ${method.name}`, `1. Envoyez ${amount ? formatPrice(amount) : "l'argent"} sur ${method.name}`)}</p>
       <AccountCard method={method} onToast={onToast} />
     </div>
   );
@@ -151,17 +152,17 @@ export function MethodList({ onPick }) {
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-sky-100 text-sky-500 dark:bg-sky-500/20"><BookOpen className="h-6 w-6" /></span>
         <span className="min-w-0 flex-1">
           <span className="block font-bold text-sky-600 dark:text-sky-300">Tutoriel de dépôt</span>
-          <span className="block text-sm text-slate-500 dark:text-slate-400">Kijan pou fè yon depo MonCash oswa NatCash</span>
+          <span className="block text-sm text-slate-500 dark:text-slate-400">{t("Kijan pou fè yon depo MonCash oswa NatCash", "Comment faire un dépôt MonCash ou NatCash")}</span>
         </span>
         <ChevronRight className="h-6 w-6 shrink-0 text-sky-500" />
       </button>
       <a
-        href={waLink("Bonjou Awens Topup, mwen gen yon pwoblèm ak depo mwen.")}
+        href={waLink(t("Bonjou Awens Topup, mwen gen yon pwoblèm ak depo mwen.", "Bonjour Awens Topup, j'ai un problème avec mon dépôt."))}
         target="_blank"
         rel="noopener noreferrer"
         className="block py-2 text-center text-sm font-medium text-slate-500 underline underline-offset-4 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
       >
-        Mwen gen yon pwoblèm ak depo mwen
+        {t("Mwen gen yon pwoblèm ak depo mwen", "J'ai un problème avec mon dépôt")}
       </a>
     </div>
   );
@@ -170,19 +171,19 @@ export function MethodList({ onPick }) {
 // Depo: chwazi MonCash oswa NatCash, voye kòb la sou kont lan, epi valide l ak kòd tranzaksyon an
 // Sa kliyan an wè lè sit la pa jwenn peman kòd li a (verifikasyon otomatik)
 const CODE_PROBLEMS = {
-  "not-found": "Okenn peman nou resevwa pa koresponn ak kòd sa a. Verifye kòd la. Si w fèk voye kòb la, tann 1 minit epi eseye ankò.",
-  invalid: "Kòd sa a pa bon. Kopye TransCode a jan li ye nan SMS NatCash/MonCash ou a.",
-  phone: "Sa se yon nimewo telefòn. Mete ID tranzaksyon ki nan SMS MonCash/NatCash la.",
-  used: "Kòd sa a deja itilize. Yon kòd tranzaksyon sèvi yon sèl fwa.",
-  expired: "Peman sa a twò ansyen (plis pase 24 è). Ekri nou sou WhatsApp ak prèv peman an.",
+  "not-found": t("Okenn peman nou resevwa pa koresponn ak kòd sa a. Verifye kòd la. Si w fèk voye kòb la, tann 1 minit epi eseye ankò.", "Aucun paiement reçu ne correspond à ce code. Vérifiez le code. Si vous venez d'envoyer l'argent, attendez 1 minute et réessayez."),
+  invalid: t("Kòd sa a pa bon. Kopye TransCode a jan li ye nan SMS NatCash/MonCash ou a.", "Ce code n'est pas valide. Copiez le TransCode tel qu'il apparaît dans votre SMS NatCash/MonCash."),
+  phone: t("Sa se yon nimewo telefòn. Mete ID tranzaksyon ki nan SMS MonCash/NatCash la.", "C'est un numéro de téléphone. Entrez l'ID de transaction du SMS MonCash/NatCash."),
+  used: t("Kòd sa a deja itilize. Yon kòd tranzaksyon sèvi yon sèl fwa.", "Ce code a déjà été utilisé. Un code de transaction ne sert qu'une fois."),
+  expired: t("Peman sa a twò ansyen (plis pase 24 è). Ekri nou sou WhatsApp ak prèv peman an.", "Ce paiement est trop ancien (plus de 24 h). Écrivez-nous sur WhatsApp avec la preuve de paiement."),
 };
 
 // 5 kòd ki pa bon: kliyan an tann 30 minit (sèvè a konte yo)
 function codeProblemText(found) {
-  if (found.status === "blocked") return `Ou mete 5 kòd ki pa bon. Eseye ankò nan ${found.wait_minutes || 30} minit.`;
+  if (found.status === "blocked") return t(`Ou mete 5 kòd ki pa bon. Eseye ankò nan ${found.wait_minutes || 30} minit.`, `Vous avez saisi 5 codes incorrects. Réessayez dans ${found.wait_minutes || 30} minutes.`);
   const text = CODE_PROBLEMS[found.status] || CODE_PROBLEMS["not-found"];
-  if (found.attempts_left === 0) return `${text} Ou mete 5 kòd ki pa bon: tann 30 minit anvan w eseye ankò.`;
-  if (found.attempts_left > 0) return `${text} Ou rete ${found.attempts_left} chans.`;
+  if (found.attempts_left === 0) return `${text} ${t("Ou mete 5 kòd ki pa bon: tann 30 minit anvan w eseye ankò.", "5 codes incorrects : attendez 30 minutes avant de réessayer.")}`;
+  if (found.attempts_left > 0) return `${text} ${t(`Ou rete ${found.attempts_left} chans.`, `Il vous reste ${found.attempts_left} essai(s).`)}`;
   return text;
 }
 
@@ -194,7 +195,7 @@ function CodeProblem({ text, helpLink }) {
         <p className="font-bold text-slate-900 dark:text-white">Vérification impossible</p>
         <p className="text-sm text-red-700 dark:text-red-300">{text}</p>
         <a href={helpLink} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-sm font-semibold text-slate-700 underline underline-offset-2 dark:text-slate-200">
-          Ou peye deja? Ekri nou sou WhatsApp
+          {t("Ou peye deja? Ekri nou sou WhatsApp", "Déjà payé ? Écrivez-nous sur WhatsApp")}
         </a>
       </div>
     </div>
@@ -217,12 +218,12 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
   const openTutorial = () => {
     if (VIDEO_TUTORIAL_URL) openExternal(VIDEO_TUTORIAL_URL);
     else if (method.guide) showGuide();
-    else onToast("Videyo a poko disponib, li ap vini byento.");
+    else onToast(t("Videyo a poko disponib, li ap vini byento.", "La vidéo n'est pas encore disponible, elle arrive bientôt."));
   };
 
   // Mesaj WhatsApp "Yon pwoblèm?" la ak tout enfòmasyon depo a, pou ekip la jwenn li vit
-  const problemLines = ["Bonjou Awens Topup, mwen gen yon pwoblèm ak depo mwen.", "", `Mòd: ${method.name}`];
-  if (Number(initialAmount) > 0) problemLines.push(`Montan: ${initialAmount} HTG`);
+  const problemLines = [t("Bonjou Awens Topup, mwen gen yon pwoblèm ak depo mwen.", "Bonjour Awens Topup, j'ai un problème avec mon dépôt."), "", `${t("Mòd", "Mode")}: ${method.name}`];
+  if (Number(initialAmount) > 0) problemLines.push(`${t("Montan", "Montant")}: ${initialAmount} HTG`);
   if (reference.trim()) problemLines.push(`TransCode: ${reference.trim()}`);
   const problemText = problemLines.join("\n");
 
@@ -234,7 +235,7 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
     try {
       // Kliyan an mete kòd la sèlman: sit la tcheke l ak SMS telefòn boutik la, montan an soti nan SMS la
       const found = await backend.checkDepositCode(method.id, reference);
-      if (!found) throw new UserError("Nou pa ka verifye kòd la kounye a. Tcheke entènèt ou epi eseye ankò.");
+      if (!found) throw new UserError(t("Nou pa ka verifye kòd la kounye a. Tcheke entènèt ou epi eseye ankò.", "Impossible de vérifier le code pour le moment. Vérifiez votre connexion et réessayez."));
       if (found.status !== "ok") {
         setProblem(codeProblemText(found));
         return;
@@ -254,8 +255,8 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
     <Sheet open onClose={onClose} title="Faire un dépôt" icon={<Plus className="h-6 w-6" />}>
       {sent ? (
         <Success
-          title={sent.confirmed ? `Depo ${formatPrice(Number(sent.amount))} konfime ✅` : `Depo ${formatPrice(Number(sent.amount))} voye!`}
-          text={sent.confirmed ? "Kòb la nan Wallet ou kounye a. Ou ka achte touswit." : "N ap verifye peman an. W ap resevwa yon notifikasyon lè kòb la antre nan Wallet ou."}
+          title={sent.confirmed ? t(`Depo ${formatPrice(Number(sent.amount))} konfime ✅`, `Dépôt de ${formatPrice(Number(sent.amount))} confirmé ✅`) : t(`Depo ${formatPrice(Number(sent.amount))} voye!`, `Dépôt de ${formatPrice(Number(sent.amount))} envoyé !`)}
+          text={sent.confirmed ? t("Kòb la nan Wallet ou kounye a. Ou ka achte touswit.", "L'argent est dans votre Wallet. Vous pouvez acheter tout de suite.") : t("N ap verifye peman an. W ap resevwa yon notifikasyon lè kòb la antre nan Wallet ou.", "Nous vérifions le paiement. Vous recevrez une notification dès que l'argent arrive dans votre Wallet.")}
           onClose={onClose}
         />
       ) : (
@@ -271,13 +272,13 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
               <div className="min-w-0">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Validation du paiement</h4>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Voye kòb la sou kont anlè a, epi mete kòd tranzaksyon {method.name} ba ou a. Montan an detekte otomatikman grasa kòd la.
+                  {t(`Voye kòb la sou kont anlè a, epi mete kòd tranzaksyon ${method.name} ba ou a. Montan an detekte otomatikman grasa kòd la.`, `Envoyez l'argent sur le compte ci-dessus, puis entrez le code de transaction ${method.name}. Le montant est détecté automatiquement grâce au code.`)}
                 </p>
               </div>
             </div>
             {Number(initialAmount) > 0 && (
               <p className="rounded-xl bg-sky-50 px-3.5 py-2.5 text-sm text-sky-800 dark:bg-sky-500/10 dark:text-sky-200">
-                Montan pou voye: <span className="font-bold tabular-nums">{formatPrice(Number(initialAmount))}</span>
+                {t("Montan pou voye", "Montant à envoyer")}: <span className="font-bold tabular-nums">{formatPrice(Number(initialAmount))}</span>
               </p>
             )}
             {problem && <CodeProblem text={problem} helpLink={waLink(supportMessage(problemText, profile))} />}
@@ -296,7 +297,7 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
             />
             {method.guide && (
               <button type="button" onClick={showGuide} className="-mt-2 text-sm font-semibold text-sky-600 hover:underline dark:text-sky-400">
-                Kote m jwenn kòd la? Gade egzanp lan
+                {t("Kote m jwenn kòd la? Gade egzanp lan", "Où trouver le code ? Voir l'exemple")}
               </button>
             )}
             <ErrorNote>{error}</ErrorNote>
@@ -315,7 +316,7 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
               rel="noopener noreferrer"
               className="underline underline-offset-4 hover:text-slate-800 dark:hover:text-slate-200"
             >
-              Yon pwoblèm?
+              {t("Yon pwoblèm?", "Un problème ?")}
             </a>
           </div>
 
@@ -323,7 +324,7 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
             <img
               ref={guideRef}
               src={method.guide}
-              alt={`Kijan pou w jwenn kòd tranzaksyon ${method.name} la nan SMS la`}
+              alt={t(`Kijan pou w jwenn kòd tranzaksyon ${method.name} la nan SMS la`, `Où trouver le code de transaction ${method.name} dans le SMS`)}
               width="853"
               height="1280"
               loading="lazy"
@@ -378,30 +379,30 @@ export function TransferSheet({ profile, initialCode = "", onClose }) {
   return (
     <Sheet open onClose={onClose} title="Envoyer de l'argent" icon={<Send className="h-6 w-6" />}>
       {sent ? (
-        <Success title={`${formatPrice(Number(sent.amount))} voye!`} text={`${recipient.name} resevwa kòb la nan Wallet li kounye a.`} onClose={onClose} />
+        <Success title={t(`${formatPrice(Number(sent.amount))} voye!`, `${formatPrice(Number(sent.amount))} envoyés !`)} text={t(`${recipient.name} resevwa kòb la nan Wallet li kounye a.`, `${recipient.name} a reçu l'argent dans son Wallet.`)} onClose={onClose} />
       ) : confirming ? (
         <div className="space-y-4 py-2 text-center">
-          <p className="text-slate-500 dark:text-slate-400">Ou pral voye</p>
+          <p className="text-slate-500 dark:text-slate-400">{t("Ou pral voye", "Vous allez envoyer")}</p>
           <p className="text-4xl font-extrabold tabular-nums text-slate-900 dark:text-white">{formatPrice(value)}</p>
           <p className="text-slate-500 dark:text-slate-400">
-            bay <span className="font-bold text-slate-900 dark:text-white">{recipient.name}</span> (AWENS-ID {code})
+            {t("bay", "à")} <span className="font-bold text-slate-900 dark:text-white">{recipient.name}</span> (AWENS-ID {code})
           </p>
           <ErrorNote>{error}</ErrorNote>
           <div className="grid grid-cols-2 gap-3 pt-2">
-            <button type="button" onClick={() => setConfirming(false)} className="rounded-2xl bg-slate-100 py-3.5 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">Anile</button>
+            <button type="button" onClick={() => setConfirming(false)} className="rounded-2xl bg-slate-100 py-3.5 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">{t("Anile", "Annuler")}</button>
             <button type="button" onClick={send} disabled={busy} className="flex items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3.5 font-bold text-white hover:bg-sky-600 disabled:opacity-60">
-              {busy && <Loader2 className="h-5 w-5 animate-spin" />} Konfime
+              {busy && <Loader2 className="h-5 w-5 animate-spin" />} {t("Konfime", "Confirmer")}
             </button>
           </div>
         </div>
       ) : (
         <form onSubmit={(e) => { e.preventDefault(); if (canSend) setConfirming(true); }} className="space-y-4">
           <p className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
-            Solde disponib: <span className="font-bold text-slate-900 dark:text-white">{formatPrice(balance)}</span>
+            {t("Solde disponib", "Solde disponible")}: <span className="font-bold text-slate-900 dark:text-white">{formatPrice(balance)}</span>
           </p>
           <Input
             id="transfer-code"
-            label="AWENS-ID moun k ap resevwa a"
+            label={t("AWENS-ID moun k ap resevwa a", "AWENS-ID du destinataire")}
             icon={UserRound}
             required
             maxLength={8}
@@ -412,15 +413,15 @@ export function TransferSheet({ profile, initialCode = "", onClose }) {
             placeholder="Ex: K7M2QX9P"
           />
           {code === profile?.wallet_code ? (
-            <p className="text-sm font-medium text-red-500">Sa se pwòp AWENS-ID ou.</p>
+            <p className="text-sm font-medium text-red-500">{t("Sa se pwòp AWENS-ID ou.", "C'est votre propre AWENS-ID.")}</p>
           ) : recipient?.name ? (
             <p className="flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-4 w-4" /> {recipient.name}</p>
           ) : recipient?.missing ? (
-            <p className="text-sm font-medium text-red-500">Nou pa jwenn AWENS-ID sa a.</p>
+            <p className="text-sm font-medium text-red-500">{t("Nou pa jwenn AWENS-ID sa a.", "AWENS-ID introuvable.")}</p>
           ) : null}
           <Input
             id="transfer-amount"
-            label="Montan (HTG)"
+            label={t("Montan (HTG)", "Montant (HTG)")}
             icon={Banknote}
             inputMode="numeric"
             type="number"
@@ -430,11 +431,11 @@ export function TransferSheet({ profile, initialCode = "", onClose }) {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Ex: 500"
-            hint={value > balance ? "Montan sa a pi gwo pase solde ou." : "Minimòm 10 HTG."}
+            hint={value > balance ? t("Montan sa a pi gwo pase solde ou.", "Ce montant dépasse votre solde.") : t("Minimòm 10 HTG.", "Minimum 10 HTG.")}
           />
           <ErrorNote>{error}</ErrorNote>
           <button type="submit" disabled={!canSend} className="w-full rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 hover:bg-sky-600 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-800 dark:disabled:text-slate-400">
-            Kontinye
+            {t("Kontinye", "Continuer")}
           </button>
         </form>
       )}

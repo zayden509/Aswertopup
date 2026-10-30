@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Bell, ShoppingCart, ArrowDownLeft, Send, X, LogIn, MessageSquareText, Megaphone } from "lucide-react";
 import { NOTIFICATIONS } from "./data.js";
 import { Sheet, timeAgo } from "./ui.jsx";
+import { t } from "./i18n.js";
 
 const KINDS = {
   order: [ShoppingCart, "bg-violet-50 text-violet-500 dark:bg-violet-500/10"],
@@ -51,15 +52,15 @@ export function NotificationsSheet({ account, onClose, onLogin, onOpen }) {
     <Sheet open onClose={onClose} title="Notifications" icon={<Bell className="h-6 w-6" />}>
       {account.enabled && !account.user && (
         <div className="mb-4 rounded-2xl bg-sky-50 p-4 dark:bg-sky-500/10">
-          <p className="text-sm text-sky-900 dark:text-sky-100">Konekte pou w resevwa notifikasyon sou kòmand ou yo, depo ou yo ak kòd PIN ou yo.</p>
+          <p className="text-sm text-sky-900 dark:text-sky-100">{t("Konekte pou w resevwa notifikasyon sou kòmand ou yo, depo ou yo ak kòd PIN ou yo.", "Connectez-vous pour recevoir les notifications de vos commandes, dépôts et codes PIN.")}</p>
           <button type="button" onClick={() => onLogin("login")} className="mt-3 flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-bold text-white">
-            <LogIn className="h-4 w-4" /> Konekte
+            <LogIn className="h-4 w-4" /> {t("Konekte", "Connexion")}
           </button>
         </div>
       )}
       {account.enabled ? (
         account.notifications.length === 0 ? (
-          <p className="py-8 text-center text-slate-500 dark:text-slate-400">Pa gen notifikasyon pou kounye a.</p>
+          <p className="py-8 text-center text-slate-500 dark:text-slate-400">{t("Pa gen notifikasyon pou kounye a.", "Aucune notification pour le moment.")}</p>
         ) : (
           <ul className="space-y-2">
             {account.notifications.map((n) => (
@@ -104,7 +105,7 @@ export function LiveToast({ notification, onOpen, onClose }) {
             {notification.body && <span className="mt-0.5 line-clamp-2 block text-sm text-slate-500 dark:text-slate-400">{notification.body}</span>}
           </span>
         </button>
-        <button type="button" onClick={onClose} aria-label="Fèmen" className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+        <button type="button" onClick={onClose} aria-label={t("Fèmen", "Fermer")} className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
           <X className="h-4 w-4" />
         </button>
       </div>

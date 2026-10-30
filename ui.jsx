@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { WHATSAPP_NUMBER } from "./data.js";
+import { lang, setLang, t } from "./i18n.js";
 
 /* ============ UTIL ============ */
 export function waLink(text) {
@@ -17,7 +18,7 @@ export function formatWhatsApp(number = WHATSAPP_NUMBER) {
 
 // Mesaj sipò ak AWENS-ID ak imèl kliyan an, pou ekip la konnen ki moun k ap ekri
 export function supportMessage(text, profile) {
-  const who = [profile?.wallet_code && `AWENS-ID: ${profile.wallet_code}`, profile?.email && `Imèl: ${profile.email}`].filter(Boolean);
+  const who = [profile?.wallet_code && `AWENS-ID: ${profile.wallet_code}`, profile?.email && `${t("Imèl", "E-mail")}: ${profile.email}`].filter(Boolean);
   return who.length ? `${text}\n\n${who.join("\n")}` : text;
 }
 
@@ -81,6 +82,28 @@ export function WhatsAppIcon({ className = "" }) {
 }
 
 /* ============ KOMPOZAN ============ */
+// Bouton KR / FR: lang sit la pou kliyan an (paj la rechaje ak nouvo lang lan)
+// `compact`: vèsyon ki pi piti a pou ba anlè a sou telefòn
+export function LangSwitch({ className = "", compact = false }) {
+  const current = lang();
+  return (
+    <div role="group" aria-label={t("Lang", "Langue")} className={`flex shrink-0 rounded-full bg-slate-200/80 p-0.5 font-extrabold dark:bg-slate-800 ${compact ? "text-[10px]" : "text-[11px]"} ${className}`}>
+      {[["kr", "KR", "Kreyòl"], ["fr", "FR", "Français"]].map(([id, short, name]) => (
+        <button
+          key={id}
+          type="button"
+          onClick={() => setLang(id)}
+          aria-pressed={current === id}
+          aria-label={name}
+          className={`rounded-full ${compact ? "px-1.5 py-1" : "px-2 py-1"} transition ${current === id ? "bg-white text-sky-600 shadow-sm dark:bg-slate-950 dark:text-sky-400" : "text-slate-500 dark:text-slate-400"}`}
+        >
+          {short}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function IconButton({ label, onClick, children }) {
   return (
     <button
@@ -117,7 +140,7 @@ export function Sheet({ open, onClose, title, icon, footer, children }) {
           </div>
           <button
             type="button"
-            aria-label="Fèmen"
+            aria-label={t("Fèmen", "Fermer")}
             onClick={onClose}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
           >
@@ -234,18 +257,18 @@ export function formatDateTime(value) {
 
 export function timeAgo(value) {
   const minutes = Math.round((Date.now() - new Date(value).getTime()) / 60000);
-  if (minutes < 1) return "Kounye a";
+  if (minutes < 1) return t("Kounye a", "À l'instant");
   if (minutes < 60) return `${minutes} min`;
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} è`;
+  if (hours < 24) return `${hours} ${t("è", "h")}`;
   const days = Math.round(hours / 24);
-  if (days === 1) return "Ayè";
-  if (days < 7) return `${days} jou`;
+  if (days === 1) return t("Ayè", "Hier");
+  if (days < 7) return `${days} ${t("jou", "j")}`;
   return formatDate(value);
 }
 
 export const ORDER_STATUS = {
-  unpaid: { label: "Peman ap verifye", className: "bg-violet-100 text-violet-800 dark:bg-violet-500/15 dark:text-violet-300" },
+  unpaid: { label: t("Peman ap verifye", "Paiement en vérification"), className: "bg-violet-100 text-violet-800 dark:bg-violet-500/15 dark:text-violet-300" },
   pending: { label: "En attente", className: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" },
   processing: { label: "En cours", className: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300" },
   delivered: { label: "Livré", className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300" },
@@ -273,9 +296,10 @@ export function StatusChip({ status }) {
 
 // Kopye yon tèks; si navigatè a refize, nou mande kliyan an kopye l alamen
 export function copyText(text, onToast) {
-  const done = () => onToast?.("Kopye.");
-  if (!navigator.clipboard) return onToast?.("Kenbe tèks la pou w kopye l.");
-  navigator.clipboard.writeText(text).then(done, () => onToast?.("Kenbe tèks la pou w kopye l."));
+  const done = () => onToast?.(t("Kopye.", "Copié."));
+  const manual = t("Kenbe tèks la pou w kopye l.", "Maintenez le texte pour le copier.");
+  if (!navigator.clipboard) return onToast?.(manual);
+  navigator.clipboard.writeText(text).then(done, () => onToast?.(manual));
 }
 
 export function ErrorNote({ children }) {

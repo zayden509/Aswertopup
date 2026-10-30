@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
-import { X, Home, ShoppingCart, Wallet, History, Bell, UserRound, PlayCircle, ShieldCheck, Moon, Sun, Download, LogOut, LogIn, ChevronRight } from "lucide-react";
-import { Logo, WhatsAppIcon, waLink, supportMessage, formatPrice } from "./ui.jsx";
+import { X, Home, ShoppingCart, Wallet, History, Bell, UserRound, PlayCircle, ShieldCheck, Moon, Sun, Download, LogOut, LogIn, ChevronRight, Languages } from "lucide-react";
+import { Logo, WhatsAppIcon, waLink, supportMessage, formatPrice, LangSwitch } from "./ui.jsx";
 import { UserAvatar } from "./ProfileWallet.jsx";
+import { t } from "./i18n.js";
 
 // Meni sou kote a (bouton ☰ anlè agoch)
 export default function SideMenu({ account, tab, dark, onToggleTheme, onClose, onGo, onNotifications, onTutorial, onLogin, onInstall }) {
@@ -34,7 +35,7 @@ export default function SideMenu({ account, tab, dark, onToggleTheme, onClose, o
   ];
 
   return (
-    <div className="fixed inset-0 z-50 !mt-0" role="dialog" aria-modal="true" aria-label="Meni">
+    <div className="fixed inset-0 z-50 !mt-0" role="dialog" aria-modal="true" aria-label={t("Meni", "Menu")}>
       <div className="absolute inset-0 animate-fade-in bg-slate-950/60" onClick={onClose} />
       <aside
         className="absolute inset-y-0 left-0 flex w-[86%] max-w-[340px] animate-slide-in-left flex-col overflow-y-auto bg-white shadow-2xl dark:bg-slate-950"
@@ -48,7 +49,7 @@ export default function SideMenu({ account, tab, dark, onToggleTheme, onClose, o
               <span className="block text-[11px] font-extrabold tracking-[.3em] text-sky-500">TOPUP</span>
             </span>
           </span>
-          <button type="button" onClick={onClose} aria-label="Fèmen meni an" className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+          <button type="button" onClick={onClose} aria-label={t("Fèmen meni an", "Fermer le menu")} className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -71,14 +72,14 @@ export default function SideMenu({ account, tab, dark, onToggleTheme, onClose, o
             </button>
           ) : account.enabled ? (
             <div className="rounded-3xl bg-sky-50 p-4 dark:bg-sky-500/10">
-              <p className="font-bold text-slate-900 dark:text-white">Byenvini 👋</p>
-              <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">Konekte pou w achte ak Wallet ou epi swiv kòmand ou yo.</p>
+              <p className="font-bold text-slate-900 dark:text-white">{t("Byenvini 👋", "Bienvenue 👋")}</p>
+              <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">{t("Konekte pou w achte ak Wallet ou epi swiv kòmand ou yo.", "Connectez-vous pour acheter avec votre Wallet et suivre vos commandes.")}</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => { onClose(); onLogin("login"); }} className="flex items-center justify-center gap-1.5 rounded-xl bg-sky-500 py-2.5 text-sm font-bold text-white">
-                  <LogIn className="h-4 w-4" /> Konekte
+                  <LogIn className="h-4 w-4" /> {t("Konekte", "Connexion")}
                 </button>
                 <button type="button" onClick={() => { onClose(); onLogin("signup"); }} className="rounded-xl bg-white py-2.5 text-sm font-bold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700">
-                  Kreye kont
+                  {t("Kreye kont", "Créer un compte")}
                 </button>
               </div>
             </div>
@@ -120,19 +121,26 @@ export default function SideMenu({ account, tab, dark, onToggleTheme, onClose, o
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
               {dark ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
             </span>
-            <span className="flex-1">Mòd fonse</span>
+            <span className="flex-1">{t("Mòd fonse", "Mode sombre")}</span>
             <span className={`relative h-7 w-12 shrink-0 rounded-full transition ${dark ? "bg-sky-500" : "bg-slate-300"}`}>
               <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${dark ? "left-6" : "left-1"}`} />
             </span>
           </button>
+          <div className="mt-1 flex items-center gap-3 rounded-2xl px-3 py-3 font-semibold text-slate-700 dark:text-slate-200">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+              <Languages className="h-5 w-5" />
+            </span>
+            <span className="flex-1">{t("Lang", "Langue")}</span>
+            <LangSwitch />
+          </div>
         </nav>
 
         <div className="space-y-2 border-t border-slate-100 p-4 dark:border-slate-800">
           <button type="button" onClick={() => { onClose(); onInstall(); }} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-500 py-3.5 font-bold text-white shadow-lg shadow-sky-500/25">
             <Download className="h-5 w-5" /> Installer l'app
           </button>
-          <a href={waLink(supportMessage("Bonjou Awens Topup, mwen bezwen èd.", profile))} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366]/10 py-3 font-bold text-[#128C7E] dark:text-[#25D366]">
-            <WhatsAppIcon className="h-5 w-5" /> Sipò WhatsApp
+          <a href={waLink(supportMessage(t("Bonjou Awens Topup, mwen bezwen èd.", "Bonjour Awens Topup, j'ai besoin d'aide."), profile))} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366]/10 py-3 font-bold text-[#128C7E] dark:text-[#25D366]">
+            <WhatsAppIcon className="h-5 w-5" /> {t("Sipò WhatsApp", "Support WhatsApp")}
           </a>
           {account.user && (
             <button type="button" onClick={() => { onClose(); account.signOut(); }} className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-bold text-red-500 ring-1 ring-red-200 hover:bg-red-50 dark:ring-red-500/30 dark:hover:bg-red-500/10">

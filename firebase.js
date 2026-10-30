@@ -12,6 +12,7 @@ import {
   getCountFromServer,
 } from "firebase/firestore";
 import { UserError } from "./errors.js";
+import { t } from "./i18n.js";
 import { dayKey } from "./days.js";
 import { quote } from "./exchange.js";
 import { isPhoneNumber, normalizeReference } from "./depositCheck.js";
@@ -30,16 +31,16 @@ const normalizePromo = (code) => String(code || "").toUpperCase().replace(/[^A-Z
 
 // Yon kòd pwomo ki ka sèvi kounye a, sinon yon erè pou kliyan an
 function promoOrThrow(code, snap, used) {
-  if (!/^[A-Z0-9]{3,20}$/.test(code) || !snap.exists()) throw new UserError("Kòd pwomo sa a pa egziste.");
+  if (!/^[A-Z0-9]{3,20}$/.test(code) || !snap.exists()) throw new UserError(t("Kòd pwomo sa a pa egziste.", "Ce code promo n'existe pas."));
   const promo = snap.data();
-  if (!promo.active) throw new UserError("Kòd pwomo sa a pa aktif ankò.");
-  if (promo.expires_at && promo.expires_at.toMillis() <= Date.now()) throw new UserError("Kòd pwomo sa a ekspire.");
-  if (promo.max_uses && promo.uses >= promo.max_uses) throw new UserError("Kòd pwomo sa a fin itilize.");
-  if (used.exists()) throw new UserError("Ou deja sèvi ak kòd pwomo sa a.");
+  if (!promo.active) throw new UserError(t("Kòd pwomo sa a pa aktif ankò.", "Ce code promo n'est plus actif."));
+  if (promo.expires_at && promo.expires_at.toMillis() <= Date.now()) throw new UserError(t("Kòd pwomo sa a ekspire.", "Ce code promo a expiré."));
+  if (promo.max_uses && promo.uses >= promo.max_uses) throw new UserError(t("Kòd pwomo sa a fin itilize.", "Ce code promo est épuisé."));
+  if (used.exists()) throw new UserError(t("Ou deja sèvi ak kòd pwomo sa a.", "Vous avez déjà utilisé ce code promo."));
   return promo;
 }
 
-const PHONE_NOT_REFERENCE = "Sa se yon nimewo telefòn. Mete ID tranzaksyon ki nan SMS MonCash/NatCash la.";
+const PHONE_NOT_REFERENCE = t("Sa se yon nimewo telefòn. Mete ID tranzaksyon ki nan SMS MonCash/NatCash la.", "C'est un numéro de téléphone. Entrez l'ID de transaction du SMS MonCash/NatCash.");
 
 const formatHtg = (n) => `${new Intl.NumberFormat("fr-FR").format(n)} HTG`;
 
@@ -103,7 +104,7 @@ export function createBackend(config, options = {}) {
   const newNotificationRef = (uid) => doc(collection(db, "users", uid, "notifications"));
   const currentUid = () => {
     const uid = auth.currentUser?.uid;
-    if (!uid) throw new UserError("Konekte anvan ou kontinye.");
+    if (!uid) throw new UserError(t("Konekte anvan ou kontinye.", "Connectez-vous pour continuer."));
     return uid;
   };
   let signupInFlight = null;
@@ -155,7 +156,7 @@ export function createBackend(config, options = {}) {
       if (result === "created" && user.photoURL) await updateDoc(ref, { photo: user.photoURL }).catch(() => {});
       if (result !== "taken") return;
     }
-    throw new UserError("Nou pa rive kreye kont ou. Eseye ankò.");
+    throw new UserError(t("Nou pa rive kreye kont ou. Eseye ankò.", "Impossible de créer votre compte. Réessayez."));
   }
 
   return {
@@ -197,7 +198,7 @@ export function createBackend(config, options = {}) {
       const changes = {};
       if (fullName !== undefined) changes.full_name = String(fullName).trim().slice(0, 60) || null;
       if (photo !== undefined) changes.photo = photo || null;
-      if (changes.photo && changes.photo.length > 60000) throw new UserError("Foto a twò lou. Chwazi yon lòt.");
+      if (changes.photo && changes.photo.length > 60000) throw new UserError(t("Foto a twò lou. Chwazi yon lòt.", "Photo trop lourde. Choisissez-en une autre."));
       await updateDoc(userRef(uid), changes);
     },
     googleSignIn() {
@@ -347,17 +348,17 @@ export function createBackend(config, options = {}) {
     async placeOrder(packageId, playerId, promoCode = null) {
       const uid = currentUid();
       const pid = String(playerId || "").trim() || null;
-      if (pid && !/^\d{6,15}$/.test(pid)) throw new UserError("Player ID a dwe gen ant 6 ak 15 chif.");
+      if (pid && !/^\d{6,15}$/.test(pid)) throw new UserError(t("Player ID a dwe gen ant 6 ak 15 chif.", "Le Player ID doit contenir entre 6 et 15 chiffres."));
       const orderRef = doc(collection(db, "orders"));
       const code = `AS-${randomCode(6)}`;
       const promoId = promoCode ? normalizePromo(promoCode) : null;
       return runTransaction(db, async (tx) => {
         const pkgSnap = await tx.get(doc(db, "packages", packageId));
         const pkg = pkgSnap.data();
-        if (!pkgSnap.exists() || !pkg.available) throw new UserError("Pake sa a pa disponib.");
-        if (pkg.needs_id && !pid) throw new UserError("Mete Player ID ou pou pake sa a.");
+        if (!pkgSnap.exists() || !pkg.available) throw new UserError(t("Pake sa a pa disponib.", "Ce forfait n'est pas disponible."));
+        if (pkg.needs_id && !pid) throw new UserError(t("Mete Player ID ou pou pake sa a.", "Entrez votre Player ID pour ce forfait."));
         const me = (await tx.get(userRef(uid))).data();
-        if (!me) throw new UserError("Konekte anvan ou achte.");
+        if (!me) throw new UserError(t("Konekte anvan ou achte.", "Connectez-vous avant d'acheter."));
 
         // Kòd pwomo: rabè a, epi kòd la konte yon fwa pou kliyan sa a
         let price = pkg.price;
@@ -370,7 +371,7 @@ export function createBackend(config, options = {}) {
           tx.update(promoRef, { uses: promo.uses + 1 });
           tx.set(useRef, { user_id: uid, order_id: orderRef.id, created_at: serverTimestamp() });
         }
-        if (me.balance < price) throw new UserError("Solde ou pa ase. Ajoute kòb nan Wallet ou.");
+        if (me.balance < price) throw new UserError(t("Solde ou pa ase. Ajoute kòb nan Wallet ou.", "Solde insuffisant. Ajoutez de l'argent à votre Wallet."));
 
         const order = {
           code, user_id: uid, package_id: packageId, product_name: pkg.product_name, package_label: pkg.label,
@@ -393,10 +394,10 @@ export function createBackend(config, options = {}) {
     async placeDirectOrder(packageId, playerId, { method, reference, senderPhone }) {
       const uid = currentUid();
       const pid = String(playerId || "").trim() || null;
-      if (pid && !/^\d{6,15}$/.test(pid)) throw new UserError("Player ID a dwe gen ant 6 ak 15 chif.");
-      if (!METHOD_NAMES[method]) throw new UserError("Chwazi MonCash oswa NatCash.");
+      if (pid && !/^\d{6,15}$/.test(pid)) throw new UserError(t("Player ID a dwe gen ant 6 ak 15 chif.", "Le Player ID doit contenir entre 6 et 15 chiffres."));
+      if (!METHOD_NAMES[method]) throw new UserError(t("Chwazi MonCash oswa NatCash.", "Choisissez MonCash ou NatCash."));
       const ref = normalizeReference(reference);
-      if (!/^[A-Z0-9]{6,40}$/.test(ref)) throw new UserError("Mete ID tranzaksyon an (sèlman lèt ak chif, omwen 6).");
+      if (!/^[A-Z0-9]{6,40}$/.test(ref)) throw new UserError(t("Mete ID tranzaksyon an (sèlman lèt ak chif, omwen 6).", "Entrez l'ID de transaction (lettres et chiffres, au moins 6)."));
       if (isPhoneNumber(ref)) throw new UserError(PHONE_NOT_REFERENCE);
       const phone = String(senderPhone || "").trim().slice(0, 20) || null;
       const refDoc = doc(db, "depositRefs", `${method}_${ref}`);
@@ -405,9 +406,9 @@ export function createBackend(config, options = {}) {
       return runTransaction(db, async (tx) => {
         const pkgSnap = await tx.get(doc(db, "packages", packageId));
         const pkg = pkgSnap.data();
-        if (!pkgSnap.exists() || !pkg.available) throw new UserError("Pake sa a pa disponib.");
-        if (pkg.needs_id && !pid) throw new UserError("Mete Player ID ou pou pake sa a.");
-        if (await referenceUsed(ref, tx)) throw new UserError("Nimewo tranzaksyon sa a deja itilize.");
+        if (!pkgSnap.exists() || !pkg.available) throw new UserError(t("Pake sa a pa disponib.", "Ce forfait n'est pas disponible."));
+        if (pkg.needs_id && !pid) throw new UserError(t("Mete Player ID ou pou pake sa a.", "Entrez votre Player ID pour ce forfait."));
+        if (await referenceUsed(ref, tx)) throw new UserError(t("Nimewo tranzaksyon sa a deja itilize.", "Ce numéro de transaction est déjà utilisé."));
 
         const payment = { method, reference: ref, sender_phone: phone };
         const order = {
@@ -429,21 +430,21 @@ export function createBackend(config, options = {}) {
       const value = Number(amount);
       const account = String(recipient?.account || "").trim().slice(0, 120);
       const name = String(recipient?.name || "").trim().slice(0, 80);
-      if (account.length < 3) throw new UserError("Mete kont kote pou n voye kòb la.");
-      if (name.length < 2) throw new UserError("Mete non ki sou kont lan.");
+      if (account.length < 3) throw new UserError(t("Mete kont kote pou n voye kòb la.", "Indiquez le compte où envoyer l'argent."));
+      if (name.length < 2) throw new UserError(t("Mete non ki sou kont lan.", "Indiquez le nom du titulaire du compte."));
       const orderRef = doc(collection(db, "orders"));
       const code = `AS-${randomCode(6)}`;
       return runTransaction(db, async (tx) => {
         const exSnap = await tx.get(doc(db, "exchange", productId));
         const ex = exSnap.data();
-        if (!exSnap.exists() || !ex.available) throw new UserError("Sèvis sa a pa disponib kounye a.");
+        if (!exSnap.exists() || !ex.available) throw new UserError(t("Sèvis sa a pa disponib kounye a.", "Ce service n'est pas disponible pour le moment."));
         if (!Number.isInteger(value) || value < ex.min || value > ex.max) {
-          throw new UserError(`Montan an dwe yon chif san vigil ant ${ex.min} ak ${ex.max} ${ex.currency}.`);
+          throw new UserError(t(`Montan an dwe yon chif san vigil ant ${ex.min} ak ${ex.max} ${ex.currency}.`, `Le montant doit être un nombre entier entre ${ex.min} et ${ex.max} ${ex.currency}.`));
         }
         const q = quote(ex, value);
         const me = (await tx.get(userRef(uid))).data();
-        if (!me) throw new UserError("Konekte anvan ou achte.");
-        if (me.balance < q.price) throw new UserError("Solde ou pa ase. Ajoute kòb nan Wallet ou.");
+        if (!me) throw new UserError(t("Konekte anvan ou achte.", "Connectez-vous avant d'acheter."));
+        if (me.balance < q.price) throw new UserError(t("Solde ou pa ase. Ajoute kòb nan Wallet ou.", "Solde insuffisant. Ajoutez de l'argent à votre Wallet."));
 
         const label = `${value} ${ex.currency}`;
         const order = {
@@ -466,16 +467,16 @@ export function createBackend(config, options = {}) {
     async requestDeposit({ amount, method, reference, senderPhone }) {
       const uid = currentUid();
       const value = Number(amount);
-      if (!Number.isInteger(value)) throw new UserError("Mete montan an san vigil (egzanp 1000).");
-      if (value < 50 || value > 100000) throw new UserError("Montan an dwe ant 50 ak 100 000 HTG.");
-      if (!METHOD_NAMES[method]) throw new UserError("Mòd peman sa a pa egziste.");
+      if (!Number.isInteger(value)) throw new UserError(t("Mete montan an san vigil (egzanp 1000).", "Entrez un montant sans virgule (exemple 1000)."));
+      if (value < 50 || value > 100000) throw new UserError(t("Montan an dwe ant 50 ak 100 000 HTG.", "Le montant doit être entre 50 et 100 000 HTG."));
+      if (!METHOD_NAMES[method]) throw new UserError(t("Mòd peman sa a pa egziste.", "Ce mode de paiement n'existe pas."));
       const ref = normalizeReference(reference);
-      if (!/^[A-Z0-9]{6,40}$/.test(ref)) throw new UserError("Mete ID tranzaksyon an (sèlman lèt ak chif, omwen 6).");
+      if (!/^[A-Z0-9]{6,40}$/.test(ref)) throw new UserError(t("Mete ID tranzaksyon an (sèlman lèt ak chif, omwen 6).", "Entrez l'ID de transaction (lettres et chiffres, au moins 6)."));
       if (isPhoneNumber(ref)) throw new UserError(PHONE_NOT_REFERENCE);
       const phone = String(senderPhone || "").trim().slice(0, 20) || null;
 
       const refDoc = doc(db, "depositRefs", `${method}_${ref}`);
-      if (await referenceUsed(ref)) throw new UserError("Nimewo tranzaksyon sa a deja itilize.");
+      if (await referenceUsed(ref)) throw new UserError(t("Nimewo tranzaksyon sa a deja itilize.", "Ce numéro de transaction est déjà utilisé."));
       const depositRef = doc(collection(db, "deposits"));
       const deposit = {
         user_id: uid, amount: value, method, reference: ref, sender_phone: phone, status: "pending", admin_note: null,
@@ -498,18 +499,18 @@ export function createBackend(config, options = {}) {
     async transferFunds(code, amount) {
       const uid = currentUid();
       const value = Number(amount);
-      if (!Number.isInteger(value)) throw new UserError("Mete montan an san vigil (egzanp 500).");
-      if (value < 10) throw new UserError("Montan minimòm lan se 10 HTG.");
+      if (!Number.isInteger(value)) throw new UserError(t("Mete montan an san vigil (egzanp 500).", "Entrez un montant sans virgule (exemple 500)."));
+      if (value < 10) throw new UserError(t("Montan minimòm lan se 10 HTG.", "Le montant minimum est de 10 HTG."));
       const toCode = String(code).toUpperCase();
       const codeSnap = await getDoc(doc(db, "walletCodes", toCode));
-      if (!codeSnap.exists()) throw new UserError("Nou pa jwenn AWENS-ID sa a.");
+      if (!codeSnap.exists()) throw new UserError(t("Nou pa jwenn AWENS-ID sa a.", "AWENS-ID introuvable."));
       const { uid: to, name: toName } = codeSnap.data();
-      if (to === uid) throw new UserError("Ou pa ka voye kòb ba tèt ou.");
+      if (to === uid) throw new UserError(t("Ou pa ka voye kòb ba tèt ou.", "Vous ne pouvez pas vous envoyer de l'argent."));
 
       const transferRef = doc(collection(db, "transfers"));
       return runTransaction(db, async (tx) => {
         const me = (await tx.get(userRef(uid))).data();
-        if (me.balance < value) throw new UserError("Solde ou pa ase.");
+        if (me.balance < value) throw new UserError(t("Solde ou pa ase.", "Solde insuffisant."));
         const myName = publicName(me.full_name, me.email);
         tx.update(userRef(uid), { balance: me.balance - value, last_op: { kind: "transfer", id: transferRef.id } });
         tx.update(userRef(to), { balance: increment(value), last_credit: transferRef.id });
@@ -692,8 +693,8 @@ export function createBackend(config, options = {}) {
 
     async createReview(order, rating, text, name) {
       const uid = auth.currentUser?.uid;
-      if (!uid) throw new UserError("Konekte anvan.");
-      if (!Number.isInteger(rating) || rating < 1 || rating > 5) throw new UserError("Chwazi kantite etwal yo.");
+      if (!uid) throw new UserError(t("Konekte anvan.", "Connectez-vous d'abord."));
+      if (!Number.isInteger(rating) || rating < 1 || rating > 5) throw new UserError(t("Chwazi kantite etwal yo.", "Choisissez le nombre d'étoiles."));
       const clean = String(text || "").trim().slice(0, 300);
       await setDoc(doc(db, "reviews", order.id), {
         user_id: uid, name: String(name || "Kliyan").trim().slice(0, 40) || "Kliyan", product_name: order.product_name,
@@ -760,10 +761,10 @@ export function createBackend(config, options = {}) {
           body: JSON.stringify({ action, ...params }),
         });
       } catch {
-        throw new UserError("Pa gen koneksyon ak sèvè a. Eseye ankò.");
+        throw new UserError(t("Pa gen koneksyon ak sèvè a. Eseye ankò.", "Pas de connexion au serveur. Réessayez."));
       }
       const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.ok) throw new UserError(data?.error || `Sèvè a pa reponn (HTTP ${res.status}).`);
+      if (!res.ok || !data?.ok) throw new UserError(data?.error || t(`Sèvè a pa reponn (HTTP ${res.status}).`, `Le serveur ne répond pas (HTTP ${res.status}).`));
       return data;
     },
 
@@ -1111,7 +1112,7 @@ export function createBackend(config, options = {}) {
         name, category: product.category, image: product.image || null,
         is_new: Boolean(product.is_new), player_id: Boolean(product.player_id), sort: Number(product.sort) || 0,
       };
-      if (data.image && data.image.length > 350000) throw new UserError("Foto a twò lou. Chwazi yon lòt.");
+      if (data.image && data.image.length > 350000) throw new UserError(t("Foto a twò lou. Chwazi yon lòt.", "Photo trop lourde. Choisissez-en une autre."));
       if (!product.id) {
         const ref = await addDoc(collection(db, "products"), { ...data, created_at: serverTimestamp() });
         return ref.id;
@@ -1148,7 +1149,7 @@ export function createBackend(config, options = {}) {
     // Foto yon pwodwi (data: yon ti imaj kare), oswa null pou retounen sou foto pa defo a
     async adminSetProductImage(productId, image) {
       if (!image) return deleteDoc(doc(db, "productImages", productId));
-      if (image.length > 120000) throw new UserError("Foto a twò lou. Chwazi yon lòt.");
+      if (image.length > 120000) throw new UserError(t("Foto a twò lou. Chwazi yon lòt.", "Photo trop lourde. Choisissez-en une autre."));
       await setDoc(doc(db, "productImages", productId), { image });
     },
 

@@ -3,8 +3,9 @@ import { UserRound, Mail, Lock, User, Loader2, CheckCircle2 } from "lucide-react
 import { GOOGLE_LOGIN } from "./data.js";
 import { backend, errorText } from "./backend.js";
 import { Sheet } from "./ui.jsx";
+import { t } from "./i18n.js";
 
-const TITLES = { login: "Konekte", signup: "Kreye yon kont", reset: "Modpas bliye" };
+const TITLES = { login: t("Konekte", "Connexion"), signup: t("Kreye yon kont", "Créer un compte"), reset: t("Modpas bliye", "Mot de passe oublié") };
 
 function Field({ id, label, icon: Icon, ...props }) {
   return (
@@ -57,7 +58,7 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
         onClose();
       } else {
         await backend.resetPassword(email);
-        setDone("Si gen yon kont ak imèl sa a, ou pral resevwa yon imèl pou chanje modpas ou. Gade nan Spam tou.");
+        setDone(t("Si gen yon kont ak imèl sa a, ou pral resevwa yon imèl pou chanje modpas ou. Gade nan Spam tou.", "Si un compte existe avec cet e-mail, vous recevrez un e-mail pour changer votre mot de passe. Vérifiez aussi les spams."));
       }
     } catch (err) {
       setError(errorText(err));
@@ -83,7 +84,7 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
           <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" />
           <p className="mx-auto mt-3 max-w-sm text-slate-600 dark:text-slate-300">{done}</p>
           <button type="button" onClick={() => switchMode("login")} className="mt-5 rounded-2xl bg-sky-500 px-6 py-3 font-bold text-white hover:bg-sky-600">
-            Konekte
+            {t("Konekte", "Connexion")}
           </button>
         </div>
       ) : (
@@ -97,7 +98,7 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
                   onClick={() => switchMode(m)}
                   className={`rounded-xl py-2.5 text-sm font-bold transition ${mode === m ? "bg-white text-slate-900 shadow-sm dark:bg-slate-950 dark:text-white" : "text-slate-500"}`}
                 >
-                  {m === "login" ? "Konekte" : "Kreye kont"}
+                  {m === "login" ? t("Konekte", "Connexion") : t("Kreye kont", "Créer un compte")}
                 </button>
               ))}
             </div>
@@ -110,20 +111,20 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
                 onClick={google}
                 className="flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-slate-200 py-3 font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
               >
-                <GoogleIcon /> Kontinye ak Google
+                <GoogleIcon /> {t("Kontinye ak Google", "Continuer avec Google")}
               </button>
-              <p className="text-center text-xs font-semibold uppercase tracking-widest text-slate-400">oswa ak imèl</p>
+              <p className="text-center text-xs font-semibold uppercase tracking-widest text-slate-400">{t("oswa ak imèl", "ou par e-mail")}</p>
             </>
           )}
 
           {mode === "signup" && (
-            <Field id="auth-name" label="Non ou" icon={User} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Jean Baptiste" />
+            <Field id="auth-name" label={t("Non ou", "Votre nom")} icon={User} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Jean Baptiste" />
           )}
-          <Field id="auth-email" label="Imèl" icon={Mail} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="ou@gmail.com" />
+          <Field id="auth-email" label={t("Imèl", "E-mail")} icon={Mail} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="ou@gmail.com" />
           {mode !== "reset" && (
             <Field
               id="auth-password"
-              label="Modpas"
+              label={t("Modpas", "Mot de passe")}
               icon={Lock}
               type="password"
               required
@@ -131,7 +132,7 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={mode === "login" ? "current-password" : "new-password"}
-              placeholder="Omwen 6 karaktè"
+              placeholder={t("Omwen 6 karaktè", "Au moins 6 caractères")}
             />
           )}
 
@@ -143,14 +144,14 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 disabled:opacity-60"
           >
             {busy && <Loader2 className="h-5 w-5 animate-spin" />}
-            {mode === "login" ? "Konekte" : mode === "signup" ? "Kreye kont mwen" : "Voye lyen an"}
+            {mode === "login" ? t("Konekte", "Connexion") : mode === "signup" ? t("Kreye kont mwen", "Créer mon compte") : t("Voye lyen an", "Envoyer le lien")}
           </button>
 
           <p className="text-center text-sm text-slate-500 dark:text-slate-400">
             {mode === "reset" ? (
-              <button type="button" onClick={() => switchMode("login")} className="font-semibold text-sky-600 dark:text-sky-400">Retounen pou konekte</button>
+              <button type="button" onClick={() => switchMode("login")} className="font-semibold text-sky-600 dark:text-sky-400">{t("Retounen pou konekte", "Retour à la connexion")}</button>
             ) : (
-              <button type="button" onClick={() => switchMode("reset")} className="font-semibold text-sky-600 dark:text-sky-400">Ou bliye modpas ou?</button>
+              <button type="button" onClick={() => switchMode("reset")} className="font-semibold text-sky-600 dark:text-sky-400">{t("Ou bliye modpas ou?", "Mot de passe oublié ?")}</button>
             )}
           </p>
         </form>

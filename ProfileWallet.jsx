@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Eye, EyeOff, RefreshCw, Send, Plus, Copy, ArrowDownLeft, ArrowUpRight, ShoppingBag, ReceiptText, ArrowRight } from "lucide-react";
 import { Logo, copyText } from "./ui.jsx";
 import { buildTransactions, useHiddenBalance, TxRow } from "./WalletPage.jsx";
+import { t } from "./i18n.js";
 
 // Inisyal non kliyan an pou avatar la (egzanp "Jean Baptiste" -> "JB")
 export function initials(profile) {
@@ -81,7 +82,7 @@ export default function ProfileWallet({ account, onDeposit, onTransfer, onOpenOr
             <button
               type="button"
               onClick={toggleHidden}
-              aria-label={hidden ? "Montre solde a" : "Kache solde a"}
+              aria-label={hidden ? t("Montre solde a", "Afficher le solde") : t("Kache solde a", "Masquer le solde")}
               className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 ring-1 ring-white/15 transition hover:bg-white/20"
             >
               {hidden ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -89,7 +90,7 @@ export default function ProfileWallet({ account, onDeposit, onTransfer, onOpenOr
             <button
               type="button"
               onClick={refresh}
-              aria-label="Mete solde a ajou"
+              aria-label={t("Mete solde a ajou", "Actualiser le solde")}
               className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 ring-1 ring-white/15 transition hover:bg-white/20"
             >
               <RefreshCw className={`h-5 w-5 ${refreshing ? "animate-spin" : ""}`} />
@@ -141,7 +142,7 @@ export default function ProfileWallet({ account, onDeposit, onTransfer, onOpenOr
         </div>
         {rows.length === 0 ? (
           <p className="rounded-2xl bg-white p-5 text-center text-sm text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800">
-            Pa gen tranzaksyon ankò. Peze <span className="font-semibold text-slate-700 dark:text-slate-200">Déposer</span> pou w ajoute kòb ak MonCash oswa NatCash.
+            {t("Pa gen tranzaksyon ankò. Peze", "Aucune transaction pour l'instant. Touchez")} <span className="font-semibold text-slate-700 dark:text-slate-200">Déposer</span> {t("pou w ajoute kòb ak MonCash oswa NatCash.", "pour ajouter de l'argent avec MonCash ou NatCash.")}
           </p>
         ) : (
           <ul className="space-y-2.5">

@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bell, Menu, UserRound, Search, Home, ShoppingCart, Tag, History, Wallet, ArrowRight, Loader2, Share, MoreVertical } from "lucide-react";
-import { CATEGORIES, HOME_SECTIONS, SLIDES, NOTIFICATIONS } from "./data.js";
-import { waLink, supportMessage, openExternal, Logo, WhatsAppIcon, IconButton, ProductCard, ProductTile, Sheet } from "./ui.jsx";
+import { CATEGORIES, HOME_SECTIONS, SLIDES, NOTIFICATIONS, categoryLabel } from "./data.js";
+import { waLink, supportMessage, openExternal, Logo, WhatsAppIcon, IconButton, ProductCard, ProductTile, Sheet, LangSwitch } from "./ui.jsx";
 import { loadOrders, saveOrder } from "./orders.js";
 import { useAccount } from "./account.js";
 import { buildCatalog } from "./catalog.js";
@@ -19,6 +19,7 @@ import { newVersionAvailable } from "./updateCheck.js";
 import { TutorialSheet, openTutorial, useTutorialRequests } from "./Tutorial.jsx";
 import { ReviewsSection } from "./Reviews.jsx";
 import { rememberReferral, claimStoredReferral } from "./Referral.jsx";
+import { t } from "./i18n.js";
 
 // Lyen parennaj (?ref=AWENS-ID): nou sonje l pandan vizitè a ap kreye kont li
 rememberReferral();
@@ -86,7 +87,7 @@ function Carousel({ onAction }) {
   };
 
   return (
-    <section aria-label="Anons">
+    <section aria-label={t("Anons", "Annonces")}>
       <div
         className="relative overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800"
         onTouchStart={onTouchStart}
@@ -136,7 +137,7 @@ function Carousel({ onAction }) {
           <button
             key={i}
             type="button"
-            aria-label={`Anons ${i + 1}`}
+            aria-label={`${t("Anons", "Annonce")} ${i + 1}`}
             onClick={() => setIndex(i)}
             className={`h-2 rounded-full transition-all ${i === index ? "w-10 bg-sky-500" : "w-2 bg-slate-300 dark:bg-slate-700"}`}
           />
@@ -148,7 +149,7 @@ function Carousel({ onAction }) {
 
 function ProductGrid({ products, prices, onOpen }) {
   if (products.length === 0) {
-    return <p className="rounded-2xl bg-white p-6 text-center text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800">Pa gen pwodwi ki koresponn ak rechèch ou a.</p>;
+    return <p className="rounded-2xl bg-white p-6 text-center text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800">{t("Pa gen pwodwi ki koresponn ak rechèch ou a.", "Aucun produit ne correspond à votre recherche.")}</p>;
   }
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
@@ -242,9 +243,9 @@ function ComingSoon({ tab, onHome }) {
     <div className="mt-6 rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
       <tab.Icon className="mx-auto h-12 w-12 text-sky-500" strokeWidth={1.5} />
       <h2 className="mt-4 text-xl font-extrabold text-slate-900 dark:text-white">{tab.label}</h2>
-      <p className="mt-2 text-slate-500 dark:text-slate-400">Paj sa a ap vini byento.</p>
+      <p className="mt-2 text-slate-500 dark:text-slate-400">{t("Paj sa a ap vini byento.", "Cette page arrive bientôt.")}</p>
       <button type="button" onClick={onHome} className="mt-5 rounded-xl bg-sky-500 px-6 py-3 font-semibold text-white hover:bg-sky-600">
-        Retounen lakay
+        {t("Retounen lakay", "Retour à l'accueil")}
       </button>
     </div>
   );
@@ -403,7 +404,7 @@ export default function App() {
   };
   const handleLocalOrder = (order) => {
     setLocalOrders(saveOrder(order));
-    setToast(`Kòmand ${order.id} anrejistre nan Historique.`);
+    setToast(t(`Kòmand ${order.id} anrejistre nan Historique.`, `Commande ${order.id} enregistrée dans l'historique.`));
   };
   const needLogin = (mode = "login") => setAuth(mode);
   const seeAll = (cat) => {
@@ -449,7 +450,7 @@ export default function App() {
     if (action === "video") {
       openTutorial();
     } else if (action === "whatsapp") {
-      openExternal(waLink(supportMessage("Bonjou Awens Topup, mwen bezwen èd.", account.profile)));
+      openExternal(waLink(supportMessage(t("Bonjou Awens Topup, mwen bezwen èd.", "Bonjour Awens Topup, j'ai besoin d'aide."), account.profile)));
     } else if (action === "payment") {
       setTab("wallet");
     } else if (action.startsWith("product:")) {
@@ -475,7 +476,7 @@ export default function App() {
           onClick={() => window.location.reload()}
           className="fixed inset-x-0 top-2 z-50 mx-auto flex w-fit items-center gap-2 rounded-full bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-lg"
         >
-          Nouvo vèsyon sit la disponib · <span className="underline underline-offset-2">Rechaje</span>
+          {t("Nouvo vèsyon sit la disponib", "Nouvelle version disponible")} · <span className="underline underline-offset-2">{t("Rechaje", "Recharger")}</span>
         </button>
       )}
       {/* Pa gen flou (backdrop-blur) sou ba ki rete fiks yo: sa fè paj la woule pi lis sou telefòn */}
@@ -483,19 +484,21 @@ export default function App() {
         <header className="sticky top-0 z-30 bg-slate-100/95 dark:bg-slate-950/95">
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-3 py-3">
             <div className="flex min-w-0 items-center gap-1">
-              <IconButton label="Meni" onClick={() => setMenuOpen(true)}>
+              <IconButton label={t("Meni", "Menu")} onClick={() => setMenuOpen(true)}>
                 <Menu className="h-6 w-6" />
               </IconButton>
-              <button type="button" onClick={() => goToTab("home")} className="flex min-w-0 items-center gap-2" aria-label="Awens Topup, lakay">
-                <Logo className="h-10 w-10 shrink-0 drop-shadow" />
-                <span className="flex items-baseline gap-1.5 leading-none">
-                  <span className="text-[26px] font-black tracking-tight">AWENS</span>
-                  <span className="text-[12px] font-extrabold tracking-[.2em] text-sky-500">TOPUP</span>
+              <button type="button" onClick={() => goToTab("home")} className="flex min-w-0 items-center gap-2" aria-label={t("Awens Topup, lakay", "Awens Topup, accueil")}>
+                <Logo className="h-9 w-9 shrink-0 drop-shadow min-[420px]:h-10 min-[420px]:w-10" />
+                {/* Telefòn etwat: TOPUP anba AWENS, pou bouton KR / FR la gen plas */}
+                <span className="flex flex-col gap-0.5 leading-none min-[390px]:flex-row min-[390px]:items-baseline min-[390px]:gap-1 min-[420px]:gap-1.5">
+                  <span className="text-[21px] font-black tracking-tight min-[420px]:text-[26px]">AWENS</span>
+                  <span className="text-[9px] font-extrabold tracking-[.42em] text-sky-500 min-[390px]:text-[10px] min-[390px]:tracking-[.16em] min-[420px]:text-[12px] min-[420px]:tracking-[.2em]">TOPUP</span>
                 </span>
               </button>
             </div>
             <div className="flex shrink-0 items-center">
-              <IconButton label="Notifikasyon" onClick={openNotifications}>
+              <LangSwitch compact className="max-[339px]:hidden" />
+              <IconButton label={t("Notifikasyon", "Notifications")} onClick={openNotifications}>
                 <Bell className="h-6 w-6" />
                 {unread > 0 && (
                   <span className="absolute right-0.5 top-0.5 min-w-[22px] rounded-full bg-red-500 px-1.5 text-center text-[11px] font-bold leading-5 text-white ring-2 ring-slate-100 dark:ring-slate-950">
@@ -571,7 +574,7 @@ export default function App() {
             <SearchBar value={query} onChange={setQuery} placeholder="Rechercher un produit..." />
             <h1 className="mt-6 text-2xl font-extrabold tracking-tight">Tous les produits</h1>
             <p className="mt-1 text-slate-500 dark:text-slate-400">
-              Top-up ak rechaj an Ayiti: Free Fire, PUBG, Roblox, Mobile Legends. Peye ak MonCash ak NatCash.
+              {t("Top-up ak rechaj an Ayiti: Free Fire, PUBG, Roblox, Mobile Legends. Peye ak MonCash ak NatCash.", "Top-up et recharges en Haïti : Free Fire, PUBG, Roblox, Mobile Legends. Payez avec MonCash et NatCash.")}
             </p>
             <div className="no-scrollbar -mx-4 mb-4 mt-4 flex gap-2 overflow-x-auto px-4">
               {CATEGORIES.map((c) => (
@@ -583,7 +586,7 @@ export default function App() {
                     c === category ? "bg-sky-500 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800"
                   }`}
                 >
-                  {c}
+                  {categoryLabel(c)}
                 </button>
               ))}
             </div>
@@ -638,10 +641,10 @@ export default function App() {
           {/* Bouton WhatsApp la pa kouvri Pwofil la (li gen pwòp bouton Sipò) ni Panneau admin lan */}
           {tab !== "admin" && tab !== "settings" && (
             <a
-              href={waLink(supportMessage("Bonjou Awens Topup! Mwen gen yon kesyon.", account.profile))}
+              href={waLink(supportMessage(t("Bonjou Awens Topup! Mwen gen yon kesyon.", "Bonjour Awens Topup ! J'ai une question."), account.profile))}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Ekri nou sou WhatsApp"
+              aria-label={t("Ekri nou sou WhatsApp", "Écrivez-nous sur WhatsApp")}
               className="fixed right-4 z-40 grid h-16 w-16 place-items-center rounded-full bg-[#25D366] text-white shadow-lg shadow-emerald-600/30 ring-4 ring-white/60 transition hover:scale-105 dark:ring-slate-950/60"
               style={{ bottom: "calc(env(safe-area-inset-bottom) + 108px)" }}
             >
@@ -664,8 +667,8 @@ export default function App() {
       {panel === "install" && (
         <Sheet open onClose={() => setPanel(null)} title="Installer l'app">
           <div className="space-y-3 text-[15px] text-slate-700 dark:text-slate-200">
-            <p className="flex gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60"><Share className="h-5 w-5 shrink-0 text-sky-500" /> <span><b>iPhone:</b> nan Safari, peze bouton pataje a anba ekran an, epi <b>Sur l'écran d'accueil</b>.</span></p>
-            <p className="flex gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60"><MoreVertical className="h-5 w-5 shrink-0 text-sky-500" /> <span><b>Android:</b> nan Chrome, peze ⋮ anlè adwat, epi <b>Installer l'application</b>.</span></p>
+            <p className="flex gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60"><Share className="h-5 w-5 shrink-0 text-sky-500" /> <span><b>iPhone:</b> {t("nan Safari, peze bouton pataje a anba ekran an, epi", "dans Safari, touchez le bouton de partage en bas de l'écran, puis")} <b>Sur l'écran d'accueil</b>.</span></p>
+            <p className="flex gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60"><MoreVertical className="h-5 w-5 shrink-0 text-sky-500" /> <span><b>Android:</b> {t("nan Chrome, peze ⋮ anlè adwat, epi", "dans Chrome, touchez ⋮ en haut à droite, puis")} <b>Installer l'application</b>.</span></p>
           </div>
         </Sheet>
       )}

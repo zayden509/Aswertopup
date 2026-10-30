@@ -38,6 +38,7 @@ import bannerTutoriel from "./img/banners/tutoriel.jpg";
 import bannerFreeFire from "./img/banners/free-fire.jpg";
 import bannerPeman from "./img/banners/peman.jpg";
 import bannerSipo from "./img/banners/sipo.jpg";
+import { t } from "./i18n.js";
 
 /* ============ KONFIGIRASYON ============ */
 // Nimewo WhatsApp, videyo tutoriel ak kle Firebase yo nan config.js
@@ -55,8 +56,8 @@ export const RANKS = [
 // `number` se nimewo kote kliyan yo voye kòb la. Si l vid, sit la di kliyan an
 // mande nimewo a sou WhatsApp. `guide`: foto ki montre kote kòd tranzaksyon an ye nan SMS la.
 export const PAYMENT_METHODS = [
-  { id: "moncash", name: "MonCash", logo: moncashImg, number: DEFAULT_ACCOUNTS.moncash.number, holder: DEFAULT_ACCOUNTS.moncash.name, recommended: true, note: "Peye ak kont MonCash ou", guide: moncashGuide },
-  { id: "natcash", name: "NatCash", logo: natcashImg, number: DEFAULT_ACCOUNTS.natcash.number, holder: DEFAULT_ACCOUNTS.natcash.name, note: "Peye ak kont NatCash ou", guide: natcashGuide },
+  { id: "moncash", name: "MonCash", logo: moncashImg, number: DEFAULT_ACCOUNTS.moncash.number, holder: DEFAULT_ACCOUNTS.moncash.name, recommended: true, note: t("Peye ak kont MonCash ou", "Payez avec votre compte MonCash"), guide: moncashGuide },
+  { id: "natcash", name: "NatCash", logo: natcashImg, number: DEFAULT_ACCOUNTS.natcash.number, holder: DEFAULT_ACCOUNTS.natcash.name, note: t("Peye ak kont NatCash ou", "Payez avec votre compte NatCash"), guide: natcashGuide },
 ];
 
 /* ============ PWODWI ============ */
@@ -72,6 +73,9 @@ export const PAYMENT_METHODS = [
 // `id` yon pake dwe menm ak `id` li nan koleksyon `packages` Firebase la: lè baz done a
 // konekte, se pri ki nan baz done a ki konte (Panneau admin → Pri pou ajoute/chanje yo).
 export const CATEGORIES = ["Tout", "Jwèt", "Abònman", "Gift Card", "Finans"];
+// Non kategori yo jan kliyan an wè yo (kle yo rete an kreyòl nan baz done a)
+const CATEGORY_LABELS = { Tout: t("Tout", "Tout"), "Jwèt": t("Jwèt", "Jeux"), "Abònman": t("Abònman", "Abonnements"), "Gift Card": t("Gift Card", "Cartes cadeaux"), Finans: t("Finans", "Finance") };
+export const categoryLabel = (category) => CATEGORY_LABELS[category] || category;
 
 // Seksyon paj akèy la, nan lòd sa a. `tagline` parèt anba non pwodwi ki poko gen pri
 // (yon pwodwi ka gen pwòp `tagline` pa l).
@@ -82,7 +86,7 @@ export const HOME_SECTIONS = [
   { category: "Finans", title: "Services Financiers", tagline: "Transfert" },
 ];
 
-const FREE_FIRE_ID_HELP = "Louvri Free Fire epi peze foto pwofil ou anwo agoch. UID ou se nimewo ki anba non ou a.";
+const FREE_FIRE_ID_HELP = t("Louvri Free Fire epi peze foto pwofil ou anwo agoch. UID ou se nimewo ki anba non ou a.", "Ouvrez Free Fire et touchez votre photo de profil en haut à gauche. Votre UID est le numéro sous votre nom.");
 
 const FREE_FIRE_DIAMANTS = {
   title: "Diamants",
@@ -158,24 +162,24 @@ export const PRODUCTS = [
   { id: "xbox", name: "Xbox Gift Card", category: "Gift Card", image: xboxImg, bg: "#107b10" },
   {
     id: "meru", name: "Meru", category: "Finans", tagline: "Transfert", image: meruImg, bg: "#ffffff", isNew: true,
-    exchange: exchangeConfig("MERU", { label: "Imèl oswa telefòn kont Meru ou", placeholder: "ou@gmail.com" }),
+    exchange: exchangeConfig("MERU", { label: t("Imèl oswa telefòn kont Meru ou", "E-mail ou téléphone de votre compte Meru"), placeholder: "ou@gmail.com" }),
   },
   {
     id: "paypal", name: "PayPal", category: "Finans", tagline: "Transfert", isNew: true,
     image: paypalImg,
-    exchange: exchangeConfig("USD", { label: "Imèl kont PayPal ou", placeholder: "ou@gmail.com" }),
+    exchange: exchangeConfig("USD", { label: t("Imèl kont PayPal ou", "E-mail de votre compte PayPal"), placeholder: "ou@gmail.com" }),
   },
   {
     id: "cash-app", name: "Cash App", category: "Finans", tagline: "Recharge", image: cashAppImg, bg: "#ffffff",
-    exchange: exchangeConfig("USD", { label: "$Cashtag ou", placeholder: "$jeanbaptiste" }),
+    exchange: exchangeConfig("USD", { label: t("$Cashtag ou", "Votre $Cashtag"), placeholder: "$jeanbaptiste" }),
   },
   {
     id: "binance", name: "Binance Pay", category: "Finans", tagline: "Recharge", image: binanceImg, bg: "#151a1d",
-    exchange: exchangeConfig("USDT", { label: "Binance Pay ID oswa imèl ou", placeholder: "123456789" }),
+    exchange: exchangeConfig("USDT", { label: t("Binance Pay ID oswa imèl ou", "Votre Binance Pay ID ou e-mail"), placeholder: "123456789" }),
   },
   {
     id: "wise", name: "Wise", category: "Finans", tagline: "Transfert", image: wiseImg, bg: "#9ee86f",
-    exchange: exchangeConfig("USD", { label: "Imèl kont Wise ou", placeholder: "ou@gmail.com" }),
+    exchange: exchangeConfig("USD", { label: t("Imèl kont Wise ou", "E-mail de votre compte Wise"), placeholder: "ou@gmail.com" }),
   },
 ];
 
@@ -185,37 +189,37 @@ export const PRODUCTS = [
 export const SLIDES = [
   {
     emoji: "🔔",
-    title: "Tutoriel kijan pou w top up?",
+    title: t("Tutoriel kijan pou w top up?", "Tutoriel : comment recharger ?"),
     image: bannerTutoriel,
-    text: "Videyo sa a se pou nenpòt rechaj ak lòt jwèt sou sit la.",
+    text: t("Videyo sa a se pou nenpòt rechaj ak lòt jwèt sou sit la.", "Cette vidéo vaut pour toutes les recharges et tous les jeux du site."),
     button: "Video Tutoriel",
     action: "video",
     Art: PlayCircle,
   },
   {
     emoji: "🔥",
-    title: "Dyaman Free Fire",
+    title: t("Dyaman Free Fire", "Diamants Free Fire"),
     image: bannerFreeFire,
-    text: "Rechaje dyaman ou yo, livrezon an kèk minit sèlman.",
-    button: "Achte kounye a",
+    text: t("Rechaje dyaman ou yo, livrezon an kèk minit sèlman.", "Rechargez vos diamants, livraison en quelques minutes."),
+    button: t("Achte kounye a", "Acheter maintenant"),
     action: "product:free-fire",
     Art: Flame,
   },
   {
     emoji: "💳",
-    title: "Peye an goud",
+    title: t("Peye an goud", "Payez en gourdes"),
     image: bannerPeman,
-    text: "Peye ak MonCash oswa NatCash, san kat bank, 24h/24.",
-    button: "Kijan pou m peye?",
+    text: t("Peye ak MonCash oswa NatCash, san kat bank, 24h/24.", "Payez avec MonCash ou NatCash, sans carte bancaire, 24h/24."),
+    button: t("Kijan pou m peye?", "Comment payer ?"),
     action: "payment",
     Art: CreditCard,
   },
   {
     emoji: "💬",
-    title: "Ou bezwen èd?",
+    title: t("Ou bezwen èd?", "Besoin d'aide ?"),
     image: bannerSipo,
-    text: "Ekip Awens Topup la la pou reponn ou sou WhatsApp.",
-    button: "Kontakte nou",
+    text: t("Ekip Awens Topup la la pou reponn ou sou WhatsApp.", "L'équipe Awens Topup vous répond sur WhatsApp."),
+    button: t("Kontakte nou", "Nous contacter"),
     action: "whatsapp",
     Art: MessageCircle,
   },
@@ -223,7 +227,7 @@ export const SLIDES = [
 
 /* ============ NOTIFIKASYON ============ */
 export const NOTIFICATIONS = [
-  { emoji: "🎉", title: "Byenvini sou Awens Topup", text: "Rechaje jwèt ou yo rapid e an sekirite.", time: "Kounye a" },
-  { emoji: "🛰️", title: "Nouvo: Starlink", text: "Ou ka peye abònman Starlink ou sou sit la.", time: "Jodi a" },
-  { emoji: "🔥", title: "Free Fire disponib", text: "Dyaman Free Fire yo disponib, livrezon rapid.", time: "Jodi a" },
+  { emoji: "🎉", title: t("Byenvini sou Awens Topup", "Bienvenue sur Awens Topup"), text: t("Rechaje jwèt ou yo rapid e an sekirite.", "Rechargez vos jeux rapidement et en toute sécurité."), time: t("Kounye a", "Maintenant") },
+  { emoji: "🛰️", title: t("Nouvo: Starlink", "Nouveau : Starlink"), text: t("Ou ka peye abònman Starlink ou sou sit la.", "Payez votre abonnement Starlink sur le site."), time: t("Jodi a", "Aujourd'hui") },
+  { emoji: "🔥", title: t("Free Fire disponib", "Free Fire disponible"), text: t("Dyaman Free Fire yo disponib, livrezon rapid.", "Les diamants Free Fire sont disponibles, livraison rapide."), time: t("Jodi a", "Aujourd'hui") },
 ];

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { BookOpen, UserRound, Copy, Smartphone, MessageSquareText, CheckCircle2, Gamepad2, ArrowLeft, ArrowRight } from "lucide-react";
 import { PAYMENT_METHODS, VIDEO_TUTORIAL_URL } from "./data.js";
 import { Sheet, openExternal } from "./ui.jsx";
+import { t } from "./i18n.js";
 
 // Tutoryèl la: videyo a si genyen youn (config.js), sinon gid etap pa etap sa a.
 // Nenpòt paj ka louvri l ak openTutorial(); App.jsx koute evènman an.
@@ -18,12 +19,12 @@ export function useTutorialRequests(onOpen) {
 }
 
 const STEPS = [
-  { icon: UserRound, title: "Kreye kont ou", text: "Peze ikòn pwofil la anlè, epi kreye yon kont ak imèl ou oswa ak Google. Kont ou gen yon Wallet an goud." },
-  { icon: Copy, title: "Chwazi MonCash oswa NatCash", text: "Nan Wallet ou, peze Depoze. Chwazi mòd peman an, epi kopye nimewo kont boutik la." },
-  { icon: Smartphone, title: "Voye kòb la", text: "Nan aplikasyon MonCash oswa NatCash ou, voye kantite kòb ou vle a sou nimewo ou fèk kopye a." },
-  { icon: MessageSquareText, title: "Jwenn kòd tranzaksyon an", text: "Ou resevwa yon SMS. Kopye TransCode (NatCash) oswa Transaction ID (MonCash) ki ladan l.", guide: true },
-  { icon: CheckCircle2, title: "Kole kòd la sou sit la", text: "Mete kòd la sèlman, epi peze Valider mon dépôt. Sit la jwenn montan an poukont li, epi kòb la antre nan Wallet ou touswit." },
-  { icon: Gamepad2, title: "Achte", text: "Chwazi jwèt ou, mete ID jwè ou (sit la montre non w pou w verifye), epi peye ak Wallet ou. Livrezon an otomatik, an kèk minit." },
+  { icon: UserRound, title: t("Kreye kont ou", "Créez votre compte"), text: t("Peze ikòn pwofil la anlè, epi kreye yon kont ak imèl ou oswa ak Google. Kont ou gen yon Wallet an goud.", "Touchez l'icône de profil en haut, puis créez un compte avec votre e-mail ou Google. Votre compte a un Wallet en gourdes.") },
+  { icon: Copy, title: t("Chwazi MonCash oswa NatCash", "Choisissez MonCash ou NatCash"), text: t("Nan Wallet ou, peze Depoze. Chwazi mòd peman an, epi kopye nimewo kont boutik la.", "Dans votre Wallet, touchez Déposer. Choisissez le mode de paiement, puis copiez le numéro du compte de la boutique.") },
+  { icon: Smartphone, title: t("Voye kòb la", "Envoyez l'argent"), text: t("Nan aplikasyon MonCash oswa NatCash ou, voye kantite kòb ou vle a sou nimewo ou fèk kopye a.", "Dans votre application MonCash ou NatCash, envoyez le montant voulu sur le numéro copié.") },
+  { icon: MessageSquareText, title: t("Jwenn kòd tranzaksyon an", "Trouvez le code de transaction"), text: t("Ou resevwa yon SMS. Kopye TransCode (NatCash) oswa Transaction ID (MonCash) ki ladan l.", "Vous recevez un SMS. Copiez le TransCode (NatCash) ou le Transaction ID (MonCash) qu'il contient."), guide: true },
+  { icon: CheckCircle2, title: t("Kole kòd la sou sit la", "Collez le code sur le site"), text: t("Mete kòd la sèlman, epi peze Valider mon dépôt. Sit la jwenn montan an poukont li, epi kòb la antre nan Wallet ou touswit.", "Entrez seulement le code, puis touchez Valider mon dépôt. Le site trouve le montant tout seul et l'argent arrive aussitôt dans votre Wallet.") },
+  { icon: Gamepad2, title: t("Achte", "Achetez"), text: t("Chwazi jwèt ou, mete ID jwè ou (sit la montre non w pou w verifye), epi peye ak Wallet ou. Livrezon an otomatik, an kèk minit.", "Choisissez votre jeu, entrez votre ID joueur (le site affiche votre nom pour vérifier), puis payez avec votre Wallet. Livraison automatique en quelques minutes.") },
 ];
 
 export function TutorialSheet({ onClose }) {
@@ -34,7 +35,7 @@ export function TutorialSheet({ onClose }) {
   const last = step === STEPS.length - 1;
 
   return (
-    <Sheet open onClose={onClose} title="Kijan sa mache" icon={<BookOpen className="h-6 w-6" />}>
+    <Sheet open onClose={onClose} title={t("Kijan sa mache", "Comment ça marche")} icon={<BookOpen className="h-6 w-6" />}>
       <div className="space-y-5" data-testid="tutorial">
         <div className="flex items-center justify-center gap-1.5" aria-hidden="true">
           {STEPS.map((s, i) => (
@@ -45,7 +46,7 @@ export function TutorialSheet({ onClose }) {
           <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-sky-50 text-sky-500 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:ring-sky-500/20">
             <Icon className="h-8 w-8" />
           </span>
-          <p className="text-sm font-semibold text-sky-600 dark:text-sky-400">Etap {step + 1} sou {STEPS.length}</p>
+          <p className="text-sm font-semibold text-sky-600 dark:text-sky-400">{t(`Etap ${step + 1} sou ${STEPS.length}`, `Étape ${step + 1} sur ${STEPS.length}`)}</p>
           <h4 className="text-xl font-bold text-slate-900 dark:text-white">{current.title}</h4>
           <p className="mx-auto max-w-sm text-slate-600 dark:text-slate-300">{current.text}</p>
           {current.guide && (
@@ -64,7 +65,7 @@ export function TutorialSheet({ onClose }) {
                   </button>
                 ))}
               </div>
-              <img src={PAYMENT_METHODS[guide].guide} alt={`Kote kòd tranzaksyon ${PAYMENT_METHODS[guide].name} la ye nan SMS la`} width="853" height="1280" className="w-full rounded-2xl ring-1 ring-slate-200 dark:ring-slate-800" />
+              <img src={PAYMENT_METHODS[guide].guide} alt={t(`Kote kòd tranzaksyon ${PAYMENT_METHODS[guide].name} la ye nan SMS la`, `Où se trouve le code de transaction ${PAYMENT_METHODS[guide].name} dans le SMS`)} width="853" height="1280" className="w-full rounded-2xl ring-1 ring-slate-200 dark:ring-slate-800" />
             </div>
           )}
         </div>
@@ -75,14 +76,14 @@ export function TutorialSheet({ onClose }) {
             disabled={step === 0}
             className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3.5 font-bold text-slate-700 disabled:opacity-40 dark:bg-slate-800 dark:text-slate-200"
           >
-            <ArrowLeft className="h-5 w-5" /> Retounen
+            <ArrowLeft className="h-5 w-5" /> {t("Retounen", "Retour")}
           </button>
           <button
             type="button"
             onClick={() => (last ? onClose() : setStep((s) => s + 1))}
             className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3.5 font-bold text-white hover:bg-sky-600"
           >
-            {last ? "Mwen konprann" : <>Swivan <ArrowRight className="h-5 w-5" /></>}
+            {last ? t("Mwen konprann", "J'ai compris") : <>{t("Swivan", "Suivant")} <ArrowRight className="h-5 w-5" /></>}
           </button>
         </div>
       </div>

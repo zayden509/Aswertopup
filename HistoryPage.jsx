@@ -7,6 +7,7 @@ import { productForPackage } from "./catalog.js";
 import { LoginPrompt } from "./WalletPage.jsx";
 import { ReceiptButton } from "./Receipt.jsx";
 import { ReviewBox } from "./Reviews.jsx";
+import { t } from "./i18n.js";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
@@ -28,7 +29,7 @@ function EmptyState({ title, text, onShop }) {
       <h2 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
       <p className="mx-auto mt-1 max-w-xs text-slate-500 dark:text-slate-400">{text}</p>
       <button type="button" onClick={onShop} className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-sky-500 px-6 py-3 font-bold text-white hover:bg-sky-600">
-        <ShoppingCart className="h-5 w-5" /> Achte kounye a
+        <ShoppingCart className="h-5 w-5" /> {t("Achte kounye a", "Acheter maintenant")}
       </button>
     </div>
   );
@@ -43,13 +44,13 @@ export function orderReceipt(order, profile) {
     amount: -Number(order.price),
     status: orderStatus(order).label,
     rows: [
-      ["Kòmand", order.code],
-      ["Dat", formatDateTime(order.created_at)],
-      ["Pwodwi", order.product_name],
-      ["Pake", order.package_label],
+      [t("Kòmand", "Commande"), order.code],
+      [t("Dat", "Date"), formatDateTime(order.created_at)],
+      [t("Pwodwi", "Produit"), order.product_name],
+      [t("Pake", "Forfait"), order.package_label],
       order.player_id && ["Player ID", order.player_id],
-      ["Peman", method ? `${method.name} · ${order.payment.reference}` : "Wallet Awens Topup"],
-      order.recipient && ["Kont", `${order.recipient.account} (${order.recipient.name})`],
+      [t("Peman", "Paiement"), method ? `${method.name} · ${order.payment.reference}` : "Wallet Awens Topup"],
+      order.recipient && [t("Kont", "Compte"), `${order.recipient.account} (${order.recipient.name})`],
     ].filter(Boolean),
     customer: profile ? `${profile.full_name || profile.email} · AWENS-ID ${profile.wallet_code}` : null,
   };
@@ -61,10 +62,16 @@ export function OrderSheet({ order, catalog = PRODUCTS, profile, onClose, onToas
   const first = order.payment ? ["unpaid", "pending"] : ["pending"];
   const steps = order.status === "refused" ? [first[0], "refused"] : [...first, "processing", "delivered"];
   const reached = steps.indexOf(order.status);
-  const stepLabel = { unpaid: "Peman voye", pending: order.payment ? "Peman OK" : "Resevwa", processing: "An kou", delivered: "Livre", refused: "Refize" };
+  const stepLabel = {
+    unpaid: t("Peman voye", "Paiement envoyé"),
+    pending: order.payment ? t("Peman OK", "Paiement OK") : t("Resevwa", "Reçue"),
+    processing: t("An kou", "En cours"),
+    delivered: t("Livre", "Livrée"),
+    refused: t("Refize", "Refusée"),
+  };
   const method = order.payment && PAYMENT_METHODS.find((m) => m.id === order.payment.method);
   // Mesaj WhatsApp ak tout detay kòmand lan, pou ekip la pa bezwen mande yo
-  const helpLines = ["Bonjou Awens Topup, mwen bezwen èd ak kòmand mwen an.", "", `Kòmand: ${order.code}`, `Pwodwi: ${order.product_name} · ${order.package_label}`];
+  const helpLines = [t("Bonjou Awens Topup, mwen bezwen èd ak kòmand mwen an.", "Bonjour Awens Topup, j'ai besoin d'aide pour ma commande."), "", `${t("Kòmand", "Commande")}: ${order.code}`, `${t("Pwodwi", "Produit")}: ${order.product_name} · ${order.package_label}`];
   if (order.player_id) helpLines.push(`Player ID: ${order.player_id}`);
   helpLines.push(`Pri: ${formatPrice(Number(order.price))}`, `Estati: ${orderStatus(order).label}`);
   const helpText = helpLines.join("\n");
@@ -73,7 +80,7 @@ export function OrderSheet({ order, catalog = PRODUCTS, profile, onClose, onToas
     <Sheet
       open
       onClose={onClose}
-      title={`Kòmand ${order.code}`}
+      title={`${t("Kòmand", "Commande")} ${order.code}`}
       footer={
         <a
           href={waLink(helpText)}
@@ -81,7 +88,7 @@ export function OrderSheet({ order, catalog = PRODUCTS, profile, onClose, onToas
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3.5 font-bold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
-          <WhatsAppIcon className="h-5 w-5 text-[#25D366]" /> Bezwen èd ak kòmand sa a?
+          <WhatsAppIcon className="h-5 w-5 text-[#25D366]" /> {t("Bezwen èd ak kòmand sa a?", "Besoin d'aide pour cette commande ?")}
         </a>
       }
     >
@@ -114,11 +121,11 @@ export function OrderSheet({ order, catalog = PRODUCTS, profile, onClose, onToas
 
       {order.delivery_code && (
         <div className="mt-5 rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:ring-emerald-500/30">
-          <p className="flex items-center gap-2 text-sm font-bold text-emerald-700 dark:text-emerald-300"><KeyRound className="h-4 w-4" /> Kòd ou</p>
+          <p className="flex items-center gap-2 text-sm font-bold text-emerald-700 dark:text-emerald-300"><KeyRound className="h-4 w-4" /> {t("Kòd ou", "Votre code")}</p>
           <div className="mt-2 flex items-center justify-between gap-3">
             <span className="min-w-0 select-all break-all font-mono text-base font-bold tracking-wide text-slate-900 dark:text-white">{order.delivery_code}</span>
             <button type="button" onClick={() => copyText(order.delivery_code, onToast)} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 dark:bg-slate-900 dark:text-emerald-300 dark:ring-emerald-500/30">
-              <Copy className="h-4 w-4" /> Kopye
+              <Copy className="h-4 w-4" /> {t("Kopye", "Copier")}
             </button>
           </div>
         </div>
@@ -126,14 +133,14 @@ export function OrderSheet({ order, catalog = PRODUCTS, profile, onClose, onToas
 
       <dl className="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
         {[
-          [Hash, "Kòmand", order.code],
-          [CalendarDays, "Dat", formatDateTime(order.created_at)],
-          [Banknote, "Pri", formatPrice(Number(order.price))],
+          [Hash, t("Kòmand", "Commande"), order.code],
+          [CalendarDays, t("Dat", "Date"), formatDateTime(order.created_at)],
+          [Banknote, t("Pri", "Prix"), formatPrice(Number(order.price))],
           order.player_id && [User, "Player ID", order.player_id],
-          order.payment && [Banknote, "Peman", `${method?.name || order.payment.method} · ${order.payment.reference}`],
-          order.recipient && [User, "Kont", `${order.recipient.account} (${order.recipient.name})`],
-          order.kind === "exchange" && [Banknote, "Frè", `${order.fee} ${order.currency} · 1 ${order.currency} = ${order.rate} HTG`],
-          order.admin_note && [StickyNote, "Nòt", order.admin_note],
+          order.payment && [Banknote, t("Peman", "Paiement"), `${method?.name || order.payment.method} · ${order.payment.reference}`],
+          order.recipient && [User, t("Kont", "Compte"), `${order.recipient.account} (${order.recipient.name})`],
+          order.kind === "exchange" && [Banknote, t("Frè", "Frais"), `${order.fee} ${order.currency} · 1 ${order.currency} = ${order.rate} HTG`],
+          order.admin_note && [StickyNote, t("Nòt", "Note"), order.admin_note],
         ]
           .filter(Boolean)
           .map(([Icon, label, value]) => (
@@ -165,7 +172,7 @@ function AccountHistory({ account, onShop, onOpenOrder }) {
   });
 
   if (account.orders.length === 0) {
-    return <EmptyState title="Ou poko gen kòmand" text="Lè w achte yon pwodwi, w ap swiv li isit la, epi w ap jwenn kòd PIN ou yo." onShop={onShop} />;
+    return <EmptyState title={t("Ou poko gen kòmand", "Aucune commande pour l'instant")} text={t("Lè w achte yon pwodwi, w ap swiv li isit la, epi w ap jwenn kòd PIN ou yo.", "Après un achat, suivez-le ici et retrouvez vos codes PIN.")} onShop={onShop} />;
   }
 
   return (
@@ -194,7 +201,7 @@ function AccountHistory({ account, onShop, onOpenOrder }) {
       </div>
 
       {visible.length === 0 ? (
-        <p className="rounded-2xl bg-white p-6 text-center text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800">Pa gen kòmand ki koresponn.</p>
+        <p className="rounded-2xl bg-white p-6 text-center text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800">{t("Pa gen kòmand ki koresponn.", "Aucune commande correspondante.")}</p>
       ) : (
         <ul className="space-y-3">
           {visible.map((o) => (
@@ -236,7 +243,7 @@ function AccountHistory({ account, onShop, onOpenOrder }) {
 // Mòd WhatsApp: kòmand yo sove sou telefòn nan sèlman
 function LocalHistory({ orders, onShop }) {
   if (orders.length === 0) {
-    return <EmptyState title="Ou poko gen kòmand" text="Lè w fin achte yon pwodwi, w ap jwenn li isit la ak nimewo kòmand lan." onShop={onShop} />;
+    return <EmptyState title={t("Ou poko gen kòmand", "Aucune commande pour l'instant")} text={t("Lè w fin achte yon pwodwi, w ap jwenn li isit la ak nimewo kòmand lan.", "Après un achat, vous le retrouverez ici avec son numéro de commande.")} onShop={onShop} />;
   }
   return (
     <ul className="space-y-3">
@@ -269,7 +276,7 @@ function LocalHistory({ orders, onShop }) {
               rel="noopener noreferrer"
               className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-slate-100 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             >
-              <WhatsAppIcon className="h-4 w-4 text-[#25D366]" /> Voye kòmand lan ankò sou WhatsApp
+              <WhatsAppIcon className="h-4 w-4 text-[#25D366]" /> {t("Voye kòmand lan ankò sou WhatsApp", "Renvoyer la commande sur WhatsApp")}
             </a>
           </li>
         );
@@ -286,16 +293,16 @@ export default function HistoryPage({ account, localOrders, onShop, onLogin, onO
         <h1 className="text-2xl font-extrabold tracking-tight">Historique</h1>
         <p className="mt-1 text-slate-500 dark:text-slate-400">
           {!account.enabled
-            ? "Kòmand ou fè sou telefòn sa a."
+            ? t("Kòmand ou fè sou telefòn sa a.", "Vos commandes passées sur ce téléphone.")
             : codes > 0
-              ? <span className="font-medium text-sky-600 dark:text-sky-400">{codes} kòd disponib</span>
-              : "Kòmand ou yo ak kòd PIN ou resevwa yo."}
+              ? <span className="font-medium text-sky-600 dark:text-sky-400">{t(`${codes} kòd disponib`, `${codes} code(s) disponible(s)`)}</span>
+              : t("Kòmand ou yo ak kòd PIN ou resevwa yo.", "Vos commandes et les codes PIN reçus.")}
         </p>
       </div>
       {!account.enabled ? (
         <LocalHistory orders={localOrders} onShop={onShop} />
       ) : !account.user ? (
-        <LoginPrompt title="Mes commandes" icon={History} text="Konekte pou w swiv kòmand ou yo epi jwenn kòd PIN ou resevwa yo." onLogin={onLogin} />
+        <LoginPrompt title="Mes commandes" icon={History} text={t("Konekte pou w swiv kòmand ou yo epi jwenn kòd PIN ou resevwa yo.", "Connectez-vous pour suivre vos commandes et retrouver vos codes PIN.")} onLogin={onLogin} />
       ) : (
         <AccountHistory account={account} onShop={onShop} onOpenOrder={onOpenOrder} />
       )}

@@ -3,12 +3,13 @@ import {
   ArrowLeft, Info, CheckCircle2, Flame, ShoppingCart, User, CreditCard, Package, Hash, MessageCircle,
   ShieldCheck, Wallet, Plus, Loader2, AlertTriangle, LogIn, Phone, Zap, Tag,
 } from "lucide-react";
-import { PAYMENT_METHODS, DIRECT_PAYMENT } from "./data.js";
+import { PAYMENT_METHODS, DIRECT_PAYMENT, categoryLabel } from "./data.js";
 import { backend, errorText } from "./backend.js";
 import { Sheet, StepCard, ProductArt, GemIcon, WhatsAppIcon, ErrorNote, formatPrice, packageName, waLink } from "./ui.jsx";
 import { loadPlayerId, savePlayerId, newOrderId, orderMessage } from "./orders.js";
 import { PayTo, Input } from "./WalletSheets.jsx";
 import { checkPlayerId } from "./playerCheck.js";
+import { t } from "./i18n.js";
 
 const ID_PATTERN = /^\d{6,15}$/;
 
@@ -226,10 +227,10 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
 
   // Bouton anba a: li di kliyan an egzakteman sa k manke
   let action = { text: "Acheter", run: () => { setError(""); setOrderId(newOrderId()); setConfirming(true); } };
-  if (!item) action = { text: "Chwazi yon pake", run: null };
-  else if (idMissing) action = { text: "Mete Player ID ou", run: null };
-  else if (idError || idUnknown) action = { text: "Korije Player ID a", run: null };
-  else if (walletMode && !loggedIn) action = { text: "Konekte pou achte", icon: LogIn, run: () => onLogin("login") };
+  if (!item) action = { text: t("Chwazi yon pake", "Choisissez un forfait"), run: null };
+  else if (idMissing) action = { text: t("Mete Player ID ou", "Entrez votre Player ID"), run: null };
+  else if (idError || idUnknown) action = { text: t("Korije Player ID a", "Corrigez le Player ID"), run: null };
+  else if (walletMode && !loggedIn) action = { text: t("Konekte pou achte", "Connectez-vous pour acheter"), icon: LogIn, run: () => onLogin("login") };
   else if (walletMode && payWith === "wallet" && missing > 0) action = { text: "Recharger mon Wallet", icon: Plus, run: topUp };
 
   // Mòd WhatsApp (pa gen baz done)
@@ -298,7 +299,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
         disabled={busy}
         className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 disabled:opacity-60"
       >
-        {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />} {directMethod ? "Voye kòmand lan" : "Confirmer l'achat"}
+        {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />} {directMethod ? t("Voye kòmand lan", "Envoyer la commande") : "Confirmer l'achat"}
       </button>
     )
   ) : (
@@ -322,7 +323,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
         onClick={onBack}
         className="flex items-center gap-2 rounded-xl py-1 font-semibold text-slate-600 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
       >
-        <ArrowLeft className="h-5 w-5" /> Retounen
+        <ArrowLeft className="h-5 w-5" /> {t("Retounen", "Retour")}
       </button>
 
       <section className="relative overflow-hidden rounded-3xl bg-slate-900 p-5 text-white shadow-lg">
@@ -331,14 +332,14 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
         <div className="relative flex items-center gap-4">
           <ProductArt product={product} className="relative h-24 w-24 shrink-0 rounded-2xl shadow-xl ring-2 ring-white/20" />
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-300">{product.category}</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-300">{categoryLabel(product.category)}</p>
             <h1 className="mt-1 text-2xl font-extrabold leading-tight [text-wrap:balance]">{product.name}</h1>
             <div className="mt-2.5 flex flex-wrap gap-1.5 text-xs font-semibold">
               <span className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 ring-1 ring-white/15">
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" /> MonCash · NatCash
               </span>
               <span className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 ring-1 ring-white/15">
-                <WhatsAppIcon className="h-3.5 w-3.5 text-emerald-300" /> Sipò WhatsApp
+                <WhatsAppIcon className="h-3.5 w-3.5 text-emerald-300" /> {t("Sipò WhatsApp", "Support WhatsApp")}
               </span>
             </div>
           </div>
@@ -347,17 +348,17 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
 
       {groups.length === 0 ? (
         <section className="rounded-3xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Pri yo poko sou sit la</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t("Pri yo poko sou sit la", "Les prix ne sont pas encore en ligne")}</h2>
           <p className="mx-auto mt-2 max-w-sm text-slate-500 dark:text-slate-400">
-            Ekri nou sou WhatsApp, n ap ba w pri yo ak tout opsyon ki disponib pou {product.name}.
+            {t(`Ekri nou sou WhatsApp, n ap ba w pri yo ak tout opsyon ki disponib pou ${product.name}.`, `Écrivez-nous sur WhatsApp : nous vous donnerons les prix et toutes les options disponibles pour ${product.name}.`)}
           </p>
           <a
-            href={waLink(`Bonjou Awens Topup, mwen vle achte ${product.name}. Ki pri yo ye?`)}
+            href={waLink(t(`Bonjou Awens Topup, mwen vle achte ${product.name}. Ki pri yo ye?`, `Bonjour Awens Topup, je veux acheter ${product.name}. Quels sont les prix ?`))}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-6 py-3.5 font-bold text-white hover:brightness-95"
           >
-            <WhatsAppIcon className="h-5 w-5" /> Mande pri yo
+            <WhatsAppIcon className="h-5 w-5" /> {t("Mande pri yo", "Demander les prix")}
           </a>
         </section>
       ) : (
@@ -370,7 +371,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                   type="button"
                   onClick={() => setShowIdHelp((v) => !v)}
                   aria-expanded={showIdHelp}
-                  aria-label="Kijan pou m jwenn UID mwen?"
+                  aria-label={t("Kijan pou m jwenn UID mwen?", "Comment trouver mon UID ?")}
                   className="grid h-7 w-7 place-items-center rounded-full text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-500/10"
                 >
                   <Info className="h-5 w-5" />
@@ -403,30 +404,30 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
               </div>
               {verified?.status === "ok" && (
                 <p className="mt-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-bold text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20" role="status">
-                  {verified.name ? `Joueur vérifié : ${verified.name}` : "ID a verifye ✅"}
+                  {verified.name ? `Joueur vérifié : ${verified.name}` : t("ID a verifye ✅", "ID vérifié ✅")}
                 </p>
               )}
               {idUnknown && (
                 <p className="mt-2 rounded-xl bg-red-50 px-3 py-2.5 text-sm font-bold text-red-700 ring-1 ring-red-100 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20" role="alert">
-                  ID sa a pa egziste. Tcheke l byen nan jwèt la epi tape l ankò.
+                  {t("ID sa a pa egziste. Tcheke l byen nan jwèt la epi tape l ankò.", "Cet ID n'existe pas. Vérifiez-le dans le jeu et saisissez-le à nouveau.")}
                 </p>
               )}
               <p id="player-id-hint" className={`mt-2 text-sm ${idError || idMissing ? "text-red-500" : "text-slate-500 dark:text-slate-400"}`}>
                 {idError
-                  ? "UID a dwe gen ant 6 ak 15 chif."
+                  ? t("UID a dwe gen ant 6 ak 15 chif.", "L'UID doit contenir entre 6 et 15 chiffres.")
                   : idMissing
-                    ? `Mete Player ID ou: li obligatwa pou ${item.label}.`
+                    ? t(`Mete Player ID ou: li obligatwa pou ${item.label}.`, `Entrez votre Player ID : il est obligatoire pour ${item.label}.`)
                     : allNeedId
-                      ? "Obligatwa: nou voye kòmand lan sou kont sa a."
+                      ? t("Obligatwa: nou voye kòmand lan sou kont sa a.", "Obligatoire : la commande est envoyée sur ce compte.")
                       : someNeedId
-                        ? "Obligatwa pou abònman ak pas yo."
-                        : "Nou sèvi ak li pou n voye kòmand lan sou bon kont lan."}
+                        ? t("Obligatwa pou abònman ak pas yo.", "Obligatoire pour les abonnements et les pass.")
+                        : t("Nou sèvi ak li pou n voye kòmand lan sou bon kont lan.", "Il sert à envoyer la commande sur le bon compte.")}
               </p>
             </StepCard>
           )}
 
           <StepCard step={product.playerId ? 2 : 1} title="Choisir votre produit">
-            <div className="space-y-6" role="radiogroup" aria-label="Pake">
+            <div className="space-y-6" role="radiogroup" aria-label={t("Pake", "Forfaits")}>
               {groups.map((g) => (
                 <div key={`${g.style}-${g.title}`}>
                   <GroupTitle group={g} />
@@ -454,15 +455,15 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                       </span>
                     )}
                     title="Solde du compte"
-                    text={`${formatPrice(balance)} disponib`}
+                    text={`${formatPrice(balance)} ${t("disponib", "disponible")}`}
                   >
                     <div className="space-y-2 px-3 pb-3">
                       {item && missing > 0 && (
                         <p className="flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
                           <AlertTriangle className="h-5 w-5 shrink-0" />
                           {DIRECT_PAYMENT
-                            ? `Ou bezwen ${formatPrice(missing)} ankò. Ajoute kòb, oswa peye dirèkteman ak MonCash/NatCash anba a.`
-                            : `Ou bezwen ${formatPrice(missing)} ankò. Rechaje Wallet ou ak MonCash oswa NatCash, epi w ap ka achte touswit.`}
+                            ? t(`Ou bezwen ${formatPrice(missing)} ankò. Ajoute kòb, oswa peye dirèkteman ak MonCash/NatCash anba a.`, `Il vous manque ${formatPrice(missing)}. Rechargez, ou payez directement avec MonCash/NatCash ci-dessous.`)
+                            : t(`Ou bezwen ${formatPrice(missing)} ankò. Rechaje Wallet ou ak MonCash oswa NatCash, epi w ap ka achte touswit.`, `Il vous manque ${formatPrice(missing)}. Rechargez votre Wallet avec MonCash ou NatCash pour acheter tout de suite.`)}
                         </p>
                       )}
                       <button type="button" onClick={topUp} className="flex items-center gap-1 rounded-xl bg-white px-3 py-2 text-sm font-bold text-sky-600 ring-1 ring-sky-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-sky-500/30">
@@ -478,16 +479,16 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                       art={<img src={m.logo} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />}
                       title={m.name}
                       badge={m.recommended ? "RECOMMANDÉ" : null}
-                      text="Peye dirèkteman pou kòmand sa a"
+                      text={t("Peye dirèkteman pou kòmand sa a", "Payer directement cette commande")}
                     />
                   ))}
                 </div>
               ) : (
                 <div className="rounded-2xl bg-slate-50 p-4 text-center ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
-                  <p className="text-slate-600 dark:text-slate-300">Konekte pou w peye ak Solde Wallet ou.</p>
+                  <p className="text-slate-600 dark:text-slate-300">{t("Konekte pou w peye ak Solde Wallet ou.", "Connectez-vous pour payer avec le solde de votre Wallet.")}</p>
                   <div className="mt-3 grid grid-cols-2 gap-2">
-                    <button type="button" onClick={() => onLogin("login")} className="rounded-xl bg-sky-500 py-2.5 font-bold text-white">Konekte</button>
-                    <button type="button" onClick={() => onLogin("signup")} className="rounded-xl bg-white py-2.5 font-bold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700">Kreye kont</button>
+                    <button type="button" onClick={() => onLogin("login")} className="rounded-xl bg-sky-500 py-2.5 font-bold text-white">{t("Konekte", "Connexion")}</button>
+                    <button type="button" onClick={() => onLogin("signup")} className="rounded-xl bg-white py-2.5 font-bold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700">{t("Kreye kont", "Créer un compte")}</button>
                   </div>
                 </div>
               )
@@ -546,21 +547,21 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
             </div>
           </div>
 
-          <Sheet open={confirming && Boolean(item)} onClose={closeConfirm} title={placed ? "Kòmand pase" : "Confirmer l'achat"} footer={confirmFooter}>
+          <Sheet open={confirming && Boolean(item)} onClose={closeConfirm} title={placed ? t("Kòmand pase", "Commande passée") : "Confirmer l'achat"} footer={confirmFooter}>
             {item && placed ? (
               <div className="py-4 text-center">
                 <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15">
                   <CheckCircle2 className="h-9 w-9 text-emerald-500" />
                 </span>
-                <h4 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">Kòmand {placed.code} pase!</h4>
+                <h4 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">{t(`Kòmand ${placed.code} pase!`, `Commande ${placed.code} passée !`)}</h4>
                 <p className="mx-auto mt-2 max-w-sm text-slate-500 dark:text-slate-400">
                   {placed.payment
-                    ? "N ap verifye peman an. Depi l konfime, n ap livre kòmand lan, epi w ap resevwa yon notifikasyon."
-                    : `${formatPrice(Number(placed.price))} soti nan Wallet ou. W ap resevwa yon notifikasyon depi kòmand lan livre.`}
+                    ? t("N ap verifye peman an. Depi l konfime, n ap livre kòmand lan, epi w ap resevwa yon notifikasyon.", "Nous vérifions le paiement. Dès qu'il est confirmé, la commande est livrée et vous recevez une notification.")
+                    : t(`${formatPrice(Number(placed.price))} soti nan Wallet ou. W ap resevwa yon notifikasyon depi kòmand lan livre.`, `${formatPrice(Number(placed.price))} débités de votre Wallet. Vous recevrez une notification dès la livraison.`)}
                 </p>
                 <div className="mt-6 grid grid-cols-2 gap-3">
-                  <button type="button" onClick={closeConfirm} className="rounded-2xl bg-slate-100 py-3.5 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">Kontinye achte</button>
-                  <button type="button" onClick={onViewOrders} className="rounded-2xl bg-sky-500 py-3.5 font-bold text-white hover:bg-sky-600">Wè kòmand mwen</button>
+                  <button type="button" onClick={closeConfirm} className="rounded-2xl bg-slate-100 py-3.5 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">{t("Kontinye achte", "Continuer mes achats")}</button>
+                  <button type="button" onClick={onViewOrders} className="rounded-2xl bg-sky-500 py-3.5 font-bold text-white hover:bg-sky-600">{t("Wè kòmand mwen", "Voir mes commandes")}</button>
                 </div>
               </div>
             ) : item ? (
@@ -586,7 +587,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                 <dl className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
                   <SummaryRow icon={Package} label="Produit">{product.name}</SummaryRow>
                   {id && <SummaryRow icon={User} label="Player ID"><span className="tabular-nums">{id}</span></SummaryRow>}
-                  {verified?.status === "ok" && verified.name && <SummaryRow icon={CheckCircle2} label="Jwè">{verified.name}</SummaryRow>}
+                  {verified?.status === "ok" && verified.name && <SummaryRow icon={CheckCircle2} label={t("Jwè", "Joueur")}>{verified.name}</SummaryRow>}
                   {walletMode && directMethod ? (
                     <SummaryRow icon={CreditCard} label="Paiement">
                       <span className="inline-flex items-center gap-2">
@@ -596,7 +597,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                   ) : walletMode ? (
                     <>
                       <SummaryRow icon={CreditCard} label="Paiement">Solde</SummaryRow>
-                      <SummaryRow icon={Wallet} label="Solde apre acha">
+                      <SummaryRow icon={Wallet} label={t("Solde apre acha", "Solde après achat")}>
                         <span className="tabular-nums">{formatPrice(balance - finalPrice)}</span>
                       </SummaryRow>
                     </>
@@ -607,7 +608,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                           <img src={payment.logo} alt="" className="h-6 w-6 rounded-md object-cover" /> {payment.name}
                         </span>
                       </SummaryRow>
-                      <SummaryRow icon={Hash} label="Kòmand"><span className="tabular-nums">{orderId}</span></SummaryRow>
+                      <SummaryRow icon={Hash} label={t("Kòmand", "Commande")}><span className="tabular-nums">{orderId}</span></SummaryRow>
                     </>
                   )}
                 </dl>
@@ -616,19 +617,19 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                     {promo ? (
                       <p className="flex items-center justify-between gap-3 rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30">
                         <span><Tag className="mr-1.5 inline h-4 w-4" />{promo.code} · −{promo.percent}% (−{formatPrice(promo.discount)})</span>
-                        <button type="button" onClick={() => setPromo(null)} className="text-xs underline">Retire</button>
+                        <button type="button" onClick={() => setPromo(null)} className="text-xs underline">{t("Retire", "Retirer")}</button>
                       </p>
                     ) : (
                       <div className="flex gap-2">
                         <input
                           value={promoInput}
                           onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                          placeholder="Kòd pwomo (si w genyen)"
-                          aria-label="Kòd pwomo"
+                          placeholder={t("Kòd pwomo (si w genyen)", "Code promo (si vous en avez un)")}
+                          aria-label={t("Kòd pwomo", "Code promo")}
                           className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[15px] uppercase tracking-wide focus:border-sky-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950"
                         />
                         <button type="button" onClick={applyPromo} disabled={promoBusy || !promoInput.trim()} className="flex shrink-0 items-center gap-1.5 rounded-xl bg-slate-900 px-4 text-sm font-bold text-white disabled:opacity-50 dark:bg-white dark:text-slate-900">
-                          {promoBusy && <Loader2 className="h-4 w-4 animate-spin" />} Aplike
+                          {promoBusy && <Loader2 className="h-4 w-4 animate-spin" />} {t("Aplike", "Appliquer")}
                         </button>
                       </div>
                     )}
@@ -638,21 +639,21 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                 {walletMode && directMethod ? (
                   <div className="mt-2 space-y-4">
                     <PayTo method={directMethod} amount={item.price} onToast={onToast} />
-                    <p className="font-bold text-slate-900 dark:text-white">2. Mete ID tranzaksyon an</p>
+                    <p className="font-bold text-slate-900 dark:text-white">{t("2. Mete ID tranzaksyon an", "2. Entrez l'ID de transaction")}</p>
                     <Input
                       id="order-reference"
-                      label="ID tranzaksyon an"
+                      label={t("ID tranzaksyon an", "ID de transaction")}
                       icon={Hash}
                       value={reference}
                       onChange={(e) => setReference(e.target.value)}
                       placeholder="Ex: 1234567890"
                       autoComplete="off"
-                      hint={`Nimewo tranzaksyon ki nan mesaj ${directMethod.name} voye ba ou a.`}
+                      hint={t(`Nimewo tranzaksyon ki nan mesaj ${directMethod.name} voye ba ou a.`, `Le numéro de transaction du message envoyé par ${directMethod.name}.`)}
                     />
-                    <Input id="order-phone" label="Nimewo ou voye kòb la (si w vle)" icon={Phone} inputMode="tel" value={senderPhone} onChange={(e) => setSenderPhone(e.target.value)} placeholder="Ex: 37000000" autoComplete="tel" />
+                    <Input id="order-phone" label={t("Nimewo ou voye kòb la (si w vle)", "Numéro qui a envoyé l'argent (facultatif)")} icon={Phone} inputMode="tel" value={senderPhone} onChange={(e) => setSenderPhone(e.target.value)} placeholder="Ex: 37000000" autoComplete="tel" />
                     <p className="flex gap-2 rounded-xl bg-violet-50 p-3 text-sm text-violet-900 dark:bg-violet-500/10 dark:text-violet-200">
                       <Zap className="h-5 w-5 shrink-0" />
-                      Depi nou konfime peman an, kòmand lan livre otomatikman.
+                      {t("Depi nou konfime peman an, kòmand lan livre otomatikman.", "Dès que le paiement est confirmé, la commande est livrée automatiquement.")}
                     </p>
                     <ErrorNote>{error}</ErrorNote>
                   </div>
@@ -662,7 +663,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                   <p className="mt-2 flex gap-3 rounded-2xl bg-sky-50 p-3.5 text-sm text-sky-900 dark:bg-sky-500/10 dark:text-sky-100">
                     <MessageCircle className="h-5 w-5 shrink-0 text-sky-500" />
                     <span>
-                      Lè w peze "Confirmer l'achat", WhatsApp ap louvri ak kòmand ou deja ekri. Voye mesaj la, epi ekip la ap ba w enstriksyon pou peye ak {payment.name}.
+                      {t(`Lè w peze "Confirmer l'achat", WhatsApp ap louvri ak kòmand ou deja ekri. Voye mesaj la, epi ekip la ap ba w enstriksyon pou peye ak ${payment.name}.`, `En touchant « Confirmer l'achat », WhatsApp s'ouvre avec votre commande déjà rédigée. Envoyez le message : l'équipe vous indiquera comment payer avec ${payment.name}.`)}
                     </span>
                   </p>
                 )}

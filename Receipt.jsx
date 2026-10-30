@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ReceiptText, Loader2 } from "lucide-react";
 import { SITE_URL, WHATSAPP_NUMBER } from "./data.js";
+import { t } from "./i18n.js";
 
 // Resi (foto PNG) yon achte, yon depo oswa yon transfè, desine sou telefòn nan:
 // kliyan an ka telechaje l oswa voye l sou WhatsApp. Kòd kat kado yo pa janm ladan l.
@@ -70,7 +71,7 @@ export function drawReceipt({ title, amount, status, rows, customer, date }) {
   ctx.fillText("T O P U P", 140 + awens, 98);
   ctx.fillStyle = "#cbd5e1";
   ctx.font = `600 22px ${FONT}`;
-  ctx.fillText("Resi", 128, 132);
+  ctx.fillText(t("Resi", "Reçu"), 128, 132);
 
   // Tit, montan, estati
   ctx.fillStyle = "#0f172a";
@@ -113,7 +114,7 @@ export function drawReceipt({ title, amount, status, rows, customer, date }) {
   ctx.fillStyle = "#64748b";
   ctx.font = `500 22px ${FONT}`;
   if (customer) ctx.fillText(customer, 48, y);
-  ctx.fillText(`Resi fèt ${STAMP.format(date || new Date())}`, 48, y + 34);
+  ctx.fillText(`${t("Resi fèt", "Reçu émis le")} ${STAMP.format(date || new Date())}`, 48, y + 34);
   ctx.fillStyle = "#0284c7";
   ctx.font = `700 22px ${FONT}`;
   ctx.fillText(`${SITE_URL.replace(/^https?:\/\//, "")} · WhatsApp ${phone}`, 48, y + 70);
@@ -125,7 +126,7 @@ export async function shareReceipt(blob, name) {
   const file = new File([blob], name, { type: "image/png" });
   if (navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: "Resi Awens Topup" });
+      await navigator.share({ files: [file], title: t("Resi Awens Topup", "Reçu Awens Topup") });
       return "shared";
     } catch (error) {
       if (error?.name === "AbortError") return "cancelled";
@@ -148,9 +149,9 @@ export function ReceiptButton({ receipt, name, onToast, className = "" }) {
     setBusy(true);
     try {
       const result = await shareReceipt(await drawReceipt(receipt()), name);
-      if (result === "downloaded") onToast?.("Resi a telechaje.");
+      if (result === "downloaded") onToast?.(t("Resi a telechaje.", "Reçu téléchargé."));
     } catch {
-      onToast?.("Resi a pa ka fèt sou telefòn sa a.");
+      onToast?.(t("Resi a pa ka fèt sou telefòn sa a.", "Impossible de créer le reçu sur ce téléphone."));
     } finally {
       setBusy(false);
     }
@@ -162,7 +163,7 @@ export function ReceiptButton({ receipt, name, onToast, className = "" }) {
       disabled={busy}
       className={`flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-50 py-3 font-bold text-sky-700 ring-1 ring-sky-100 hover:bg-sky-100 disabled:opacity-60 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/20 ${className}`}
     >
-      {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ReceiptText className="h-5 w-5" />} Telechaje / pataje resi a
+      {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ReceiptText className="h-5 w-5" />} {t("Telechaje / pataje resi a", "Télécharger / partager le reçu")}
     </button>
   );
 }

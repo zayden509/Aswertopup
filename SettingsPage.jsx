@@ -1,16 +1,17 @@
 import React, { useRef, useState } from "react";
 import {
   Award, Mail, Copy, Smartphone, Moon, Sun, ShieldCheck, LogOut, ChevronRight, Settings, Share, MoreVertical, Camera, Pencil,
-  Wallet, ShoppingBag, Plus, Send, Bell, PlayCircle, Loader2, Trash2, User, CalendarDays,
+  Wallet, ShoppingBag, Plus, Send, Bell, PlayCircle, Loader2, Trash2, User, CalendarDays, Languages,
 } from "lucide-react";
 import { RANKS } from "./data.js";
 import { backend, errorText } from "./backend.js";
-import { Sheet, ErrorNote, WhatsAppIcon, waLink, supportMessage, formatPrice, formatDate, copyText } from "./ui.jsx";
+import { Sheet, ErrorNote, WhatsAppIcon, waLink, supportMessage, formatPrice, formatDate, copyText, LangSwitch } from "./ui.jsx";
 import { LoginPrompt } from "./WalletPage.jsx";
 import ProfileWallet, { UserAvatar } from "./ProfileWallet.jsx";
 import { InviteCard } from "./Referral.jsx";
 import { QrCard, FeesCard } from "./ProfileTabs.jsx";
 import { squarePhoto } from "./image.js";
+import { t } from "./i18n.js";
 
 export function rankInfo(spent) {
   const current = [...RANKS].reverse().find((r) => spent >= r.min) || null;
@@ -57,7 +58,7 @@ function usePhotoPicker(onToast) {
     setBusy(true);
     try {
       await backend.saveProfile({ photo: await squarePhoto(file, 192) });
-      onToast("Foto pwofil ou chanje.");
+      onToast(t("Foto pwofil ou chanje.", "Photo de profil modifiée."));
     } catch (error) {
       onToast(errorText(error));
     } finally {
@@ -81,7 +82,7 @@ function EditProfileSheet({ account, onClose, onToast }) {
     setError("");
     try {
       await backend.saveProfile({ fullName: name });
-      onToast("Pwofil ou ajou.");
+      onToast(t("Pwofil ou ajou.", "Profil mis à jour."));
       onClose();
     } catch (err) {
       setError(errorText(err));
@@ -92,7 +93,7 @@ function EditProfileSheet({ account, onClose, onToast }) {
   const removePhoto = async () => {
     try {
       await backend.saveProfile({ photo: null });
-      onToast("Foto a retire.");
+      onToast(t("Foto a retire.", "Photo supprimée."));
     } catch (err) {
       setError(errorText(err));
     }
@@ -105,7 +106,7 @@ function EditProfileSheet({ account, onClose, onToast }) {
       title="Modifier le profil"
       footer={
         <button type="submit" form="profile-form" disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3.5 text-lg font-bold text-white disabled:opacity-60">
-          {busy && <Loader2 className="h-5 w-5 animate-spin" />} Sove
+          {busy && <Loader2 className="h-5 w-5 animate-spin" />} {t("Sove", "Enregistrer")}
         </button>
       }
     >
@@ -114,24 +115,24 @@ function EditProfileSheet({ account, onClose, onToast }) {
           <UserAvatar profile={profile} photo={account.photo} className="h-20 w-20 text-2xl" />
           <div className="space-y-2">
             <button type="button" onClick={photo.pick} disabled={photo.busy} className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white disabled:opacity-60 dark:bg-white dark:text-slate-900">
-              {photo.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />} Chanje foto a
+              {photo.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />} {t("Chanje foto a", "Changer la photo")}
             </button>
             {profile.photo && (
               <button type="button" onClick={removePhoto} className="flex items-center gap-1.5 text-sm font-semibold text-red-500">
-                <Trash2 className="h-4 w-4" /> Retire foto a
+                <Trash2 className="h-4 w-4" /> {t("Retire foto a", "Retirer la photo")}
               </button>
             )}
           </div>
           {photo.input}
         </div>
         <label className="block">
-          <span className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300">Non ou</span>
+          <span className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300">{t("Non ou", "Votre nom")}</span>
           <span className="flex items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white px-4 focus-within:border-sky-400 dark:border-slate-700 dark:bg-slate-950">
             <User className="h-5 w-5 shrink-0 text-slate-400" />
             <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} autoComplete="name" placeholder="Jean Baptiste" className="w-full bg-transparent py-3.5 focus:outline-none" />
           </span>
         </label>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Imèl: <span className="font-semibold text-slate-700 dark:text-slate-200">{profile.email}</span></p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("Imèl", "E-mail")}: <span className="font-semibold text-slate-700 dark:text-slate-200">{profile.email}</span></p>
         <ErrorNote>{error}</ErrorNote>
       </form>
     </Sheet>
@@ -147,7 +148,7 @@ function RankCard({ spent }) {
           {rank.current ? rank.current.emoji : <Award className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
         </span>
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Pwogram fidelite</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{t("Pwogram fidelite", "Programme de fidélité")}</p>
           <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{rank.current ? rank.current.name : "Pas encore de rang"}</p>
           <p className="text-sm text-slate-500 dark:text-slate-400">{formatPrice(spent)} dépensés</p>
         </div>
@@ -163,7 +164,7 @@ function RankCard({ spent }) {
           </div>
         </>
       ) : (
-        <p className="mt-4 text-sm font-semibold text-violet-500">Ou rive nan pi gwo rang lan. Mèsi!</p>
+        <p className="mt-4 text-sm font-semibold text-violet-500">{t("Ou rive nan pi gwo rang lan. Mèsi!", "Vous avez atteint le rang le plus élevé. Merci !")}</p>
       )}
     </section>
   );
@@ -193,16 +194,16 @@ export default function SettingsPage({
   };
 
   const shortcuts = profile && [
-    { label: "Pòtfèy", icon: Wallet, onClick: onSeeWallet },
-    { label: "Kòmand", icon: ShoppingBag, onClick: () => onGo("history") },
-    { label: "Depoze", icon: Plus, onClick: onDeposit },
-    { label: "Voye", icon: Send, onClick: onTransfer },
-    { label: "Notifikasyon", icon: Bell, onClick: onNotifications, badge: account.unread },
+    { label: t("Pòtfèy", "Portefeuille"), icon: Wallet, onClick: onSeeWallet },
+    { label: t("Kòmand", "Commandes"), icon: ShoppingBag, onClick: () => onGo("history") },
+    { label: t("Depoze", "Déposer"), icon: Plus, onClick: onDeposit },
+    { label: t("Voye", "Envoyer"), icon: Send, onClick: onTransfer },
+    { label: t("Notifikasyon", "Notifications"), icon: Bell, onClick: onNotifications, badge: account.unread },
     { label: "Tutoriel", icon: PlayCircle, onClick: onTutorial },
-    { label: "Sipò", icon: WhatsAppIcon, href: waLink(supportMessage("Bonjou Awens Topup, mwen bezwen èd.", profile)) },
+    { label: t("Sipò", "Support"), icon: WhatsAppIcon, href: waLink(supportMessage(t("Bonjou Awens Topup, mwen bezwen èd.", "Bonjour Awens Topup, j'ai besoin d'aide."), profile)) },
     profile.is_admin
       ? { label: "Admin", icon: ShieldCheck, onClick: onAdmin }
-      : { label: "Rang", icon: Award, onClick: () => { setTab("profile"); setTimeout(() => document.getElementById("rank")?.scrollIntoView({ behavior: "smooth" }), 50); } },
+      : { label: t("Rang", "Rang"), icon: Award, onClick: () => { setTab("profile"); setTimeout(() => document.getElementById("rank")?.scrollIntoView({ behavior: "smooth" }), 50); } },
   ];
 
   const appSection = (
@@ -210,12 +211,13 @@ export default function SettingsPage({
       <Row icon={Smartphone} label="Installer l'application" onClick={install} />
       {showInstall && (
         <div className="mx-3 mb-3 space-y-2 rounded-2xl bg-sky-50 p-4 text-sm text-sky-900 dark:bg-sky-500/10 dark:text-sky-100">
-          <p className="flex items-center gap-2"><Share className="h-4 w-4 shrink-0" /> <span><b>iPhone:</b> peze bouton pataje a nan Safari, epi <b>Sur l'écran d'accueil</b>.</span></p>
-          <p className="flex items-center gap-2"><MoreVertical className="h-4 w-4 shrink-0" /> <span><b>Android:</b> peze ⋮ nan Chrome, epi <b>Installer l'application</b>.</span></p>
+          <p className="flex items-center gap-2"><Share className="h-4 w-4 shrink-0" /> <span><b>iPhone:</b> {t("peze bouton pataje a nan Safari, epi", "touchez le bouton de partage dans Safari, puis")} <b>Sur l'écran d'accueil</b>.</span></p>
+          <p className="flex items-center gap-2"><MoreVertical className="h-4 w-4 shrink-0" /> <span><b>Android:</b> {t("peze ⋮ nan Chrome, epi", "touchez ⋮ dans Chrome, puis")} <b>Installer l'application</b>.</span></p>
         </div>
       )}
       <Row icon={dark ? Moon : Sun} label="Thème" value={dark ? "Sombre" : "Clair"} onClick={onToggleTheme} />
-      <Row icon={WhatsAppIcon} label="Kontakte sipò a" href={waLink(supportMessage("Bonjou Awens Topup, mwen bezwen èd.", account.profile))} />
+      <Row icon={Languages} label={t("Lang", "Langue")} value={<LangSwitch className="ml-auto w-fit" />} />
+      <Row icon={WhatsAppIcon} label={t("Kontakte sipò a", "Contacter le support")} href={waLink(supportMessage(t("Bonjou Awens Topup, mwen bezwen èd.", "Bonjour Awens Topup, j'ai besoin d'aide."), account.profile))} />
     </Section>
   );
 
@@ -224,7 +226,7 @@ export default function SettingsPage({
       <div className="space-y-6">
         <h1 className="flex items-center gap-3 text-3xl font-extrabold tracking-tight"><Settings className="h-7 w-7 text-slate-400" /> Profil</h1>
         {account.enabled && !account.user && (
-          <LoginPrompt title="Kont ou" text="Konekte pou w wè rang ou, solde ou ak tout kòmand ou yo." onLogin={onLogin} />
+          <LoginPrompt title={t("Kont ou", "Votre compte")} text={t("Konekte pou w wè rang ou, solde ou ak tout kòmand ou yo.", "Connectez-vous pour voir votre rang, votre solde et toutes vos commandes.")} onLogin={onLogin} />
         )}
         {appSection}
       </div>
@@ -249,7 +251,7 @@ export default function SettingsPage({
             <button
               type="button"
               onClick={photo.pick}
-              aria-label="Chanje foto pwofil la"
+              aria-label={t("Chanje foto pwofil la", "Changer la photo de profil")}
               className="absolute -bottom-1 -right-1 grid h-9 w-9 place-items-center rounded-full bg-sky-500 text-white shadow-lg ring-4 ring-white dark:ring-slate-900"
             >
               {photo.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
@@ -257,7 +259,7 @@ export default function SettingsPage({
             {photo.input}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-xl font-extrabold text-slate-900 dark:text-white">{profile.full_name || "San non"}</p>
+            <p className="truncate text-xl font-extrabold text-slate-900 dark:text-white">{profile.full_name || t("San non", "Sans nom")}</p>
             <p className="truncate text-sm text-slate-500 dark:text-slate-400">{profile.email}</p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-bold text-violet-600 dark:bg-violet-500/10 dark:text-violet-300">
@@ -325,7 +327,7 @@ export default function SettingsPage({
           <Section title="Mon compte">
             <Row icon={Mail} label="Adresse email" value={profile.email} />
             <Row icon={Copy} label="AWENS-ID" value={<span className="font-mono tracking-wider">{profile.wallet_code}</span>} onClick={() => copyText(profile.wallet_code, onToast)} />
-            <Row icon={Award} label="Manm depi" value={profile.created_at ? formatDate(profile.created_at) : "—"} />
+            <Row icon={Award} label={t("Manm depi", "Membre depuis")} value={profile.created_at ? formatDate(profile.created_at) : "—"} />
           </Section>
           {appSection}
           {profile.is_admin && (
@@ -333,7 +335,7 @@ export default function SettingsPage({
               <ShieldCheck className="h-7 w-7 text-emerald-400" />
               <span className="min-w-0 flex-1">
                 <span className="block text-lg font-bold">Panneau admin</span>
-                <span className="block text-sm text-slate-300">Estatistik, kòmand, kliyan, pwodwi</span>
+                <span className="block text-sm text-slate-300">{t("Estatistik, kòmand, kliyan, pwodwi", "Statistiques, commandes, clients, produits")}</span>
               </span>
               <ChevronRight className="h-6 w-6 text-slate-400" />
             </button>

@@ -2,16 +2,17 @@ import React, { useEffect, useState } from "react";
 import { Star, MessageSquareQuote, Check, Trash2, EyeOff, Loader2, BadgeCheck } from "lucide-react";
 import { backend, errorText } from "./backend.js";
 import { ErrorNote, formatDate } from "./ui.jsx";
+import { t } from "./i18n.js";
 
 // Avi kliyan yo: yon kliyan ki resevwa kòmand li bay nòt; admin nan apwouve sa ki parèt sou sit la.
 
 export function Stars({ value, size = "h-4 w-4", onPick }) {
   return (
-    <span className="inline-flex gap-0.5" aria-label={`${value} etwal sou 5`}>
+    <span className="inline-flex gap-0.5" aria-label={t(`${value} etwal sou 5`, `${value} étoiles sur 5`)}>
       {[1, 2, 3, 4, 5].map((n) => {
         const icon = <Star className={`${size} ${n <= value ? "fill-amber-400 text-amber-400" : "text-slate-300 dark:text-slate-600"}`} />;
         return onPick ? (
-          <button key={n} type="button" onClick={() => onPick(n)} aria-label={`${n} etwal`} className="p-0.5">{icon}</button>
+          <button key={n} type="button" onClick={() => onPick(n)} aria-label={t(`${n} etwal`, `${n} étoile(s)`)} className="p-0.5">{icon}</button>
         ) : <span key={n}>{icon}</span>;
       })}
     </span>
@@ -21,7 +22,7 @@ export function Stars({ value, size = "h-4 w-4", onPick }) {
 // "Jean Baptiste Pierre" → "Jean B."
 export function shortName(profile) {
   const words = String(profile?.full_name || "").trim().split(/\s+/).filter(Boolean);
-  if (!words.length) return "Kliyan";
+  if (!words.length) return t("Kliyan", "Client");
   return words.length > 1 ? `${words[0]} ${words[1][0].toUpperCase()}.` : words[0];
 }
 
@@ -38,16 +39,16 @@ export function ReviewsSection() {
   return (
     <section className="mt-9" data-testid="reviews">
       <div className="mb-4 flex items-end justify-between gap-3">
-        <h2 className="text-2xl font-extrabold tracking-tight">Sa kliyan yo di</h2>
+        <h2 className="text-2xl font-extrabold tracking-tight">{t("Sa kliyan yo di", "Avis clients")}</h2>
         {reviews.length > 0 && (
           <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 dark:text-slate-300">
-            <Star className="h-4 w-4 fill-amber-400 text-amber-400" /> {average.toFixed(1)} · {reviews.length} avi
+            <Star className="h-4 w-4 fill-amber-400 text-amber-400" /> {average.toFixed(1)} · {reviews.length} {t("avi", "avis")}
           </span>
         )}
       </div>
       {delivered > 0 && (
         <p className="mb-4 flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 font-semibold text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30">
-          <BadgeCheck className="h-5 w-5 shrink-0" /> {new Intl.NumberFormat("fr-FR").format(delivered)} kòmand livre deja
+          <BadgeCheck className="h-5 w-5 shrink-0" /> {new Intl.NumberFormat("fr-FR").format(delivered)} {t("kòmand livre deja", "commandes déjà livrées")}
         </p>
       )}
       {reviews.length > 0 && (
@@ -85,7 +86,7 @@ export function ReviewBox({ order, profile, onToast }) {
       <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm ring-1 ring-slate-200 dark:bg-slate-800/50 dark:ring-slate-700">
         <Stars value={mine.rating} />
         <p className="mt-1 text-slate-600 dark:text-slate-300">
-          Mèsi pou avi w! {mine.approved ? "Li parèt sou sit la." : "L ap parèt sou sit la lè ekip la fin li l."}
+          {t("Mèsi pou avi w!", "Merci pour votre avis !")} {mine.approved ? t("Li parèt sou sit la.", "Il est publié sur le site.") : t("L ap parèt sou sit la lè ekip la fin li l.", "Il sera publié après relecture par l'équipe.")}
         </p>
       </div>
     );
@@ -97,7 +98,7 @@ export function ReviewBox({ order, profile, onToast }) {
     try {
       await backend.createReview(order, rating, text, shortName(profile));
       setMine({ rating, approved: false });
-      onToast?.("Mèsi pou avi w! ⭐");
+      onToast?.(t("Mèsi pou avi w! ⭐", "Merci pour votre avis ! ⭐"));
     } catch (err) {
       setError(errorText(err));
     } finally {
@@ -107,19 +108,19 @@ export function ReviewBox({ order, profile, onToast }) {
 
   return (
     <div className="mt-4 space-y-3 rounded-2xl bg-amber-50/70 p-4 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:ring-amber-500/30" data-testid="review-box">
-      <p className="flex items-center gap-2 font-bold text-slate-900 dark:text-white"><MessageSquareQuote className="h-5 w-5 text-amber-500" /> Kijan sa te pase?</p>
+      <p className="flex items-center gap-2 font-bold text-slate-900 dark:text-white"><MessageSquareQuote className="h-5 w-5 text-amber-500" /> {t("Kijan sa te pase?", "Comment ça s'est passé ?")}</p>
       <Stars value={rating} size="h-8 w-8" onPick={setRating} />
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
         maxLength={300}
         rows={2}
-        placeholder="Di lòt kliyan yo sa w panse (si w vle)"
+        placeholder={t("Di lòt kliyan yo sa w panse (si w vle)", "Dites aux autres clients ce que vous en pensez (facultatif)")}
         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[15px] focus:border-sky-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950"
       />
       <ErrorNote>{error}</ErrorNote>
       <button type="button" onClick={send} disabled={busy || !rating} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 py-3 font-bold text-white hover:bg-amber-600 disabled:opacity-50">
-        {busy && <Loader2 className="h-5 w-5 animate-spin" />} Voye avi a
+        {busy && <Loader2 className="h-5 w-5 animate-spin" />} {t("Voye avi a", "Envoyer l'avis")}
       </button>
     </div>
   );

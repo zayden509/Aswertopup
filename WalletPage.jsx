@@ -3,6 +3,7 @@ import { Wallet, Eye, EyeOff, Copy, Plus, Send, ShoppingCart, ArrowDownLeft, Arr
 import { Sheet, formatPrice, formatDate, formatDateTime, copyText, isPaidOrder, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
 import { ReceiptButton } from "./Receipt.jsx";
 import { MethodList } from "./WalletSheets.jsx";
+import { t } from "./i18n.js";
 
 const HIDE_KEY = "aswer-hide-balance";
 const FILTERS = [
@@ -63,12 +64,12 @@ function TxIcon({ row }) {
 // Detay ak resi yon depo oswa yon transfè
 function txReceipt(r, profile) {
   const d = r.raw;
-  const rows = [["Dat", formatDateTime(d.created_at)]];
+  const rows = [[t("Dat", "Date"), formatDateTime(d.created_at)]];
   if (r.kind === "deposit") {
-    rows.push(["Mòd", d.method === "moncash" ? "MonCash" : "NatCash"], ["Kòd tranzaksyon", d.reference]);
-    if (d.admin_note && d.status === "refused") rows.push(["Nòt", d.admin_note]);
+    rows.push([t("Mòd", "Mode"), d.method === "moncash" ? "MonCash" : "NatCash"], [t("Kòd tranzaksyon", "Code de transaction"), d.reference]);
+    if (d.admin_note && d.status === "refused") rows.push([t("Nòt", "Note"), d.admin_note]);
   } else {
-    rows.push(r.sent ? ["Bay", d.to_code] : ["Soti nan", d.from_code]);
+    rows.push(r.sent ? [t("Bay", "À"), d.to_code] : [t("Soti nan", "De"), d.from_code]);
   }
   return {
     title: r.title,
@@ -139,10 +140,10 @@ export function LoginPrompt({ title, text, onLogin, icon: Icon = Wallet }) {
       <p className="mx-auto mt-1 max-w-sm text-slate-500 dark:text-slate-400">{text}</p>
       <div className="mt-5 grid grid-cols-2 gap-3">
         <button type="button" onClick={() => onLogin("login")} className="flex items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3 font-bold text-white hover:bg-sky-600">
-          <LogIn className="h-5 w-5" /> Konekte
+          <LogIn className="h-5 w-5" /> {t("Konekte", "Connexion")}
         </button>
         <button type="button" onClick={() => onLogin("signup")} className="rounded-2xl bg-slate-100 py-3 font-bold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
-          Kreye kont
+          {t("Kreye kont", "Créer un compte")}
         </button>
       </div>
     </div>
@@ -158,7 +159,7 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
       <div className="space-y-4">
         <LoginPrompt
           title="Mon portefeuille AWENS"
-          text="Konekte pou w ajoute kòb ak MonCash oswa NatCash, wè solde ou epi achte an kèk segonn."
+          text={t("Konekte pou w ajoute kòb ak MonCash oswa NatCash, wè solde ou epi achte an kèk segonn.", "Connectez-vous pour ajouter de l'argent avec MonCash ou NatCash, voir votre solde et acheter en quelques secondes.")}
           onLogin={onLogin}
         />
         <section className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
@@ -191,7 +192,7 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
           <button
             type="button"
             onClick={toggleHidden}
-            aria-label={hidden ? "Montre solde a" : "Kache solde a"}
+            aria-label={hidden ? t("Montre solde a", "Afficher le solde") : t("Kache solde a", "Masquer le solde")}
             className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/80 text-slate-700 ring-1 ring-slate-200 hover:bg-white dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700"
           >
             {hidden ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -258,7 +259,7 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
 
         {visible.length === 0 ? (
           <p className="mt-4 rounded-2xl bg-white p-6 text-center text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800">
-            Pa gen tranzaksyon ankò. Kòmanse ak <button type="button" onClick={onDeposit} className="font-semibold text-sky-600 dark:text-sky-400">Ajouter de l'argent</button>.
+            {t("Pa gen tranzaksyon ankò. Kòmanse ak", "Aucune transaction pour l'instant. Commencez par")} <button type="button" onClick={onDeposit} className="font-semibold text-sky-600 dark:text-sky-400">Ajouter de l'argent</button>.
           </p>
         ) : (
           <ul className="mt-4 space-y-3">
