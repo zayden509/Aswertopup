@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { DatabaseBackup, FileSpreadsheet, Lock, BellRing, Send } from "lucide-react";
+import { DatabaseBackup, FileSpreadsheet, Lock, BellRing, Send, TicketPercent } from "lucide-react";
 import { backend, errorText } from "./backend.js";
 import { ErrorNote, formatPrice, orderStatus, isPaidOrder, DEPOSIT_STATUS } from "./ui.jsx";
 import { Card, AdminButton, inputClass } from "./adminUi.jsx";
@@ -219,6 +219,78 @@ export function AlertsCard({ owner, onToast }) {
         <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400"><Lock className="h-4 w-4" /> Se pwopriyetè a sèlman ki ka konekte alèt yo.</p>
       )}
       <ErrorNote>{error}</ErrorNote>
+    </Card>
+  );
+}
+
+// Kòd pwomo: admin nan kreye yo; kliyan an mete kòd la lè l ap achte
+export function PromosCard({ onToast }) {
+  const [list, setList] = useState([]);
+  const [form, setForm] = useState({ code: "", percent: "10", expiresAt: "", maxUses: "" });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  useEffect(() => backend.adminSubscribePromos(setList), []);
+  const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+
+  const create = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const code = await backend.adminCreatePromo(form);
+      setForm({ code: "", percent: "10", expiresAt: "", maxUses: "" });
+      onToast(`Kòd ${code} kreye.`);
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const act = async (run, message) => {
+    try {
+      await run();
+      onToast(message);
+    } catch (err) {
+      onToast(errorText(err));
+    }
+  };
+  const expired = (p) => p.expires_at && new Date(p.expires_at).getTime() <= Date.now();
+
+  return (
+    <Card
+      title={<span className="flex items-center gap-2"><TicketPercent className="h-5 w-5 text-fuchsia-500" /> Kòd pwomo</span>}
+      subtitle="Kliyan an mete kòd la lè l ap achte, epi li jwenn rabè a. Chak kliyan ka sèvi ak yon kòd yon sèl fwa."
+    >
+      <form onSubmit={create} className="grid gap-2 sm:grid-cols-[1fr_6rem_10rem_7rem_auto]" data-testid="promo-form">
+        <input value={form.code} onChange={(e) => set("code", e.target.value.toUpperCase())} placeholder="Ex: AWENS10" aria-label="Kòd" className={`${inputClass} uppercase`} />
+        <input value={form.percent} onChange={(e) => set("percent", e.target.value.replace(/\D/g, ""))} inputMode="numeric" aria-label="Rabè (%)" placeholder="%" className={inputClass} />
+        <input type="date" value={form.expiresAt} onChange={(e) => set("expiresAt", e.target.value)} aria-label="Ekspire" className={inputClass} />
+        <input value={form.maxUses} onChange={(e) => set("maxUses", e.target.value.replace(/\D/g, ""))} inputMode="numeric" aria-label="Kantite fwa" placeholder="Fwa (∞)" className={inputClass} />
+        <AdminButton type="submit" tone="primary" busy={busy} disabled={busy || !form.code}>Kreye</AdminButton>
+      </form>
+      <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Rabè a an %. Dat ak kantite fwa yo pa obligatwa.</p>
+      <ErrorNote>{error}</ErrorNote>
+      {list.length > 0 && (
+        <ul className="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
+          {list.map((p) => (
+            <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
+              <div className="min-w-0">
+                <p className="font-mono font-bold text-slate-900 dark:text-white">{p.id} <span className="font-sans text-sm font-semibold text-fuchsia-600 dark:text-fuchsia-400">−{p.percent}%</span></p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {p.uses}{p.max_uses ? `/${p.max_uses}` : ""} fwa · {p.expires_at ? `ekspire ${stamp(p.expires_at).slice(0, 10)}` : "pa ekspire"}
+                  {!p.active ? " · etenn" : expired(p) ? " · ekspire" : ""}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <AdminButton className="h-8 text-xs" onClick={() => act(() => backend.adminSetPromoActive(p.id, !p.active), p.active ? `${p.id} etenn.` : `${p.id} limen.`)}>
+                  {p.active ? "Etenn" : "Limen"}
+                </AdminButton>
+                <AdminButton tone="danger" className="h-8 text-xs" onClick={() => act(() => backend.adminDeletePromo(p.id), `${p.id} efase.`)}>Efase</AdminButton>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </Card>
   );
 }

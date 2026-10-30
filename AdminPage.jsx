@@ -19,7 +19,7 @@ import AdminTeam, { isOwner } from "./AdminTeam.jsx";
 import AdminAuto from "./AdminAuto.jsx";
 import AdminSettings from "./AdminSettings.jsx";
 import AdminSms from "./AdminSms.jsx";
-import { AlertsCard, BackupCard, ReportsCard } from "./AdminTools.jsx";
+import { AlertsCard, BackupCard, PromosCard, ReportsCard } from "./AdminTools.jsx";
 import { AdminReviews } from "./Reviews.jsx";
 
 const TABS = [
@@ -663,7 +663,12 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
           </>
         )}
         {tab === "customers" && <AdminCustomers profiles={profiles} orders={allOrders} deposits={deposits} onToast={onToast} />}
-        {tab === "catalog" && <AdminCatalog account={account} onToast={onToast} />}
+        {tab === "catalog" && (
+          <>
+            <AdminCatalog account={account} onToast={onToast} />
+            <PromosCard onToast={onToast} />
+          </>
+        )}
         {tab === "messages" && (
           <>
             <AdminMessages profiles={profiles} announcements={announcements} onToast={onToast} />

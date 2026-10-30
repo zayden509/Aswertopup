@@ -350,6 +350,44 @@ service cloud.firestore {
         && request.resource.data.delivered is int && request.resource.data.delivered >= 0;
     }
 
+    // ---------- Kòd pwomo ----------
+    // Admin yo kreye yo. Yon kliyan ka sèlman ajoute 1 sou "uses" lè l sèvi ak kòd la nan yon kòmand.
+    match /promos/{code} {
+      allow get: if signedIn();
+      allow list: if isAdmin();
+      allow create: if isAdmin() && validPromo(code) && request.resource.data.uses == 0;
+      allow update: if (isAdmin() && validPromo(code) && request.resource.data.uses == resource.data.uses)
+        || (signedIn() && changedOnly(['uses']) && request.resource.data.uses == resource.data.uses + 1
+            && !exists(promoUseDoc(code)) && existsAfter(promoUseDoc(code)));
+      allow delete: if isAdmin();
+    }
+
+    function validPromo(code) {
+      let p = request.resource.data;
+      return code.matches('^[A-Z0-9]{3,20}$')
+        && p.keys().hasOnly(['percent', 'active', 'expires_at', 'max_uses', 'uses', 'created_at'])
+        && p.percent is int && p.percent >= 1 && p.percent <= 90
+        && p.active is bool
+        && (p.expires_at == null || p.expires_at is timestamp)
+        && (p.max_uses == null || (p.max_uses is int && p.max_uses >= 1))
+        && p.uses is int && p.created_at is timestamp;
+    }
+
+    // Yon kliyan sèvi ak yon kòd yon sèl fwa: promoUses/{KÒD}_{uid}
+    match /promoUses/{key} {
+      allow get: if signedIn() && (resource == null || resource.data.user_id == me() || isAdmin());
+      allow list: if isAdmin();
+      allow create: if signedIn() && validPromoUse(key);
+    }
+
+    function validPromoUse(key) {
+      let d = request.resource.data;
+      let order = getAfter(/databases/$(database)/documents/orders/$(d.order_id)).data;
+      return exactKeys(['user_id', 'order_id', 'created_at'])
+        && d.user_id == me() && d.created_at == request.time
+        && order.user_id == me() && key == order.promo + '_' + me();
+    }
+
     // ---------- Vizitè yo: yon kontè pa jou (AAAA-MM-JJ, lè Ayiti) ----------
     // Chak vizitè ka sèlman ajoute 1; se admin yo sèlman ki ka li l.
     match /visits/{day} {
@@ -376,11 +414,17 @@ service cloud.firestore {
       let pkg = get(packageDoc(d.package_id)).data;
       let before = get(userDoc(me())).data;
       let after = getAfter(userDoc(me())).data;
-      return exactKeys(['code', 'user_id', 'package_id', 'product_name', 'package_label', 'price',
-                        'player_id', 'status', 'delivery_code', 'admin_note', 'created_at', 'updated_at'])
+      let promo = d.get('promo', null);
+      return (promo == null
+          ? exactKeys(['code', 'user_id', 'package_id', 'product_name', 'package_label', 'price',
+                       'player_id', 'status', 'delivery_code', 'admin_note', 'created_at', 'updated_at'])
+            && d.price == pkg.price
+          : exactKeys(['code', 'user_id', 'package_id', 'product_name', 'package_label', 'price',
+                       'player_id', 'status', 'delivery_code', 'admin_note', 'created_at', 'updated_at', 'promo', 'list_price'])
+            && validOrderPromo(d, pkg))
         && d.user_id == me()
         && pkg.available == true
-        && d.price == pkg.price && d.product_name == pkg.product_name && d.package_label == pkg.label
+        && d.product_name == pkg.product_name && d.package_label == pkg.label
         && d.status == 'pending' && d.delivery_code == null && d.admin_note == null
         && (d.player_id == null || (d.player_id is string && d.player_id.matches('^[0-9]{6,15}$')))
         && (pkg.needs_id != true || d.player_id != null)
@@ -389,6 +433,24 @@ service cloud.firestore {
         && after.balance == before.balance - d.price
         && after.total_spent == before.total_spent + d.price
         && after.last_op == {'kind': 'order', 'id': id};
+    }
+
+    // Yon kòmand ak kòd pwomo: pri a = pri pake a mwens pousantaj la (arondi anba), kòd la aktif,
+    // pa ekspire, pa depase kantite fwa li ka sèvi, e kliyan an poko janm sèvi ak li
+    function validOrderPromo(d, pkg) {
+      let path = /databases/$(database)/documents/promos/$(d.promo);
+      let p = get(path).data;
+      return d.promo is string && d.list_price == pkg.price
+        && p.active == true
+        && (p.expires_at == null || p.expires_at > request.time)
+        && (p.max_uses == null || p.uses < p.max_uses)
+        && getAfter(path).data.uses == p.uses + 1
+        && !exists(promoUseDoc(d.promo)) && existsAfter(promoUseDoc(d.promo))
+        && d.price == pkg.price - math.floor(pkg.price * p.percent / 100.0);
+    }
+
+    function promoUseDoc(code) {
+      return /databases/$(database)/documents/promoUses/$(code + '_' + me());
     }
 
     // Kliyan an peye dirèkteman ak MonCash/NatCash: kòmand lan tann admin nan konfime peman an.

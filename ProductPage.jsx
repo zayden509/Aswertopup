@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   ArrowLeft, Info, CheckCircle2, Flame, ShoppingCart, User, CreditCard, Package, Hash, MessageCircle,
-  ShieldCheck, Wallet, Plus, Loader2, AlertTriangle, LogIn, Phone, Zap,
+  ShieldCheck, Wallet, Plus, Loader2, AlertTriangle, LogIn, Phone, Zap, Tag,
 } from "lucide-react";
 import { PAYMENT_METHODS, DIRECT_PAYMENT } from "./data.js";
 import { backend, errorText } from "./backend.js";
@@ -159,9 +159,33 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
   const [payChoice, setPayChoice] = useState(null);
   const [reference, setReference] = useState("");
   const [senderPhone, setSenderPhone] = useState("");
+  // Kòd pwomo (mòd Wallet): { code, percent, discount, price } lè l aplike
+  const [promoInput, setPromoInput] = useState("");
+  const [promo, setPromo] = useState(null);
+  const [promoError, setPromoError] = useState("");
+  const [promoBusy, setPromoBusy] = useState(false);
 
   const group = groups.find((g) => g.items.some((it) => it.id === selectedId)) || null;
   const item = group?.items.find((it) => it.id === selectedId) || null;
+  // Lè kliyan an chanje pake, rabè a dwe kalkile ankò
+  useEffect(() => {
+    setPromo(null);
+    setPromoError("");
+  }, [selectedId]);
+  const finalPrice = item ? (promo ? promo.price : item.price) : 0;
+
+  const applyPromo = async () => {
+    setPromoBusy(true);
+    setPromoError("");
+    try {
+      setPromo(await backend.checkPromo(promoInput, item.price));
+    } catch (err) {
+      setPromo(null);
+      setPromoError(errorText(err));
+    } finally {
+      setPromoBusy(false);
+    }
+  };
   const payment = PAYMENT_METHODS.find((m) => m.id === paymentId);
   const id = playerId.trim();
   const idValid = ID_PATTERN.test(id);
@@ -232,7 +256,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
     setBusy(true);
     setError("");
     try {
-      const order = await backend.placeOrder(item.id, id || null);
+      const order = await backend.placeOrder(item.id, id || null, promo?.code || null);
       if (id) savePlayerId(id);
       setPlaced(order);
       // Si pake a otomatik (FazerCards), sèvè a voye l touswit; sinon admin nan trete l
@@ -553,7 +577,10 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                   )}
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-900 dark:text-white">{packageName(item)}</p>
-                    <p className="text-2xl font-extrabold tabular-nums text-sky-500">{formatPrice(item.price)}</p>
+                    <p className="text-2xl font-extrabold tabular-nums text-sky-500">
+                      {promo && <span className="mr-2 text-base font-semibold text-slate-400 line-through">{formatPrice(item.price)}</span>}
+                      {formatPrice(finalPrice)}
+                    </p>
                   </div>
                 </div>
                 <dl className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
@@ -570,7 +597,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                     <>
                       <SummaryRow icon={CreditCard} label="Paiement">Solde</SummaryRow>
                       <SummaryRow icon={Wallet} label="Solde apre acha">
-                        <span className="tabular-nums">{formatPrice(balance - item.price)}</span>
+                        <span className="tabular-nums">{formatPrice(balance - finalPrice)}</span>
                       </SummaryRow>
                     </>
                   ) : (
@@ -584,6 +611,30 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                     </>
                   )}
                 </dl>
+                {walletMode && !directMethod && (
+                  <div className="mt-2 space-y-2" data-testid="promo">
+                    {promo ? (
+                      <p className="flex items-center justify-between gap-3 rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30">
+                        <span><Tag className="mr-1.5 inline h-4 w-4" />{promo.code} · −{promo.percent}% (−{formatPrice(promo.discount)})</span>
+                        <button type="button" onClick={() => setPromo(null)} className="text-xs underline">Retire</button>
+                      </p>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          value={promoInput}
+                          onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                          placeholder="Kòd pwomo (si w genyen)"
+                          aria-label="Kòd pwomo"
+                          className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[15px] uppercase tracking-wide focus:border-sky-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950"
+                        />
+                        <button type="button" onClick={applyPromo} disabled={promoBusy || !promoInput.trim()} className="flex shrink-0 items-center gap-1.5 rounded-xl bg-slate-900 px-4 text-sm font-bold text-white disabled:opacity-50 dark:bg-white dark:text-slate-900">
+                          {promoBusy && <Loader2 className="h-4 w-4 animate-spin" />} Aplike
+                        </button>
+                      </div>
+                    )}
+                    <ErrorNote>{promoError}</ErrorNote>
+                  </div>
+                )}
                 {walletMode && directMethod ? (
                   <div className="mt-2 space-y-4">
                     <PayTo method={directMethod} amount={item.price} onToast={onToast} />

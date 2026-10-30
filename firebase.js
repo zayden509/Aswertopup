@@ -25,6 +25,20 @@ function randomCode(length) {
   return Array.from(values, (v) => CODE_CHARS[v % CODE_CHARS.length]).join("");
 }
 
+// Kòd pwomo: lèt ak chif sèlman, an majiskil
+const normalizePromo = (code) => String(code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+// Yon kòd pwomo ki ka sèvi kounye a, sinon yon erè pou kliyan an
+function promoOrThrow(code, snap, used) {
+  if (!/^[A-Z0-9]{3,20}$/.test(code) || !snap.exists()) throw new UserError("Kòd pwomo sa a pa egziste.");
+  const promo = snap.data();
+  if (!promo.active) throw new UserError("Kòd pwomo sa a pa aktif ankò.");
+  if (promo.expires_at && promo.expires_at.toMillis() <= Date.now()) throw new UserError("Kòd pwomo sa a ekspire.");
+  if (promo.max_uses && promo.uses >= promo.max_uses) throw new UserError("Kòd pwomo sa a fin itilize.");
+  if (used.exists()) throw new UserError("Ou deja sèvi ak kòd pwomo sa a.");
+  return promo;
+}
+
 const PHONE_NOT_REFERENCE = "Sa se yon nimewo telefòn. Mete ID tranzaksyon ki nan SMS MonCash/NatCash la.";
 
 const formatHtg = (n) => `${new Intl.NumberFormat("fr-FR").format(n)} HTG`;
@@ -314,12 +328,23 @@ export function createBackend(config, options = {}) {
     },
 
     /* ---------- Aksyon kliyan yo ---------- */
-    async placeOrder(packageId, playerId) {
+    // Kòd pwomo: tcheke l anvan achte. Retounen { code, percent, discount, price }.
+    async checkPromo(promoCode, price) {
+      const uid = currentUid();
+      const code = normalizePromo(promoCode);
+      const [snap, used] = await Promise.all([getDoc(doc(db, "promos", code)), getDoc(doc(db, "promoUses", `${code}_${uid}`))]);
+      const promo = promoOrThrow(code, snap, used);
+      const discount = Math.floor((price * promo.percent) / 100);
+      return { code, percent: promo.percent, discount, price: price - discount };
+    },
+
+    async placeOrder(packageId, playerId, promoCode = null) {
       const uid = currentUid();
       const pid = String(playerId || "").trim() || null;
       if (pid && !/^\d{6,15}$/.test(pid)) throw new UserError("Player ID a dwe gen ant 6 ak 15 chif.");
       const orderRef = doc(collection(db, "orders"));
       const code = `AS-${randomCode(6)}`;
+      const promoId = promoCode ? normalizePromo(promoCode) : null;
       return runTransaction(db, async (tx) => {
         const pkgSnap = await tx.get(doc(db, "packages", packageId));
         const pkg = pkgSnap.data();
@@ -327,19 +352,32 @@ export function createBackend(config, options = {}) {
         if (pkg.needs_id && !pid) throw new UserError("Mete Player ID ou pou pake sa a.");
         const me = (await tx.get(userRef(uid))).data();
         if (!me) throw new UserError("Konekte anvan ou achte.");
-        if (me.balance < pkg.price) throw new UserError("Solde ou pa ase. Ajoute kòb nan Wallet ou.");
+
+        // Kòd pwomo: rabè a, epi kòd la konte yon fwa pou kliyan sa a
+        let price = pkg.price;
+        let promo = null;
+        if (promoId) {
+          const promoRef = doc(db, "promos", promoId);
+          const useRef = doc(db, "promoUses", `${promoId}_${uid}`);
+          promo = promoOrThrow(promoId, await tx.get(promoRef), await tx.get(useRef));
+          price = pkg.price - Math.floor((pkg.price * promo.percent) / 100);
+          tx.update(promoRef, { uses: promo.uses + 1 });
+          tx.set(useRef, { user_id: uid, order_id: orderRef.id, created_at: serverTimestamp() });
+        }
+        if (me.balance < price) throw new UserError("Solde ou pa ase. Ajoute kòb nan Wallet ou.");
 
         const order = {
           code, user_id: uid, package_id: packageId, product_name: pkg.product_name, package_label: pkg.label,
-          price: pkg.price, player_id: pid, status: "pending", delivery_code: null, admin_note: null,
+          price, player_id: pid, status: "pending", delivery_code: null, admin_note: null,
           created_at: serverTimestamp(), updated_at: serverTimestamp(),
+          ...(promo && { promo: promoId, list_price: pkg.price }),
         };
         tx.update(userRef(uid), {
-          balance: me.balance - pkg.price, total_spent: me.total_spent + pkg.price, last_op: { kind: "order", id: orderRef.id },
+          balance: me.balance - price, total_spent: me.total_spent + price, last_op: { kind: "order", id: orderRef.id },
         });
         tx.set(orderRef, order);
         tx.set(newNotificationRef(uid), notification("order", `Kòmand ${code} resevwa`,
-          `${pkg.product_name} · ${pkg.label} (${formatHtg(pkg.price)}). N ap trete l kounye a.`, code));
+          `${pkg.product_name} · ${pkg.label} (${formatHtg(price)}). N ap trete l kounye a.`, code));
         return { ...order, id: orderRef.id, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
       });
     },
@@ -548,6 +586,29 @@ export function createBackend(config, options = {}) {
       }
       await batch.commit();
     },
+
+    /* ---------- Kòd pwomo (admin) ---------- */
+    adminSubscribePromos(callback) {
+      return onSnapshot(query(collection(db, "promos"), orderBy("created_at", "desc")), (snap) => callback(snap.docs.map(toPlain)), (error) => console.error("promos", error));
+    },
+
+    async adminCreatePromo({ code, percent, expiresAt, maxUses }) {
+      const id = normalizePromo(code);
+      if (!/^[A-Z0-9]{3,20}$/.test(id)) throw new UserError("Kòd la dwe gen 3 a 20 lèt oswa chif.");
+      const pct = Number(percent);
+      if (!Number.isInteger(pct) || pct < 1 || pct > 90) throw new UserError("Rabè a dwe ant 1 ak 90%.");
+      const max = maxUses === "" || maxUses == null ? null : Number(maxUses);
+      if (max !== null && (!Number.isInteger(max) || max < 1)) throw new UserError("Kantite fwa a dwe yon chif (1 oswa plis).");
+      const expires = expiresAt ? new Date(`${expiresAt}T23:59:59-05:00`) : null;
+      if (expires && expires.getTime() <= Date.now()) throw new UserError("Dat ekspirasyon an deja pase.");
+      const ref = doc(db, "promos", id);
+      if ((await getDoc(ref)).exists()) throw new UserError("Kòd sa a egziste deja.");
+      await setDoc(ref, { percent: pct, active: true, expires_at: expires, max_uses: max, uses: 0, created_at: serverTimestamp() });
+      return id;
+    },
+
+    adminSetPromoActive: (code, active) => updateDoc(doc(db, "promos", code), { active }),
+    adminDeletePromo: (code) => deleteDoc(doc(db, "promos", code)),
 
     /* ---------- Avi kliyan yo ak kantite kòmand livre ---------- */
     // Avi admin yo apwouve (paj akèy la), pi resan an anvan
