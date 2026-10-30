@@ -77,6 +77,8 @@ export async function tryConfirm(backend, sms, deposit) {
   try {
     const method = sms.method === "natcash" ? "NatCash" : "MonCash";
     await backend.adminReviewDeposit(deposit, true, `Konfime otomatikman (SMS ${method}).`);
+    // Premye depo yon zanmi envite: bonis parennaj yo (si règ yo pa pèmèt li, depo a rete konfime)
+    await backend.adminRewardReferral({ ...deposit, status: "completed" }).catch((error) => console.error("referral", error));
     return { confirmed: true };
   } catch (error) {
     await backend.adminReleaseSms(sms.id).catch(() => {});

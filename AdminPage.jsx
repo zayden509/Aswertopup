@@ -21,6 +21,7 @@ import AdminSettings from "./AdminSettings.jsx";
 import AdminSms from "./AdminSms.jsx";
 import { AlertsCard, BackupCard, PromosCard, ReportsCard } from "./AdminTools.jsx";
 import { AdminReviews } from "./Reviews.jsx";
+import { ReferralSettingsCard } from "./Referral.jsx";
 
 const TABS = [
   { id: "dashboard", label: "Tablo", Icon: LayoutDashboard, title: "Tablo" },
@@ -345,7 +346,9 @@ function DepositCard({ deposit, deposits, automation, seen, profile, onToast }) 
     setError("");
     try {
       await backend.adminReviewDeposit(deposit, approve, note);
-      onToast(approve ? `${formatPrice(Number(deposit.amount))} ajoute nan Wallet kliyan an.` : "Depo a refize.");
+      // Premye depo yon zanmi envite: bonis parennaj yo
+      const bonus = approve && (await backend.adminRewardReferral({ ...deposit, status: "completed" }).catch(() => false));
+      onToast(approve ? `${formatPrice(Number(deposit.amount))} ajoute nan Wallet kliyan an.${bonus ? " Bonis parennaj la bay tou." : ""}` : "Depo a refize.");
     } catch (err) {
       setError(errorText(err));
       setBusy(false);
@@ -680,6 +683,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
         {tab === "settings" && (
           <>
             <AdminSettings account={account} owner={owner} onToast={onToast} onTrusted={recheckDeposits} />
+            <ReferralSettingsCard owner={owner} onToast={onToast} />
             <AlertsCard owner={owner} onToast={onToast} />
             <BackupCard owner={owner} onToast={onToast} />
           </>

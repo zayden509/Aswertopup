@@ -70,6 +70,11 @@ kontinye mache.
   Lòt admin yo ka fè tout rès bagay yo.
 - **Paramèt**: nimewo MonCash ak NatCash kliyan yo voye kòb la, ak non ki sou kont lan.
   Se pwopriyetè a sèlman ki ka chanje yo.
+- **Parennaj** (Paramèt): mete konbyen goud chak moun jwenn (egzanp 50) ak premye depo
+  minimòm lan (egzanp 500). Chak kliyan wè yon kat **Envite zanmi w yo** ak lyen pa l
+  (`awenstopup.com/?ref=AWENS-ID`). Lè yon zanmi kreye kont li ak lyen an epi premye depo li
+  (omwen minimòm lan) konfime, yo chak jwenn bonis la nan Wallet, yon sèl fwa. Sa mache ak depo
+  otomatik yo ak depo ou konfime alamen. Mete 0 pou etenn li (kat la disparèt).
 
 ## Kijan sa mache
 - **Déposer**: kliyan an voye kòb sou MonCash/NatCash ou, epi li mete montan an ak ID

@@ -16,7 +16,7 @@ const loading = enabled
 // Fonksyon ki retounen yon "stop" touswit, menm si Firebase poko fin chaje
 const SUBSCRIPTIONS = [
   "onAuth", "subscribePrices", "subscribeCatalog", "subscribeAnnouncements", "subscribeAccount", "subscribeAdmin",
-  "subscribeSupplierMap", "subscribeSms", "subscribeSmsFor", "subscribeSmsSeen", "subscribeAlerts", "subscribeReviews", "subscribePublicStats", "adminSubscribeReviews", "adminSubscribePromos", "subscribeAutomation",
+  "subscribeSupplierMap", "subscribeSms", "subscribeSmsFor", "subscribeSmsSeen", "subscribeAlerts", "subscribeReviews", "subscribePublicStats", "adminSubscribeReviews", "adminSubscribePromos", "subscribeReferralSettings", "subscribeMyReferrals", "subscribeAutomation",
 ];
 
 // null lè Firebase poko konfigire: sit la mache an mòd WhatsApp sèlman

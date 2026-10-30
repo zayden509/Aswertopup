@@ -139,7 +139,20 @@ service cloud.firestore {
         && op.keys().hasOnly(['kind', 'id'])
         && ((op.kind == 'deposit' && depositCreditOk(uid, op.id, before, after))
             || (op.kind == 'refund' && refundOk(uid, op.id, before, after))
-            || (op.kind == 'paid' && paidOk(uid, op.id, before, after)));
+            || (op.kind == 'paid' && paidOk(uid, op.id, before, after))
+            || (op.kind == 'referral' && referralCreditOk(uid, op.id, before, after)));
+    }
+
+    // Bonis parennaj: zanmi an (id) ak moun ki envite l la jwenn bonis paramèt la, yon sèl fwa
+    function referralCreditOk(uid, id, before, after) {
+      let path = /databases/$(database)/documents/referrals/$(id);
+      let r = get(path).data;
+      let bonus = get(/databases/$(database)/documents/settings/referral).data.bonus;
+      return r.rewarded == false && getAfter(path).data.rewarded == true
+        && (uid == id || uid == r.referrer_uid)
+        && bonus is int && bonus > 0
+        && after.balance == before.balance + bonus
+        && after.total_spent == before.total_spent;
     }
 
     function depositCreditOk(uid, id, before, after) {
@@ -268,6 +281,10 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly(['moncash', 'natcash'])
           && validPayAccount(request.resource.data.get('moncash', null))
           && validPayAccount(request.resource.data.get('natcash', null)))
+        || (isOwner() && id == 'referral'
+          && exactKeys(['bonus', 'min_deposit'])
+          && request.resource.data.bonus is int && request.resource.data.bonus >= 0 && request.resource.data.bonus <= 5000
+          && request.resource.data.min_deposit is int && request.resource.data.min_deposit >= 50 && request.resource.data.min_deposit <= 100000)
         || (isOwner() && id == 'automation'
           && exactKeys(['sms_auto', 'senders', 'max_auto'])
           && request.resource.data.sms_auto is bool
@@ -348,6 +365,34 @@ service cloud.firestore {
       allow write: if isAdmin() && id == 'public'
         && request.resource.data.keys().hasOnly(['delivered'])
         && request.resource.data.delivered is int && request.resource.data.delivered >= 0;
+    }
+
+    // ---------- Parennaj: referrals/{uid zanmi an} ----------
+    // Zanmi an kreye l touswit apre l fin kreye kont li (lyen ?ref=AWENS-ID). Lè premye depo li a
+    // (omwen min_deposit) konfime, yon admin (oswa sèvè a) make l "rewarded" epi bay 2 bonis yo.
+    match /referrals/{uid} {
+      allow get: if signedIn() && (resource == null || me() == uid || resource.data.referrer_uid == me() || isAdmin());
+      allow list: if signedIn() && (resource.data.referrer_uid == me() || isAdmin());
+      allow create: if signedIn() && me() == uid && validNewReferral(uid);
+      allow update: if isAdmin() && changedOnly(['rewarded', 'deposit_id', 'rewarded_at'])
+        && resource.data.rewarded == false && request.resource.data.rewarded == true
+        && request.resource.data.rewarded_at == request.time
+        && referralDepositOk(uid, request.resource.data.deposit_id);
+    }
+
+    function validNewReferral(uid) {
+      let d = request.resource.data;
+      let owner = get(walletCodeDoc(d.referrer_code)).data;
+      return exactKeys(['referrer_uid', 'referrer_code', 'rewarded', 'created_at'])
+        && d.referrer_uid == owner.uid && d.referrer_uid != uid
+        && d.rewarded == false && d.created_at == request.time
+        && get(userDoc(uid)).data.created_at > request.time - duration.value(1, 'd');
+    }
+
+    function referralDepositOk(uid, depositId) {
+      let dep = get(depositDoc(depositId)).data;
+      let s = get(/databases/$(database)/documents/settings/referral).data;
+      return dep.user_id == uid && dep.status == 'completed' && dep.amount >= s.min_deposit;
     }
 
     // ---------- Kòd pwomo ----------

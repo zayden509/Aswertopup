@@ -8,6 +8,7 @@ import { backend, errorText } from "./backend.js";
 import { Sheet, ErrorNote, WhatsAppIcon, waLink, supportMessage, formatPrice, formatDate, copyText } from "./ui.jsx";
 import { LoginPrompt } from "./WalletPage.jsx";
 import ProfileWallet, { UserAvatar } from "./ProfileWallet.jsx";
+import { InviteCard } from "./Referral.jsx";
 import { QrCard, FeesCard } from "./ProfileTabs.jsx";
 import { squarePhoto } from "./image.js";
 
@@ -319,6 +320,7 @@ export default function SettingsPage({
             onSeeAll={onSeeWallet}
             onToast={onToast}
           />
+          <InviteCard profile={profile} onToast={onToast} />
           <RankCard spent={spent} />
           <Section title="Mon compte">
             <Row icon={Mail} label="Adresse email" value={profile.email} />

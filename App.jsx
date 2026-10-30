@@ -18,6 +18,10 @@ import { NotificationsSheet, LiveToast } from "./Notifications.jsx";
 import { newVersionAvailable } from "./updateCheck.js";
 import { TutorialSheet, openTutorial, useTutorialRequests } from "./Tutorial.jsx";
 import { ReviewsSection } from "./Reviews.jsx";
+import { rememberReferral, claimStoredReferral } from "./Referral.jsx";
+
+// Lyen parennaj (?ref=AWENS-ID): nou sonje l pandan vizitè a ap kreye kont li
+rememberReferral();
 
 // Si yon nouvo vèsyon sit la soti pandan paj la louvri, ansyen fichye yo pa egziste ankò:
 // nou rechaje paj la (yon fwa pa minit) olye nou kite l kase
@@ -373,6 +377,12 @@ export default function App() {
     else if (!signedIn) setAuth("login");
     else if (account.profile) setPanel("transfer");
   }, [payCode, account.ready, account.enabled, signedIn, account.profile]);
+
+  // Yon kont ki fèk kreye ak yon lyen parennaj: nou anrejistre ki moun ki envite l
+  const profileId = account.profile?.wallet_code;
+  useEffect(() => {
+    if (profileId) claimStoredReferral(account.profile);
+  }, [profileId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const q = query.trim().toLowerCase();
   const filtered = catalog.filter((p) =>

@@ -587,6 +587,58 @@ export function createBackend(config, options = {}) {
       await batch.commit();
     },
 
+    /* ---------- Parennaj ---------- */
+    // { bonus, min_deposit } (bonus 0: parennaj la etenn)
+    subscribeReferralSettings(callback) {
+      return onSnapshot(doc(db, "settings", "referral"), (snap) => callback(snap.data() || { bonus: 0, min_deposit: 500 }), (error) => console.error("referral", error));
+    },
+
+    async adminSetReferralSettings({ bonus, minDeposit }) {
+      const b = Number(bonus);
+      const min = Number(minDeposit);
+      if (!Number.isInteger(b) || b < 0 || b > 5000) throw new UserError("Bonis la dwe ant 0 ak 5 000 HTG.");
+      if (!Number.isInteger(min) || min < 50 || min > 100000) throw new UserError("Premye depo a dwe omwen 50 HTG.");
+      await setDoc(doc(db, "settings", "referral"), { bonus: b, min_deposit: min });
+    },
+
+    // Zanmi k ap kreye kont li ak lyen yon moun (?ref=AWENS-ID): nou sonje ki moun ki envite l
+    async claimReferral(code) {
+      const uid = currentUid();
+      const clean = String(code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (!/^[A-HJ-NP-Z2-9]{8}$/.test(clean)) return false;
+      if ((await getDoc(doc(db, "referrals", uid))).exists()) return false;
+      const owner = await getDoc(doc(db, "walletCodes", clean));
+      if (!owner.exists() || owner.data().uid === uid) return false;
+      await setDoc(doc(db, "referrals", uid), { referrer_uid: owner.data().uid, referrer_code: clean, rewarded: false, created_at: serverTimestamp() });
+      return true;
+    },
+
+    // Zanmi yon kliyan envite (pou kat parennaj la)
+    subscribeMyReferrals(callback) {
+      const uid = auth.currentUser?.uid;
+      if (!uid) return () => {};
+      return onSnapshot(query(collection(db, "referrals"), where("referrer_uid", "==", uid)), (snap) => callback(snap.docs.map(toPlain)), (error) => console.error("my referrals", error));
+    },
+
+    // Admin/sèvè a, apre yon depo konfime: si se premye depo yon zanmi envite (e l ase gwo),
+    // zanmi an ak moun ki envite l la chak jwenn bonis la. Retounen true si bonis yo bay.
+    async adminRewardReferral(deposit) {
+      const refRef = doc(db, "referrals", deposit.user_id);
+      const [refSnap, settingsSnap] = await Promise.all([getDoc(refRef), getDoc(doc(db, "settings", "referral"))]);
+      const settings = settingsSnap.data() || {};
+      if (!refSnap.exists() || refSnap.data().rewarded || !(settings.bonus > 0) || deposit.amount < settings.min_deposit) return false;
+      const { referrer_uid: referrer } = refSnap.data();
+      const op = { kind: "referral", id: deposit.user_id };
+      const batch = writeBatch(db);
+      batch.update(refRef, { rewarded: true, deposit_id: deposit.id, rewarded_at: serverTimestamp() });
+      batch.update(userRef(deposit.user_id), { balance: increment(settings.bonus), last_admin_op: op });
+      batch.update(userRef(referrer), { balance: increment(settings.bonus), last_admin_op: op });
+      batch.set(newNotificationRef(deposit.user_id), notification("deposit", `Bonis parennaj ${formatHtg(settings.bonus)} 🎁`, "Mèsi paske w vin jwenn nou! Bonis la nan Wallet ou."));
+      batch.set(newNotificationRef(referrer), notification("deposit", `Bonis parennaj ${formatHtg(settings.bonus)} 🎁`, "Zanmi w envite a fè premye depo li. Bonis ou a nan Wallet ou."));
+      await batch.commit();
+      return true;
+    },
+
     /* ---------- Kòd pwomo (admin) ---------- */
     adminSubscribePromos(callback) {
       return onSnapshot(query(collection(db, "promos"), orderBy("created_at", "desc")), (snap) => callback(snap.docs.map(toPlain)), (error) => console.error("promos", error));
