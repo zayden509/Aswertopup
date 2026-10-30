@@ -53,6 +53,8 @@ export async function POST(request) {
     if (!(await backend.adminIsAdmin(uid))) return fail("Admin sèlman.", 403);
 
     const body = await request.json().catch(() => ({}));
+    // Yon admin "kòmand sèlman" ka voye yon kòmand ankò, men li pa touche paramèt FazerCards yo
+    if (!["sync", "retry"].includes(body.action) && !(await backend.adminIsFullAdmin(uid))) return fail("Se yon admin konplè ki ka fè sa.", 403);
     switch (body.action) {
       case "status":
         return json({ ok: true, ...(await status()) });

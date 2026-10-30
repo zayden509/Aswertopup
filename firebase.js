@@ -43,6 +43,12 @@ const PHONE_NOT_REFERENCE = "Sa se yon nimewo telefòn. Mete ID tranzaksyon ki n
 
 const formatHtg = (n) => `${new Intl.NumberFormat("fr-FR").format(n)} HTG`;
 
+// Wòl admin yo: "full" (tout bagay) oswa "orders" (trete kòmand sèlman)
+const ADMIN_ROLES = ["full", "orders"];
+const roleText = (role) => role === "orders"
+  ? "Ou ka trete kòmand yo (livrer, refize) epi wè kliyan yo nan Profil → Panneau admin."
+  : "Ou ka jere kòmand yo, depo yo, pwodwi yo ak kliyan yo nan Profil → Panneau admin.";
+
 // Sou yon rezo fèb (4G), premye demann koneksyon an ka echwe: nou eseye yon dezyèm fwa
 // anvan nou di kliyan an pa gen entènèt
 async function retryOnNetwork(run) {
@@ -952,6 +958,12 @@ export function createBackend(config, options = {}) {
       return snap.exists() && snap.data().is_admin === true;
     },
 
+    // Admin konplè (pa "kòmand sèlman"): ka chanje paramèt FazerCards yo, depo yo…
+    async adminIsFullAdmin(uid) {
+      const snap = await getDoc(userRef(uid));
+      return snap.exists() && snap.data().is_admin === true && snap.data().admin_role !== "orders";
+    },
+
     // Pwopriyetè a: admin ke okenn lòt admin pa nonmen
     async adminIsOwner(uid) {
       const snap = await getDoc(userRef(uid));
@@ -1154,16 +1166,24 @@ export function createBackend(config, options = {}) {
     adminDeleteAnnouncement: (id) => deleteDoc(doc(db, "announcements", id)),
 
     /* ---------- Ekip la ---------- */
-    // Sèlman pwopriyetè a (admin san admin_by) ka fè sa; règ yo verifye l
-    async adminSetAdmin(uid, makeAdmin) {
+    // Sèlman pwopriyetè a (admin san admin_by) ka fè sa; règ yo verifye l.
+    // role: "full" (tout bagay) oswa "orders" (trete kòmand sèlman)
+    async adminSetAdmin(uid, makeAdmin, role = "full") {
       const me = currentUid();
       if (uid === me) throw new UserError("Ou pa ka chanje pwòp wòl ou.");
+      if (!ADMIN_ROLES.includes(role)) throw new UserError("Wòl sa a pa egziste.");
       const batch = writeBatch(db);
-      batch.update(userRef(uid), makeAdmin ? { is_admin: true, admin_by: me } : { is_admin: false, admin_by: null });
-      if (makeAdmin) {
-        batch.set(newNotificationRef(uid), notification("info", "Ou se admin sou Awens Topup",
-          "Ou ka jere kòmand yo, depo yo, pwodwi yo ak kliyan yo nan Profil → Panneau admin."));
-      }
+      batch.update(userRef(uid), makeAdmin ? { is_admin: true, admin_by: me, admin_role: role } : { is_admin: false, admin_by: null, admin_role: null });
+      if (makeAdmin) batch.set(newNotificationRef(uid), notification("info", "Ou se admin sou Awens Topup", roleText(role)));
+      await batch.commit();
+    },
+
+    async adminSetAdminRole(uid, role) {
+      if (uid === currentUid()) throw new UserError("Ou pa ka chanje pwòp wòl ou.");
+      if (!ADMIN_ROLES.includes(role)) throw new UserError("Wòl sa a pa egziste.");
+      const batch = writeBatch(db);
+      batch.update(userRef(uid), { admin_role: role });
+      batch.set(newNotificationRef(uid), notification("info", "Wòl admin ou chanje", roleText(role)));
       await batch.commit();
     },
   };

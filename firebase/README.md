@@ -66,8 +66,12 @@ kontinye mache.
 - **Mesaj**: voye yon mesaj bay tout moun (menm vizitè ki pa gen kont wè l nan 🔔) oswa bay
   yon sèl kliyan.
 - **Ekip**: ajoute yon admin ak imèl li (li dwe gen yon kont sou sit la deja), oswa retire l.
-  Se sèlman **pwopriyetè** a (admin ou te mete alamen nan Firebase la) ki ka fè sa.
-  Lòt admin yo ka fè tout rès bagay yo.
+  Se sèlman **pwopriyetè** a (admin ou te mete alamen nan Firebase la) ki ka fè sa. Ou chwazi
+  wòl li:
+  - **Kòmand sèlman**: li livre oswa refize kòmand yo epi li wè kliyan yo. Li pa wè tab Depo,
+    Pwodwi, Mesaj, Otomatik ni Paramèt, e règ Firestore yo anpeche l touche yo.
+  - **Admin konplè**: tout bagay, eksepte ekip la ak paramèt pwopriyetè a.
+  Ou ka chanje wòl yon admin nenpòt lè nan lis ekip la. Admin ki te la deja yo rete konplè.
 - **Paramèt**: nimewo MonCash ak NatCash kliyan yo voye kòb la, ak non ki sou kont lan.
   Se pwopriyetè a sèlman ki ka chanje yo.
 - **Parennaj** (Paramèt): mete konbyen goud chak moun jwenn (egzanp 50) ak premye depo
@@ -130,7 +134,8 @@ Sa ki fè l mache: 3 fonksyon sou Vercel (`api/fulfill.js`, `api/fazer.js`,
 
 ### Konfigirasyon (yon sèl fwa)
 1. **Kont bot la**: sou sit la, kreye yon kont pou sèvè a, pa egzanp `bot@awenstopup.com`, ak
-   yon modpas long. Imèl la pa bezwen egziste. Apre sa, nan **Panneau admin → Ekip**, fè l admin.
+   yon modpas long. Imèl la pa bezwen egziste. Apre sa, nan **Panneau admin → Ekip**, fè l admin
+   ak wòl **Admin konplè** (san sa, depo otomatik yo pa ka konfime).
 2. **Kle FazerCards la**: sou reseller.fazercards.com → **Profile**, kreye yon kle API.
 3. **Vercel**: pwojè a → **Settings → Environment Variables**, ajoute:
    - `FAZER_API_KEY`: kle FazerCards la

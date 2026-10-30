@@ -19,7 +19,8 @@ rules_version = '2';
 //
 // Admin yo: pwopriyetè a se admin ou te mete alamen nan konsòl la
 // (is_admin = true, san admin_by). Se sèlman li ki ka ajoute oswa retire
-// lòt admin nan Panneau admin lan.
+// lòt admin nan Panneau admin lan, epi chwazi wòl yo: "full" (tout bagay)
+// oswa "orders" (trete kòmand sèlman: pa depo, pa pwodwi, pa paramèt).
 // =====================================================================
 
 service cloud.firestore {
@@ -37,6 +38,11 @@ service cloud.firestore {
     function walletCodeDoc(id) { return /databases/$(database)/documents/walletCodes/$(id); }
     function depositRefDoc(id) { return /databases/$(database)/documents/depositRefs/$(id); }
     function isAdmin() { return signedIn() && get(userDoc(me())).data.is_admin == true; }
+    // Admin konplè: tout admin, eksepte sa pwopriyetè a bay wòl "kòmand sèlman" (admin_role 'orders')
+    function isFullAdmin() {
+      let u = get(userDoc(me())).data;
+      return signedIn() && u.is_admin == true && u.get('admin_role', 'full') != 'orders';
+    }
     function isOwner() {
       let u = get(userDoc(me())).data;
       return signedIn() && u.is_admin == true && u.get('admin_by', null) == null;
@@ -137,10 +143,10 @@ service cloud.firestore {
       return isAdmin()
         && changedOnly(['balance', 'total_spent', 'last_admin_op'])
         && op.keys().hasOnly(['kind', 'id'])
-        && ((op.kind == 'deposit' && depositCreditOk(uid, op.id, before, after))
+        && ((op.kind == 'deposit' && isFullAdmin() && depositCreditOk(uid, op.id, before, after))
             || (op.kind == 'refund' && refundOk(uid, op.id, before, after))
-            || (op.kind == 'paid' && paidOk(uid, op.id, before, after))
-            || (op.kind == 'referral' && referralCreditOk(uid, op.id, before, after)));
+            || (op.kind == 'paid' && isFullAdmin() && paidOk(uid, op.id, before, after))
+            || (op.kind == 'referral' && isFullAdmin() && referralCreditOk(uid, op.id, before, after)));
     }
 
     // Bonis parennaj: zanmi an (id) ak moun ki envite l la jwenn bonis paramèt la, yon sèl fwa
@@ -181,13 +187,14 @@ service cloud.firestore {
         && after.total_spent == before.total_spent + o.price;
     }
 
-    // Pwopriyetè a fè yon lòt kliyan admin (admin_by = li menm) oswa li retire l
+    // Pwopriyetè a fè yon lòt kliyan admin (admin_by = li menm, wòl "full" oswa "orders"),
+    // li chanje wòl li, oswa li retire l
     function adminRoleOk(uid) {
       let after = request.resource.data;
       return me() != uid && isOwner()
-        && changedOnly(['is_admin', 'admin_by'])
-        && ((after.is_admin == true && after.admin_by == me())
-            || (after.is_admin == false && after.admin_by == null));
+        && changedOnly(['is_admin', 'admin_by', 'admin_role'])
+        && ((after.is_admin == true && after.admin_by == me() && after.get('admin_role', 'full') in ['full', 'orders'])
+            || (after.is_admin == false && after.admin_by == null && after.get('admin_role', null) == null));
     }
 
     // ---------- ASWER-ID (pou transfè yo) ----------
@@ -206,8 +213,8 @@ service cloud.firestore {
     // (group = tit seksyon an sou paj pwodwi a)
     match /packages/{id} {
       allow read: if true;
-      allow create, update: if isAdmin() && validPackage();
-      allow delete: if isAdmin();
+      allow create, update: if isFullAdmin() && validPackage();
+      allow delete: if isFullAdmin();
     }
 
     function validPackage() {
@@ -225,8 +232,8 @@ service cloud.firestore {
     // ---------- Pwodwi admin nan ajoute ----------
     match /products/{id} {
       allow read: if true;
-      allow create, update: if isAdmin() && validProduct();
-      allow delete: if isAdmin();
+      allow create, update: if isFullAdmin() && validProduct();
+      allow delete: if isFullAdmin();
     }
 
     function validProduct() {
@@ -242,7 +249,7 @@ service cloud.firestore {
     // To ak frè konvèsyon yo (yon dokiman pa pwodwi Finans)
     match /exchange/{id} {
       allow read: if true;
-      allow write: if isAdmin() && validExchange();
+      allow write: if isFullAdmin() && validExchange();
     }
 
     function validExchange() {
@@ -259,8 +266,8 @@ service cloud.firestore {
     // Ki pwodwi FazerCards ki koresponn ak chak pake (livrezon otomatik). Admin sèlman.
     match /supplierMap/{packageId} {
       allow read: if isAdmin();
-      allow delete: if isAdmin();
-      allow create, update: if isAdmin()
+      allow delete: if isFullAdmin();
+      allow create, update: if isFullAdmin()
         && request.resource.data.keys().hasOnly(['provider', 'category_id', 'category_name', 'offer_id', 'offer_name', 'price_usd', 'field_key', 'auto'])
         && request.resource.data.provider == 'fazercards'
         && request.resource.data.category_id is string && request.resource.data.category_id.size() <= 100
@@ -274,7 +281,7 @@ service cloud.firestore {
     // settings/automation: konfimasyon depo otomatik ak SMS (pwopriyetè a sèlman, admin yo li l).
     match /settings/{id} {
       allow read: if id != 'automation' || isAdmin();
-      allow write: if (isAdmin() && id == 'catalog'
+      allow write: if (isFullAdmin() && id == 'catalog'
           && request.resource.data.keys().hasOnly(['hidden'])
           && request.resource.data.hidden is list && request.resource.data.hidden.size() <= 300)
         || (isOwner() && id == 'payments'
@@ -295,17 +302,17 @@ service cloud.firestore {
 
     // SMS NatCash/MonCash sèvè a resevwa nan httpSMS (admin yo sèlman; bot sèvè a se yon admin)
     match /smsPayments/{id} {
-      allow read, write: if isAdmin();
+      allow read, write: if isFullAdmin();
     }
 
     // Kòd ki pa bon chak kliyan eseye (sèvè a sèlman), pou pèsonn pa ka devine kòd tranzaksyon
     match /codeChecks/{uid} {
-      allow read, write: if isAdmin();
+      allow read, write: if isFullAdmin();
     }
 
     // Paramèt prive sèvè a (ex. alèt Telegram pwopriyetè a): admin yo sèlman
     match /private/{id} {
-      allow read, write: if isAdmin();
+      allow read, write: if isFullAdmin();
     }
 
     function validPayAccount(a) {
@@ -317,8 +324,8 @@ service cloud.firestore {
     // Foto pou pwodwi ki nan sit la deja (pa egzanp STARLINK): admin nan ka chanje l
     match /productImages/{id} {
       allow read: if true;
-      allow delete: if isAdmin();
-      allow create, update: if isAdmin() && id.size() <= 60
+      allow delete: if isFullAdmin();
+      allow create, update: if isFullAdmin() && id.size() <= 60
         && request.resource.data.keys().hasOnly(['image'])
         && request.resource.data.image is string && request.resource.data.image.size() <= 120000
         && request.resource.data.image.matches('^data:image/(webp|jpeg|png);base64,[A-Za-z0-9+/=]+$');
@@ -327,14 +334,14 @@ service cloud.firestore {
     // ---------- Mesaj pou tout kliyan yo ----------
     match /announcements/{id} {
       allow read: if true;
-      allow create: if isAdmin()
+      allow create: if isFullAdmin()
         && exactKeys(['title', 'body', 'by', 'created_at'])
         && request.resource.data.title is string
         && request.resource.data.title.size() >= 1 && request.resource.data.title.size() <= 120
         && optString(request.resource.data.body, 1000)
         && request.resource.data.by == me()
         && request.resource.data.created_at == request.time;
-      allow delete: if isAdmin();
+      allow delete: if isFullAdmin();
     }
 
     // ---------- Avi kliyan yo: yon avi pou chak kòmand ki livre ----------
@@ -343,8 +350,8 @@ service cloud.firestore {
       allow read: if resource == null || resource.data.approved == true
         || (signedIn() && (resource.data.user_id == me() || isAdmin()));
       allow create: if signedIn() && validNewReview(orderId);
-      allow update: if isAdmin() && changedOnly(['approved']) && request.resource.data.approved is bool;
-      allow delete: if isAdmin();
+      allow update: if isFullAdmin() && changedOnly(['approved']) && request.resource.data.approved is bool;
+      allow delete: if isFullAdmin();
     }
 
     function validNewReview(orderId) {
@@ -374,7 +381,7 @@ service cloud.firestore {
       allow get: if signedIn() && (resource == null || me() == uid || resource.data.referrer_uid == me() || isAdmin());
       allow list: if signedIn() && (resource.data.referrer_uid == me() || isAdmin());
       allow create: if signedIn() && me() == uid && validNewReferral(uid);
-      allow update: if isAdmin() && changedOnly(['rewarded', 'deposit_id', 'rewarded_at'])
+      allow update: if isFullAdmin() && changedOnly(['rewarded', 'deposit_id', 'rewarded_at'])
         && resource.data.rewarded == false && request.resource.data.rewarded == true
         && request.resource.data.rewarded_at == request.time
         && referralDepositOk(uid, request.resource.data.deposit_id);
@@ -400,11 +407,11 @@ service cloud.firestore {
     match /promos/{code} {
       allow get: if signedIn();
       allow list: if isAdmin();
-      allow create: if isAdmin() && validPromo(code) && request.resource.data.uses == 0;
-      allow update: if (isAdmin() && validPromo(code) && request.resource.data.uses == resource.data.uses)
+      allow create: if isFullAdmin() && validPromo(code) && request.resource.data.uses == 0;
+      allow update: if (isFullAdmin() && validPromo(code) && request.resource.data.uses == resource.data.uses)
         || (signedIn() && changedOnly(['uses']) && request.resource.data.uses == resource.data.uses + 1
             && !exists(promoUseDoc(code)) && existsAfter(promoUseDoc(code)));
-      allow delete: if isAdmin();
+      allow delete: if isFullAdmin();
     }
 
     function validPromo(code) {
@@ -580,7 +587,7 @@ service cloud.firestore {
           // konfime = pri a ajoute nan total kliyan an (paidOk)
           ? (after.status == 'refused'
               ? getAfter(u).data.balance == get(u).data.balance
-              : getAfter(u).data.total_spent == get(u).data.total_spent + before.price)
+              : isFullAdmin() && getAfter(u).data.total_spent == get(u).data.total_spent + before.price)
           : (after.status != 'refused' || getAfter(u).data.balance == get(u).data.balance + before.price));
     }
 
@@ -598,7 +605,7 @@ service cloud.firestore {
     match /deposits/{id} {
       allow read: if signedIn() && (resource.data.user_id == me() || isAdmin());
       allow create: if signedIn() && validNewDeposit(id);
-      allow update: if isAdmin() && validDepositReview();
+      allow update: if isFullAdmin() && validDepositReview();
     }
 
     function validNewDeposit(id) {

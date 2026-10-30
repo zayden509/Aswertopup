@@ -15,7 +15,7 @@ import AdminDashboard from "./AdminDashboard.jsx";
 import AdminCustomers from "./AdminCustomers.jsx";
 import AdminCatalog from "./AdminCatalog.jsx";
 import AdminMessages from "./AdminMessages.jsx";
-import AdminTeam, { isOwner } from "./AdminTeam.jsx";
+import AdminTeam, { isOwner, isOrdersOnly } from "./AdminTeam.jsx";
 import AdminAuto from "./AdminAuto.jsx";
 import AdminSettings from "./AdminSettings.jsx";
 import AdminSms from "./AdminSms.jsx";
@@ -34,6 +34,8 @@ const TABS = [
   { id: "auto", label: "Otomatik", Icon: Zap, title: "Livrezon otomatik" },
   { id: "settings", label: "Paramèt", Icon: Settings, title: "Paramèt" },
 ];
+// Sa yon admin "kòmand sèlman" wè (règ Firestore yo bloke rès la pou li)
+const ORDERS_ONLY_TABS = ["orders", "customers"];
 
 // "Tout" an premye: yon kòmand rete nan lis la menm apre l livre (oswa livre otomatikman)
 const ORDER_FILTERS = [
@@ -113,7 +115,7 @@ function SupplierLine({ order, auto, onToast }) {
   );
 }
 
-function OrderCard({ order, profile, product, auto, onLink, onToast }) {
+function OrderCard({ order, profile, product, auto, limited, onLink, onToast }) {
   const [mode, setMode] = useState(null); // "deliver" | "refuse"
   const [code, setCode] = useState("");
   const [note, setNote] = useState("");
@@ -209,7 +211,7 @@ function OrderCard({ order, profile, product, auto, onLink, onToast }) {
             <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5 ring-1 ring-slate-200 dark:bg-slate-800/50 dark:ring-slate-700">
               <Zap className="h-4 w-4 shrink-0 text-slate-400" />
               <p className="min-w-0 flex-1 text-sm text-slate-600 dark:text-slate-300">Pake sa a poko konekte ak FazerCards: li p ap livre poukont li.</p>
-              <AdminButton onClick={onLink} className="h-8 shrink-0 text-xs">Konekte l</AdminButton>
+              {!limited && <AdminButton onClick={onLink} className="h-8 shrink-0 text-xs">Konekte l</AdminButton>}
             </div>
           )}
         </div>
@@ -222,7 +224,11 @@ function OrderCard({ order, profile, product, auto, onLink, onToast }) {
           {mode === null && unpaid ? (
             <div className="flex flex-wrap justify-end gap-2">
               <AdminButton tone="danger" icon={X} onClick={() => setMode("refuse")}>Refuser</AdminButton>
-              <AdminButton tone="success" icon={Check} busy={busy} disabled={busy} onClick={confirmPayment}>Mwen resevwa peman an</AdminButton>
+              {limited ? (
+                <p className="w-full text-right text-xs text-slate-500 dark:text-slate-400">Se yon admin konplè ki ka konfime peman an.</p>
+              ) : (
+                <AdminButton tone="success" icon={Check} busy={busy} disabled={busy} onClick={confirmPayment}>Mwen resevwa peman an</AdminButton>
+              )}
             </div>
           ) : mode === null ? (
             <div className="flex flex-wrap justify-end gap-2">
@@ -405,7 +411,7 @@ function SearchBox({ value, onChange, placeholder }) {
   );
 }
 
-function OrdersTab({ orders, older, onLoadOlder, filter, onFilter, profiles, catalog, supplierMap, loading, onLink, onToast }) {
+function OrdersTab({ orders, older, onLoadOlder, filter, onFilter, profiles, catalog, supplierMap, loading, limited, onLink, onToast }) {
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -444,6 +450,7 @@ function OrdersTab({ orders, older, onLoadOlder, filter, onFilter, profiles, cat
             profile={profiles[o.user_id]}
             product={productForPackage(o.package_id, catalog)}
             auto={Boolean(supplierMap[o.package_id]?.auto)}
+            limited={limited}
             onLink={onLink}
             onToast={onToast}
           />
@@ -467,7 +474,10 @@ function OrdersTab({ orders, older, onLoadOlder, filter, onFilter, profiles, cat
 }
 
 export default function AdminPage({ account, catalog = [], onBack, onToast }) {
-  const [tab, setTab] = useState("dashboard");
+  const limited = isOrdersOnly(account.profile);
+  const tabs = limited ? TABS.filter((t) => ORDERS_ONLY_TABS.includes(t.id)) : TABS;
+  const [selectedTab, setTab] = useState(limited ? "orders" : "dashboard");
+  const tab = tabs.some((t) => t.id === selectedTab) ? selectedTab : tabs[0].id;
   const [orders, setOrders] = useState([]);
   const [deposits, setDeposits] = useState([]);
   const [profiles, setProfiles] = useState({});
@@ -508,7 +518,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   // Ki pake ki otomatik (FazerCards)
   useEffect(() => backend.subscribeSupplierMap(setSupplierMap), [epoch]);
   useEffect(() => backend.subscribeAutomation(setAutomation), [epoch]);
-  useEffect(() => backend.subscribeSmsSeen(setSmsSeen), [epoch]);
+  useEffect(() => (limited ? undefined : backend.subscribeSmsSeen(setSmsSeen)), [epoch, limited]);
 
   // Livrezon otomatik san bouton: yon kòmand otomatik ki poko rive kote FazerCards (oswa ki te
   // bloke sou yon erè), oswa ki rete "an kou" twò lontan, voye/verifye poukont li yon fwa
@@ -537,12 +547,13 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   const rechecked = useRef(new Set());
   const [recheckRound, setRecheckRound] = useState(0);
   useEffect(() => {
+    if (limited) return;
     deposits.forEach((d) => {
       if (d.status !== "pending" || rechecked.current.has(d.id) || Date.now() - Date.parse(d.created_at) > 86400000) return;
       rechecked.current.add(d.id);
       backend.requestDepositCheck(d.id);
     });
-  }, [deposits, recheckRound]);
+  }, [deposits, recheckRound, limited]);
   const recheckDeposits = () => {
     rechecked.current.clear();
     setRecheckRound((n) => n + 1);
@@ -551,8 +562,8 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   // Lè non yon pwodwi chanje sou sit la, pake li yo nan baz done a swiv li (kòmand ki deja fèt yo pa chanje)
   const nameFixes = useMemo(() => packageNameFixes(account.prices, account.catalog.products), [account.prices, account.catalog.products]);
   useEffect(() => {
-    if (nameFixes.length) backend.adminRenamePackages(nameFixes).catch((error) => console.error("rename packages", error));
-  }, [nameFixes]);
+    if (nameFixes.length && !limited) backend.adminRenamePackages(nameFixes).catch((error) => console.error("rename packages", error));
+  }, [nameFixes, limited]);
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [tab]);
 
@@ -580,7 +591,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   const pendingDeposits = deposits.filter((d) => d.status === "pending").length;
   const badges = { orders: openCount, deposits: pendingDeposits };
   const sortedDeposits = [...deposits].sort((a, b) => (a.status === "pending") === (b.status === "pending") ? 0 : a.status === "pending" ? -1 : 1);
-  const current = TABS.find((t) => t.id === tab);
+  const current = tabs.find((t) => t.id === tab);
   const subtitles = {
     dashboard: "Lavant, vizitè ak sa ki pou trete",
     orders: `${allOrders.length} kòmand · ${openCount} pou trete`,
@@ -607,14 +618,14 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
           </div>
           <span className={`hidden items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold min-[380px]:inline-flex ${owner ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" : "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300"}`}>
             {owner ? <Crown className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}
-            {owner ? "Pwopriyetè" : "Admin"}
+            {owner ? "Pwopriyetè" : limited ? "Kòmand" : "Admin"}
           </span>
           <button type="button" onClick={() => setEpoch((e) => e + 1)} aria-label="Rechaje" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800">
             <RefreshCw className={`h-[18px] w-[18px] ${loading ? "animate-spin" : ""}`} />
           </button>
         </div>
         <nav aria-label="Seksyon admin" className="no-scrollbar mx-auto flex max-w-3xl gap-1 overflow-x-auto px-3 pb-2.5">
-          {TABS.map((t) => {
+          {tabs.map((t) => {
             const active = t.id === tab;
             return (
               <button
@@ -651,7 +662,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
         {tab === "orders" && (
           <OrdersTab
             orders={allOrders} older={older} onLoadOlder={loadOlder} filter={orderFilter} onFilter={setOrderFilter}
-            profiles={profiles} catalog={catalog} supplierMap={supplierMap} loading={loading} onLink={() => setTab("auto")} onToast={onToast}
+            profiles={profiles} catalog={catalog} supplierMap={supplierMap} loading={loading} limited={limited} onLink={() => setTab("auto")} onToast={onToast}
           />
         )}
         {tab === "deposits" && (
