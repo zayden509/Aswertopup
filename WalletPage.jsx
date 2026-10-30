@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Wallet, Eye, EyeOff, Copy, Plus, Send, ShoppingCart, ArrowDownLeft, ArrowUpRight, LogIn } from "lucide-react";
-import { formatPrice, formatDate, copyText, isPaidOrder, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
+import { Sheet, formatPrice, formatDate, formatDateTime, copyText, isPaidOrder, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
+import { ReceiptButton } from "./Receipt.jsx";
 import { MethodList } from "./WalletSheets.jsx";
 
 const HIDE_KEY = "aswer-hide-balance";
@@ -59,12 +60,56 @@ function TxIcon({ row }) {
   return <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${cls}`}><Icon className="h-5 w-5" /></span>;
 }
 
-// Yon liy tranzaksyon; yon acha louvri detay kòmand lan
-export function TxRow({ row: r, onOpenOrder }) {
-  const Tag = r.kind === "order" ? "button" : "div";
+// Detay ak resi yon depo oswa yon transfè
+function txReceipt(r, profile) {
+  const d = r.raw;
+  const rows = [["Dat", formatDateTime(d.created_at)]];
+  if (r.kind === "deposit") {
+    rows.push(["Mòd", d.method === "moncash" ? "MonCash" : "NatCash"], ["Kòd tranzaksyon", d.reference]);
+    if (d.admin_note && d.status === "refused") rows.push(["Nòt", d.admin_note]);
+  } else {
+    rows.push(r.sent ? ["Bay", d.to_code] : ["Soti nan", d.from_code]);
+  }
+  return {
+    title: r.title,
+    amount: r.amount,
+    status: r.status.label,
+    rows,
+    customer: profile ? `${profile.full_name || profile.email} · AWENS-ID ${profile.wallet_code}` : null,
+  };
+}
+
+function TxSheet({ row, profile, onClose, onToast }) {
+  const receipt = txReceipt(row, profile);
   return (
-    <Tag
-      {...(r.kind === "order" && { type: "button", onClick: () => onOpenOrder(r.raw) })}
+    <Sheet open onClose={onClose} title={row.title}>
+      <p className={`text-3xl font-extrabold tabular-nums ${row.amount < 0 ? "text-orange-500" : "text-emerald-500"}`}>
+        {row.amount < 0 ? "−" : "+"}{formatPrice(Math.abs(row.amount))}
+      </p>
+      <p className="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400">{row.status.label}</p>
+      <dl className="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
+        {receipt.rows.map(([label, value]) => (
+          <div key={label} className="flex items-center justify-between gap-4 py-3">
+            <dt className="text-slate-500 dark:text-slate-400">{label}</dt>
+            <dd className="min-w-0 break-all text-right font-medium tabular-nums text-slate-900 dark:text-white">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      {(row.kind === "transfer" || row.raw.status === "completed") && (
+        <ReceiptButton className="mt-4" receipt={() => receipt} name={`resi-${row.kind === "deposit" ? "depo" : "transfe"}-${row.raw.id.slice(0, 8)}.png`} onToast={onToast} />
+      )}
+    </Sheet>
+  );
+}
+
+// Yon liy tranzaksyon: yon acha louvri detay kòmand lan; yon depo oswa yon transfè louvri detay li ak resi a
+export function TxRow({ row: r, onOpenOrder, profile, onToast }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+    <button
+      type="button"
+      onClick={() => (r.kind === "order" ? onOpenOrder(r.raw) : setOpen(true))}
       className="flex w-full items-center gap-3 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800"
     >
       <TxIcon row={r} />
@@ -78,7 +123,9 @@ export function TxRow({ row: r, onOpenOrder }) {
         </span>
         <span className="block text-xs text-slate-500 dark:text-slate-400">{r.status.label}</span>
       </span>
-    </Tag>
+    </button>
+    {open && <TxSheet row={r} profile={profile} onClose={() => setOpen(false)} onToast={onToast} />}
+    </>
   );
 }
 
@@ -216,7 +263,7 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
         ) : (
           <ul className="mt-4 space-y-3">
             {visible.map((r) => (
-              <li key={r.key}><TxRow row={r} onOpenOrder={onOpenOrder} /></li>
+              <li key={r.key}><TxRow row={r} onOpenOrder={onOpenOrder} profile={profile} onToast={onToast} /></li>
             ))}
           </ul>
         )}

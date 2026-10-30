@@ -5,6 +5,7 @@ import { Sheet, ProductArt, WhatsAppIcon, StatusChip, waLink, formatPrice, forma
 import { orderMessage } from "./orders.js";
 import { productForPackage } from "./catalog.js";
 import { LoginPrompt } from "./WalletPage.jsx";
+import { ReceiptButton } from "./Receipt.jsx";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
@@ -33,7 +34,27 @@ function EmptyState({ title, text, onShop }) {
 }
 
 // Detay yon kòmand, ak kòd PIN lan lè admin nan fin livre l
-export function OrderSheet({ order, catalog = PRODUCTS, onClose, onToast }) {
+// Resi yon kòmand (san kòd kat kado a: li rete nan kont kliyan an sèlman)
+export function orderReceipt(order, profile) {
+  const method = order.payment && PAYMENT_METHODS.find((m) => m.id === order.payment.method);
+  return {
+    title: `${order.product_name} · ${order.package_label}`,
+    amount: -Number(order.price),
+    status: orderStatus(order).label,
+    rows: [
+      ["Kòmand", order.code],
+      ["Dat", formatDateTime(order.created_at)],
+      ["Pwodwi", order.product_name],
+      ["Pake", order.package_label],
+      order.player_id && ["Player ID", order.player_id],
+      ["Peman", method ? `${method.name} · ${order.payment.reference}` : "Wallet Awens Topup"],
+      order.recipient && ["Kont", `${order.recipient.account} (${order.recipient.name})`],
+    ].filter(Boolean),
+    customer: profile ? `${profile.full_name || profile.email} · AWENS-ID ${profile.wallet_code}` : null,
+  };
+}
+
+export function OrderSheet({ order, catalog = PRODUCTS, profile, onClose, onToast }) {
   const product = productForPackage(order.package_id, catalog);
   // Peman dirèk (MonCash/NatCash): premye etap la se konfimasyon peman an
   const first = order.payment ? ["unpaid", "pending"] : ["pending"];
@@ -121,6 +142,9 @@ export function OrderSheet({ order, catalog = PRODUCTS, onClose, onToast }) {
             </div>
           ))}
       </dl>
+      {order.status !== "unpaid" && (
+        <ReceiptButton className="mt-4" receipt={() => orderReceipt(order, profile)} name={`resi-${order.code}.png`} onToast={onToast} />
+      )}
     </Sheet>
   );
 }

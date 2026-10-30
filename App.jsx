@@ -671,7 +671,7 @@ export default function App() {
           onInstall={install}
         />
       )}
-      {openOrder && <OrderSheet order={openOrder} catalog={catalog} onClose={() => setOpenOrderId(null)} onToast={setToast} />}
+      {openOrder && <OrderSheet order={openOrder} catalog={catalog} profile={account.profile} onClose={() => setOpenOrderId(null)} onToast={setToast} />}
       {auth && account.enabled && !signedIn && <AuthSheet initialMode={auth} onClose={() => setAuth(null)} />}
 
       {live && <LiveToast notification={live} onOpen={() => openNotification(live)} onClose={closeLive} />}

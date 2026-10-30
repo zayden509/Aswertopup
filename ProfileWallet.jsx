@@ -146,7 +146,7 @@ export default function ProfileWallet({ account, onDeposit, onTransfer, onOpenOr
         ) : (
           <ul className="space-y-2.5">
             {rows.slice(0, 4).map((r) => (
-              <li key={r.key}><TxRow row={r} onOpenOrder={onOpenOrder} /></li>
+              <li key={r.key}><TxRow row={r} onOpenOrder={onOpenOrder} profile={profile} onToast={onToast} /></li>
             ))}
           </ul>
         )}
