@@ -19,6 +19,7 @@ import AdminTeam, { isOwner } from "./AdminTeam.jsx";
 import AdminAuto from "./AdminAuto.jsx";
 import AdminSettings from "./AdminSettings.jsx";
 import AdminSms from "./AdminSms.jsx";
+import { BackupCard, ReportsCard } from "./AdminTools.jsx";
 
 const TABS = [
   { id: "dashboard", label: "Tablo", Icon: LayoutDashboard, title: "Tablo" },
@@ -632,7 +633,12 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
       <div className="mx-auto max-w-3xl space-y-4 px-4 pt-5">
         <SectionHead title={current.title} sub={subtitles[tab]} />
 
-        {tab === "dashboard" && <AdminDashboard orders={orders} deposits={deposits} profiles={profiles} visits={visits} onGo={go} />}
+        {tab === "dashboard" && (
+          <>
+            <AdminDashboard orders={orders} deposits={deposits} profiles={profiles} visits={visits} onGo={go} />
+            <ReportsCard profiles={profiles} onToast={onToast} />
+          </>
+        )}
         {tab === "orders" && (
           <OrdersTab
             orders={allOrders} older={older} onLoadOlder={loadOlder} filter={orderFilter} onFilter={setOrderFilter}
@@ -655,7 +661,12 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
         {tab === "messages" && <AdminMessages profiles={profiles} announcements={announcements} onToast={onToast} />}
         {tab === "team" && <AdminTeam me={me} profiles={profiles} onToast={onToast} />}
         {tab === "auto" && <AdminAuto account={account} supplierMap={supplierMap} onToast={onToast} />}
-        {tab === "settings" && <AdminSettings account={account} owner={owner} onToast={onToast} onTrusted={recheckDeposits} />}
+        {tab === "settings" && (
+          <>
+            <AdminSettings account={account} owner={owner} onToast={onToast} onTrusted={recheckDeposits} />
+            <BackupCard owner={owner} onToast={onToast} />
+          </>
+        )}
       </div>
     </div>
   );

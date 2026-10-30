@@ -651,6 +651,22 @@ export function createBackend(config, options = {}) {
       return () => stops.forEach((stop) => stop());
     },
 
+    // Pwopriyetè a: tout done sit la pou yon backup (fichye JSON)
+    async adminExportAll() {
+      const names = ["users", "orders", "deposits", "transfers", "packages", "products", "exchange", "supplierMap",
+        "settings", "productImages", "announcements", "visits", "smsPayments"];
+      const out = { exported_at: new Date().toISOString(), project: config.projectId };
+      for (const name of names) out[name] = (await getDocs(collection(db, name))).docs.map(toPlain);
+      return out;
+    },
+
+    // Rapò: kòmand ak depo ki fèt ant 2 dat
+    async adminPeriodData(from, to) {
+      const range = (name) => getDocs(query(collection(db, name), where("created_at", ">=", from), where("created_at", "<", to), orderBy("created_at", "asc")));
+      const [orders, deposits] = await Promise.all([range("orders"), range("deposits")]);
+      return { orders: orders.docs.map(toPlain), deposits: deposits.docs.map(toPlain) };
+    },
+
     // Nimewo MonCash/NatCash ki nan Paramèt ({} si pwopriyetè a poko chanje yo)
     async adminGetPayments() {
       const snap = await getDoc(doc(db, "settings", "payments"));
