@@ -737,14 +737,15 @@ export function createBackend(config, options = {}) {
     getIdToken: () => auth.currentUser?.getIdToken() ?? Promise.resolve(null),
 
     // Mande sèvè a voye kòmand lan bay FazerCards (si pake a otomatik). Pa janm bloke kliyan an.
-    async requestAutoDelivery(orderId) {
+    // placed: kliyan an fèk pase kòmand lan (sèvè a voye imèl kliyan an ak imèl admin nan)
+    async requestAutoDelivery(orderId, { placed = false } = {}) {
       try {
         const token = await auth.currentUser?.getIdToken();
         if (!token) return null;
         const res = await fetch("/api/fulfill", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ orderId }),
+          body: JSON.stringify(placed ? { orderId, placed: true } : { orderId }),
         });
         return res.ok ? await res.json() : null;
       } catch {
@@ -1013,6 +1014,26 @@ export function createBackend(config, options = {}) {
     async adminGetOrder(id) {
       const snap = await getDoc(doc(db, "orders", id));
       return snap.exists() ? toPlain(snap) : null;
+    },
+
+    async adminGetUser(uid) {
+      const snap = await getDoc(userRef(uid));
+      return snap.exists() ? snap.data() : null;
+    },
+
+    // Imèl kòmand lan pati yon sèl fwa: premye demann lan pran l (private/orderEmails).
+    // Kòmand ki gen plis pase 2 jou yo retire nan lis la pou dokiman an pa grandi.
+    async adminClaimOrderEmail(orderId) {
+      const ref = doc(db, "private", "orderEmails");
+      return runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        const sent = snap.exists() ? snap.data().sent || {} : {};
+        if (sent[orderId]) return false;
+        const now = Date.now();
+        const kept = Object.fromEntries(Object.entries(sent).filter(([, at]) => now - at < 2 * 86400000));
+        tx.set(ref, { sent: { ...kept, [orderId]: now } });
+        return true;
+      });
     },
 
     async adminGetSupplierMap(packageId) {
