@@ -58,7 +58,10 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
         onClose();
       } else {
         await backend.resetPassword(email);
-        setDone(t("Si gen yon kont ak imèl sa a, ou pral resevwa yon imèl pou chanje modpas ou. Gade nan Spam tou.", "Si un compte existe avec cet e-mail, vous recevrez un e-mail pour changer votre mot de passe. Vérifiez aussi les spams."));
+        setDone(t(
+          "Si gen yon kont ak imèl sa a, nou voye yon LYEN (pa yon kòd) pou chanje modpas ou. Li soti nan noreply@aswer-topup.firebaseapp.com epi li ka pran kèk minit. Gade nan Spam, Promosyon ak Tout imèl yo. Si w te kreye kont lan ak Google, pa gen modpas: peze \"Kontinye ak Google\".",
+          "Si un compte existe avec cet e-mail, nous avons envoyé un LIEN (pas un code) pour changer votre mot de passe. Il vient de noreply@aswer-topup.firebaseapp.com et peut prendre quelques minutes. Vérifiez les Spams, Promotions et Tous les messages. Si vous avez créé le compte avec Google, il n'y a pas de mot de passe : utilisez « Continuer avec Google »."
+        ));
       }
     } catch (err) {
       setError(errorText(err));

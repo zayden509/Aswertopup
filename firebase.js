@@ -94,6 +94,8 @@ const CATEGORY_NAMES = ["Jwèt", "Abònman", "Gift Card", "Finans"];
 export function createBackend(config, options = {}) {
   const app = initializeApp(config, options.appName);
   const auth = getAuth(app);
+  // Imèl Firebase yo (chanje modpas…) an Franse olye d Anglè: Firebase pa gen Kreyòl
+  auth.languageCode = "fr";
   const db = getFirestore(app);
   if (options.emulatorHost) {
     connectAuthEmulator(auth, `http://${options.emulatorHost}:9099`, { disableWarnings: true });
