@@ -293,7 +293,13 @@ function BottomNav({ tab, onChange }) {
 /* ============ APP ============ */
 export default function App() {
   const [dark, toggleTheme] = useTheme();
-  const [tab, setTab] = useState("home");
+  // Lyen nan imèl yo (?page=history, ?page=admin…) louvri paj la dirèkteman
+  const [tab, setTab] = useState(() => {
+    const page = new URLSearchParams(window.location.search).get("page");
+    if (!["history", "wallet", "admin", "settings", "shop"].includes(page)) return "home";
+    try { window.history.replaceState(window.history.state, "", window.location.pathname); } catch {}
+    return page;
+  });
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Tout");
   // Paj pwodwi a anrejistre nan istorik navigatè a pou bouton "retounen" telefòn nan mache

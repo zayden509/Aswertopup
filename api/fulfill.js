@@ -12,8 +12,13 @@ async function orderEmails(backend, order) {
     if (!mailReady() || order.kind === "exchange") return;
     if (Date.now() - Date.parse(order.created_at) > EMAIL_WINDOW) return;
     if (!(await backend.adminClaimOrderEmail(order.id))) return;
-    const customer = await backend.adminGetUser(order.user_id);
-    await sendOrderEmails(order, customer);
+    const [customer, admins] = await Promise.all([
+      backend.adminGetUser(order.user_id),
+      backend.adminListAdminEmails().catch(() => []),
+    ]);
+    // Kont bot sèvè a se yon admin tou: li pa bezwen imèl
+    const botEmail = String(process.env.BOT_EMAIL || "").trim().replace(/^(["'])(.*)\1$/, "$2").toLowerCase();
+    await sendOrderEmails(order, customer, admins.filter((e) => e.toLowerCase() !== botEmail));
   } catch (error) {
     console.error("order emails", error);
   }

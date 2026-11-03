@@ -7,6 +7,7 @@ import { FazerCardsClient, FazerCardsAuthError, FazerCardsError, TERMINAL_ORDER_
 import { createBackend } from "../../firebase.js";
 import { FIREBASE_CONFIG } from "../../config.js";
 import { alert, checkFazerBalance, HOUR } from "./alert.js";
+import { notifyStatus } from "./mail.js";
 
 const env = process.env;
 const firebaseConfig = env.TEST_FIREBASE_CONFIG ? JSON.parse(env.TEST_FIREBASE_CONFIG) : FIREBASE_CONFIG;
@@ -110,10 +111,12 @@ export async function applyStatus(backend, order, fz) {
   if (fz.status === "completed" && order.status !== "delivered" && order.status !== "refused") {
     const codes = [...(fz.cards || []), ...(fz.keys || [])].join(" | ").slice(0, 200);
     await backend.adminUpdateOrder(order, "delivered", codes, null, supplier);
+    await notifyStatus(backend, order.id);
   } else if ((fz.status === "failed" || fz.status === "refund") && order.status !== "delivered" && order.status !== "refused") {
     // FazerCards remèt nou kòb la: nou remèt kliyan an pa l tou
     const note = `Livrezon otomatik la pa mache${reason ? ` (${reason})` : ""}. Verifye Player ID ou epi eseye ankò.`;
     await backend.adminUpdateOrder(order, "refused", "", note.slice(0, 300), supplier);
+    await notifyStatus(backend, order.id);
     await alert(backend, `⚠️ Kòmand ${order.code} (${order.product_name} ${order.package_label}) echwe kote FazerCards${reason ? `: ${reason}` : ""}. Kliyan an ranbouse.`, { key: `fail_${order.id}`, everyMs: 24 * HOUR });
   } else if (!isTerminal(fz.status) && order.status === "pending") {
     await backend.adminUpdateOrder(order, "processing", "", null, supplier);

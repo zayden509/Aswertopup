@@ -132,6 +132,7 @@ function OrderCard({ order, profile, product, auto, limited, onLink, onToast }) 
     setError("");
     try {
       await backend.adminUpdateOrder(order, status, code, note);
+      if (status === "delivered" || status === "refused") backend.requestOrderEmail(order.id);
       setMode(null);
       onToast(status === "refused" ? `${order.code} refize${unpaid ? "" : ", kliyan an ranbouse"}.` : `${order.code}: ${ORDER_STATUS[status].label}.`);
     } catch (err) {

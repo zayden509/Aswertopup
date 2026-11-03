@@ -753,6 +753,21 @@ export function createBackend(config, options = {}) {
       }
     },
 
+    // Admin nan fin livre oswa refize yon kòmand: sèvè a voye yon imèl bay kliyan an
+    async requestOrderEmail(orderId) {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        if (!token) return;
+        await fetch("/api/order-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ orderId }),
+        });
+      } catch {
+        // imèl la pa obligatwa
+      }
+    },
+
     // Panneau admin → FazerCards (balans, katalòg, webhook, eseye ankò)
     async adminFazer(action, params = {}) {
       const token = await auth.currentUser?.getIdToken();
@@ -1021,17 +1036,23 @@ export function createBackend(config, options = {}) {
       return snap.exists() ? snap.data() : null;
     },
 
+    // Imèl tout admin yo (pwopriyetè a ak admin li ajoute yo), pou imèl nouvo kòmand yo
+    async adminListAdminEmails() {
+      const snap = await getDocs(query(collection(db, "users"), where("is_admin", "==", true), limit(50)));
+      return snap.docs.map((d) => d.data().email).filter((e) => typeof e === "string" && e.includes("@"));
+    },
+
     // Imèl kòmand lan pati yon sèl fwa: premye demann lan pran l (private/orderEmails).
     // Kòmand ki gen plis pase 2 jou yo retire nan lis la pou dokiman an pa grandi.
-    async adminClaimOrderEmail(orderId) {
+    async adminClaimOrderEmail(key) {
       const ref = doc(db, "private", "orderEmails");
       return runTransaction(db, async (tx) => {
         const snap = await tx.get(ref);
         const sent = snap.exists() ? snap.data().sent || {} : {};
-        if (sent[orderId]) return false;
+        if (sent[key]) return false;
         const now = Date.now();
         const kept = Object.fromEntries(Object.entries(sent).filter(([, at]) => now - at < 2 * 86400000));
-        tx.set(ref, { sent: { ...kept, [orderId]: now } });
+        tx.set(ref, { sent: { ...kept, [key]: now } });
         return true;
       });
     },
