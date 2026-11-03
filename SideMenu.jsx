@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { X, Home, ShoppingCart, Wallet, History, Bell, UserRound, PlayCircle, ShieldCheck, Moon, Sun, Download, LogOut, LogIn, ChevronRight, Languages } from "lucide-react";
 import { Logo, WhatsAppIcon, waLink, supportMessage, formatPrice, LangSwitch } from "./ui.jsx";
-import { UserAvatar } from "./ProfileWallet.jsx";
+import { UserAvatar } from "./Avatar.jsx";
 import { t } from "./i18n.js";
 
 // Meni sou kote a (bouton ☰ anlè agoch)

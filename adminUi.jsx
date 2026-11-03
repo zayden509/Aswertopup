@@ -1,7 +1,7 @@
 import React from "react";
 import { Copy, Loader2 } from "lucide-react";
 import { copyText } from "./ui.jsx";
-import { UserAvatar } from "./ProfileWallet.jsx";
+import { UserAvatar } from "./Avatar.jsx";
 
 // Ti moso ki sèvi nan tout onglet Panneau admin lan
 

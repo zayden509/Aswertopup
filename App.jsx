@@ -6,15 +6,10 @@ import { loadOrders, saveOrder } from "./orders.js";
 import { useAccount } from "./account.js";
 import { buildCatalog } from "./catalog.js";
 import { backend } from "./backend.js";
-import ProductPage from "./ProductPage.jsx";
-import HistoryPage, { OrderSheet } from "./HistoryPage.jsx";
-import WalletPage from "./WalletPage.jsx";
-import { UserAvatar } from "./ProfileWallet.jsx";
+import { UserAvatar } from "./Avatar.jsx";
 import SideMenu from "./SideMenu.jsx";
 import Footer from "./Footer.jsx";
-import AuthSheet from "./AuthSheet.jsx";
-import { DepositSheet, TransferSheet } from "./WalletSheets.jsx";
-import { NotificationsSheet, LiveToast } from "./Notifications.jsx";
+import { LiveToast } from "./Notifications.jsx";
 import { newVersionAvailable } from "./updateCheck.js";
 import { TutorialSheet, openTutorial, useTutorialRequests } from "./Tutorial.jsx";
 import { ReviewsSection } from "./Reviews.jsx";
@@ -43,11 +38,32 @@ function lazyPage(load) {
 // Panneau admin lan chaje sèlman pou admin yo
 const AdminPage = lazyPage(() => import("./AdminPage.jsx"));
 
-// Paj sa yo pa sou paj akèy la: yo chaje apre boutik la parèt, pou premye afichaj la pi vit
-const LATER_PAGES = [() => import("./ExchangePage.jsx"), () => import("./SettingsPage.jsx"), () => import("./PaymentPage.jsx")];
-const ExchangePage = lazyPage(LATER_PAGES[0]);
-const SettingsPage = lazyPage(LATER_PAGES[1]);
-const PaymentPage = lazyPage(LATER_PAGES[2]);
+// Paj ak fenèt sa yo pa sou paj akèy la: yo chaje apre boutik la parèt (kliyan an pa wè diferans),
+// konsa premye afichaj la pi lejè e pi rapid sou telefòn ak 3G/4G
+const load = {
+  product: () => import("./ProductPage.jsx"),
+  history: () => import("./HistoryPage.jsx"),
+  wallet: () => import("./WalletPage.jsx"),
+  sheets: () => import("./WalletSheets.jsx"),
+  notifications: () => import("./Notifications.jsx"),
+  auth: () => import("./AuthSheet.jsx"),
+  exchange: () => import("./ExchangePage.jsx"),
+  settings: () => import("./SettingsPage.jsx"),
+  payment: () => import("./PaymentPage.jsx"),
+};
+const LATER_PAGES = Object.values(load);
+const pick = (loader, name) => () => loader().then((m) => ({ default: m[name] }));
+const ProductPage = lazyPage(load.product);
+const HistoryPage = lazyPage(load.history);
+const OrderSheet = lazyPage(pick(load.history, "OrderSheet"));
+const WalletPage = lazyPage(load.wallet);
+const DepositSheet = lazyPage(pick(load.sheets, "DepositSheet"));
+const TransferSheet = lazyPage(pick(load.sheets, "TransferSheet"));
+const NotificationsSheet = lazyPage(pick(load.notifications, "NotificationsSheet"));
+const AuthSheet = lazyPage(load.auth);
+const ExchangePage = lazyPage(load.exchange);
+const SettingsPage = lazyPage(load.settings);
+const PaymentPage = lazyPage(load.payment);
 const pageSpinner = <Loader2 className="mx-auto mt-16 h-8 w-8 animate-spin text-sky-500" />;
 
 /* ============ UTIL ============ */
@@ -107,7 +123,7 @@ function Carousel({ onAction }) {
               onClick={() => onAction(s.action)}
               className="block w-full shrink-0"
             >
-              <img src={s.image} alt={s.title} loading={i === 0 ? "eager" : "lazy"} className="block aspect-[2/1] w-full object-cover" />
+              <img src={s.image} alt={s.title} loading={i === 0 ? "eager" : "lazy"} fetchpriority={i === 0 ? "high" : "auto"} decoding="async" className="block aspect-[2/1] w-full object-cover" />
             </button>
           ) : (
             <div key={i} className="relative min-h-[190px] w-full shrink-0 overflow-hidden p-5 sm:p-6" aria-hidden={i !== index}>
@@ -347,7 +363,8 @@ export default function App() {
 
   // Chaje lòt paj yo davans lè boutik la fin parèt, pou yo louvri touswit lè kliyan an peze
   useEffect(() => {
-    const t = setTimeout(() => LATER_PAGES.forEach((load) => load().catch(() => {})), 2500);
+    const prefetch = () => LATER_PAGES.forEach((loader) => loader().catch(() => {}));
+    const t = setTimeout(() => (window.requestIdleCallback ? window.requestIdleCallback(prefetch, { timeout: 2000 }) : prefetch()), 800);
     return () => clearTimeout(t);
   }, []);
 
@@ -528,6 +545,7 @@ export default function App() {
 
       <main className={`mx-auto max-w-3xl px-4 pt-2 ${adminView ? "pb-16" : "pb-36"}`}>
         <Suspense fallback={pageSpinner}>
+        <div key={product ? `p-${product.id}` : tab} className="animate-page">
         {product?.exchange && (
           <ExchangePage
             key={product.id}
@@ -639,6 +657,7 @@ export default function App() {
         {adminView && (
           <AdminPage account={account} catalog={catalog} onBack={() => setTab("settings")} onToast={setToast} />
         )}
+        </div>
         </Suspense>
       </main>
 
@@ -662,6 +681,7 @@ export default function App() {
         </>
       )}
 
+      <Suspense fallback={null}>
       {panel === "notifications" && (
         <NotificationsSheet account={account} onClose={() => setPanel(null)} onLogin={(m) => { setPanel(null); needLogin(m); }} onOpen={openNotification} />
       )}
@@ -694,6 +714,7 @@ export default function App() {
       )}
       {openOrder && <OrderSheet order={openOrder} catalog={catalog} profile={account.profile} onClose={() => setOpenOrderId(null)} onToast={setToast} />}
       {auth && account.enabled && !signedIn && <AuthSheet initialMode={auth} onClose={() => setAuth(null)} />}
+      </Suspense>
 
       {live && <LiveToast notification={live} onOpen={() => openNotification(live)} onClose={closeLive} />}
       {toast && (

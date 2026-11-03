@@ -23,7 +23,13 @@ body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-
 .animate-fade-in { animation: fade-in 0.2s ease-out; }
 .animate-sheet-up { animation: sheet-up 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .animate-slide-in-left { animation: slide-in-left 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+/* Chanjman paj: yon ti glisman dous */
+/* opacity sèlman: yon transform ta deplase bouton "fixed" yo pandan animasyon an */
+@keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
+.animate-page { animation: page-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+html { scroll-behavior: smooth; }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-slide-down, .animate-fade-in, .animate-sheet-up, .animate-slide-in-left { animation: none; }
+  .animate-slide-down, .animate-fade-in, .animate-sheet-up, .animate-slide-in-left, .animate-page { animation: none; }
+  html { scroll-behavior: auto; }
 }
