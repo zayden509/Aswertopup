@@ -43,7 +43,7 @@ export function QrCard({ profile, onToast }) {
         )}
         {src && (
           <span className="absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-2xl bg-white shadow-md ring-4 ring-white">
-            <Logo className="h-10 w-10" />
+            <Logo tone="light" className="h-10 w-10" />
           </span>
         )}
       </div>

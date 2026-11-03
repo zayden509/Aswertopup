@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Mail, Lock, User, Loader2, CheckCircle2, X, Eye, EyeOff, Zap, ShieldCheck, Wallet, ArrowLeft, KeyRound } from "lucide-react";
 import { GOOGLE_LOGIN } from "./data.js";
 import { backend, errorText } from "./backend.js";
-import { Logo } from "./ui.jsx";
+import { BrandLogo } from "./Brand.jsx";
 import { t } from "./i18n.js";
 
 const HEAD = {
@@ -119,10 +119,7 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
                 <ArrowLeft className="h-4 w-4" /> {t("Retounen", "Retour")}
               </button>
             ) : (
-              <span className="flex items-center gap-2">
-                <Logo className="h-8 w-8 drop-shadow" />
-                <span className="text-lg font-black tracking-tight">AWENS <span className="text-xs font-extrabold tracking-[.2em] text-sky-300">TOPUP</span></span>
-              </span>
+              <BrandLogo tone="dark" className="h-9 w-auto" />
             )}
             <button type="button" aria-label={t("Fèmen", "Fermer")} onClick={onClose} className="grid h-9 w-9 place-items-center rounded-xl bg-white/10 text-white/90 transition hover:bg-white/20">
               <X className="h-5 w-5" />

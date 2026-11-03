@@ -52,7 +52,7 @@ export default function ProfileWallet({ account, onDeposit, onTransfer, onOpenOr
         {/* Dekorasyon kat la: limyè ak logo an filigran */}
         <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-sky-400/25 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-indigo-500/25 blur-3xl" />
-        <Logo className="pointer-events-none absolute -bottom-6 -right-6 h-40 w-40 opacity-[.08]" />
+        <Logo tone="dark" className="pointer-events-none absolute -bottom-6 -right-6 h-40 w-40 opacity-[.08]" />
 
         <div className="relative flex items-start justify-between gap-3">
           <div>

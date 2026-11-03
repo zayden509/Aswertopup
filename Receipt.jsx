@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ReceiptText, Loader2 } from "lucide-react";
 import { SITE_URL, WHATSAPP_NUMBER } from "./data.js";
 import { t } from "./i18n.js";
+import { A_PATH, WENS_PATH, TOPUP_PATH } from "./Brand.jsx";
 
 // Resi (foto PNG) yon achte, yon depo oswa yon transfè, desine sou telefòn nan:
 // kliyan an ka telechaje l oswa voye l sou WhatsApp. Kòd kat kado yo pa janm ladan l.
@@ -12,16 +13,37 @@ const STAMP = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeStyle: "
 const htg = (n) => `${new Intl.NumberFormat("fr-FR").format(Math.abs(n))} HTG`;
 const phone = WHATSAPP_NUMBER.replace(/^509(\d{2})(\d{2})(\d{4})$/, "+509 $1 $2 $3");
 
-function diamond(ctx, x, y, s) {
-  const g = ctx.createLinearGradient(x, y, x + s, y + s);
-  g.addColorStop(0, "#22d3ee");
-  g.addColorStop(1, "#6366f1");
-  ctx.fillStyle = g;
+// Logo Awens Topup (vèsyon ble a) desine sou resi a. `h` = wotè logo a an piksèl.
+function brandLogo(ctx, x, y, h) {
+  const k = h / 150;
+  ctx.save();
+  ctx.translate(x - 2 * k, y - 10 * k);
+  ctx.scale(k, k);
+  ctx.fillStyle = "#22d3ee";
+  ctx.strokeStyle = "#22d3ee";
+  ctx.lineWidth = 16;
   ctx.beginPath();
-  const p = (px, py) => [x + (px / 64) * s, y + (py / 64) * s];
-  [[18, 8], [46, 8], [60, 24], [32, 58], [4, 24]].forEach(([px, py], i) => (i ? ctx.lineTo(...p(px, py)) : ctx.moveTo(...p(px, py))));
-  ctx.closePath();
-  ctx.fill();
+  ctx.roundRect(12, 20, 130, 130, 28);
+  ctx.stroke();
+  ctx.fill(new Path2D(A_PATH), "evenodd");
+  ctx.fillStyle = "#ffffff";
+  ctx.fill(new Path2D(WENS_PATH));
+  ctx.fillStyle = "#7dd3fc";
+  ctx.fill(new Path2D(TOPUP_PATH));
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineCap = "round";
+  ctx.lineWidth = 7;
+  ctx.stroke(new Path2D("M470 20c40 2 70 22 84 52M452 150c44 8 92-4 120-40"));
+  ctx.fillStyle = "#22d3ee";
+  for (const [tx, ty, r, sc] of [[496, 40.65, 18, 1.55], [548, 84.3, -14, 1.1], [486, 108, 10, 0.85]]) {
+    ctx.save();
+    ctx.translate(tx, ty);
+    ctx.rotate((r * Math.PI) / 180);
+    ctx.scale(sc, sc);
+    ctx.fill(new Path2D("M9 2h22l8 10-19 20L1 12z"));
+    ctx.restore();
+  }
+  ctx.restore();
 }
 
 // Koupe yon tèks long an plizyè liy pou l antre nan lajè a
@@ -61,17 +83,12 @@ export function drawReceipt({ title, amount, status, rows, customer, date }) {
   head.addColorStop(1, "#0c4a6e");
   ctx.fillStyle = head;
   ctx.fillRect(0, 0, W, 170);
-  diamond(ctx, 48, 48, 64);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = `900 44px ${FONT}`;
-  ctx.fillText("AWENS", 128, 98);
-  const awens = ctx.measureText("AWENS").width;
-  ctx.fillStyle = "#38bdf8";
-  ctx.font = `800 20px ${FONT}`;
-  ctx.fillText("T O P U P", 140 + awens, 98);
+  brandLogo(ctx, 48, 36, 84);
   ctx.fillStyle = "#cbd5e1";
   ctx.font = `600 22px ${FONT}`;
-  ctx.fillText(t("Resi", "Reçu"), 128, 132);
+  ctx.textAlign = "right";
+  ctx.fillText(t("Resi", "Reçu"), W - 48, 84);
+  ctx.textAlign = "left";
 
   // Tit, montan, estati
   ctx.fillStyle = "#0f172a";

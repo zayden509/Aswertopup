@@ -1,12 +1,13 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bell, Menu, UserRound, Search, Home, ShoppingCart, Tag, History, Wallet, ArrowRight, Loader2, Share, MoreVertical } from "lucide-react";
 import { CATEGORIES, HOME_SECTIONS, SLIDES, NOTIFICATIONS, categoryLabel } from "./data.js";
-import { waLink, supportMessage, openExternal, Logo, WhatsAppIcon, IconButton, ProductCard, ProductTile, Sheet, LangSwitch } from "./ui.jsx";
+import { waLink, supportMessage, openExternal, WhatsAppIcon, IconButton, ProductCard, ProductTile, Sheet, LangSwitch } from "./ui.jsx";
 import { loadOrders, saveOrder } from "./orders.js";
 import { useAccount } from "./account.js";
 import { buildCatalog } from "./catalog.js";
 import { backend } from "./backend.js";
 import { UserAvatar } from "./Avatar.jsx";
+import { BrandLogo } from "./Brand.jsx";
 import SideMenu from "./SideMenu.jsx";
 import Footer from "./Footer.jsx";
 import { LiveToast } from "./Notifications.jsx";
@@ -511,12 +512,7 @@ export default function App() {
                 <Menu className="h-6 w-6" />
               </IconButton>
               <button type="button" onClick={() => goToTab("home")} className="flex min-w-0 items-center gap-2" aria-label={t("Awens Topup, lakay", "Awens Topup, accueil")}>
-                <Logo className="h-9 w-9 shrink-0 drop-shadow min-[420px]:h-10 min-[420px]:w-10" />
-                {/* Telefòn etwat: TOPUP anba AWENS, pou bouton KR / FR la gen plas */}
-                <span className="flex flex-col gap-0.5 leading-none min-[390px]:flex-row min-[390px]:items-baseline min-[390px]:gap-1 min-[420px]:gap-1.5">
-                  <span className="text-[21px] font-black tracking-tight min-[420px]:text-[26px]">AWENS</span>
-                  <span className="text-[9px] font-extrabold tracking-[.42em] text-sky-500 min-[390px]:text-[10px] min-[390px]:tracking-[.16em] min-[420px]:text-[12px] min-[420px]:tracking-[.2em]">TOPUP</span>
-                </span>
+                <BrandLogo className="h-9 w-auto max-w-[44vw] min-[420px]:h-11" />
               </button>
             </div>
             <div className="flex shrink-0 items-center">

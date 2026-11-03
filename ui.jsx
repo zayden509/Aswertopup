@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { WHATSAPP_NUMBER } from "./data.js";
 import { lang, setLang, t } from "./i18n.js";
+import { LogoMark } from "./Brand.jsx";
 
 /* ============ UTIL ============ */
 export function waLink(text) {
@@ -46,19 +47,9 @@ export function packageName(item) {
 }
 
 /* ============ IKÒN ============ */
-export function Logo({ className = "" }) {
-  return (
-    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
-      <defs>
-        <linearGradient id="aswer-gem" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#22d3ee" />
-          <stop offset="1" stopColor="#6366f1" />
-        </linearGradient>
-      </defs>
-      <path d="M18 8h28l14 16-28 34L4 24z" fill="url(#aswer-gem)" />
-      <path d="M4 24h56M18 8l14 50M46 8 32 58M18 8l-4 16M46 8l4 16" stroke="#fff" strokeOpacity=".55" strokeWidth="2" fill="none" strokeLinejoin="round" />
-    </svg>
-  );
+// Ikòn logo a (kare ak lèt A). Logo konplè a nan Brand.jsx (BrandLogo).
+export function Logo({ className = "", tone = "auto" }) {
+  return <LogoMark className={className} tone={tone} />;
 }
 
 // Dyaman ak koulè, pou kat pake yo

@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { X, Home, ShoppingCart, Wallet, History, Bell, UserRound, PlayCircle, ShieldCheck, Moon, Sun, Download, LogOut, LogIn, ChevronRight, Languages } from "lucide-react";
-import { Logo, WhatsAppIcon, waLink, supportMessage, formatPrice, LangSwitch } from "./ui.jsx";
+import { WhatsAppIcon, waLink, supportMessage, formatPrice, LangSwitch } from "./ui.jsx";
 import { UserAvatar } from "./Avatar.jsx";
+import { BrandLogo } from "./Brand.jsx";
 import { t } from "./i18n.js";
 
 // Meni sou kote a (bouton ☰ anlè agoch)
@@ -42,13 +43,7 @@ export default function SideMenu({ account, tab, dark, onToggleTheme, onClose, o
         style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="flex items-center justify-between gap-3 px-5 pb-3 pt-5">
-          <span className="flex items-center gap-2.5">
-            <Logo className="h-10 w-10" />
-            <span className="leading-none">
-              <span className="block text-xl font-black tracking-tight text-slate-900 dark:text-white">AWENS</span>
-              <span className="block text-[11px] font-extrabold tracking-[.3em] text-sky-500">TOPUP</span>
-            </span>
-          </span>
+          <BrandLogo className="h-11 w-auto" />
           <button type="button" onClick={onClose} aria-label={t("Fèmen meni an", "Fermer le menu")} className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
             <X className="h-5 w-5" />
           </button>

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ShieldCheck, Zap, MessageCircle, ChevronRight, FileText, Lock, UserX, Instagram, Facebook } from "lucide-react";
 import { PAYMENT_METHODS, SOCIAL_LINKS } from "./data.js";
+import { BrandLogo } from "./Brand.jsx";
 import { Logo, Sheet, WhatsAppIcon, waLink, supportMessage, formatWhatsApp } from "./ui.jsx";
 import { t } from "./i18n.js";
 
@@ -121,14 +122,11 @@ export default function Footer({ email, onGo, onTutorial, onRank }) {
       </div>
 
       <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-slate-900 via-[#0b1d3f] to-[#0b2547] p-5 text-white shadow-xl shadow-slate-900/10">
-        <Logo className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 opacity-10" />
+        <Logo tone="dark" className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 opacity-10" />
         <div className="relative flex items-center gap-3">
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/15">
-            <Logo className="h-9 w-9" />
-          </span>
           <div>
-            <p className="text-xl font-black tracking-tight">Awens Topup</p>
-            <p className="text-sm text-sky-200/80">{t("Gaming & Recharges · Ayiti 🇭🇹", "Gaming & Recharges · Haïti 🇭🇹")}</p>
+            <BrandLogo tone="dark" className="h-12 w-auto" />
+            <p className="mt-1.5 text-sm text-sky-200/80">{t("Gaming & Recharges · Ayiti 🇭🇹", "Gaming & Recharges · Haïti 🇭🇹")}</p>
           </div>
         </div>
         <p className="relative mt-4 text-[15px] leading-relaxed text-slate-300">
