@@ -1,19 +1,31 @@
-import React, { useState } from "react";
-import { UserRound, Mail, Lock, User, Loader2, CheckCircle2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { Mail, Lock, User, Loader2, CheckCircle2, X, Eye, EyeOff, Zap, ShieldCheck, Wallet, ArrowLeft, KeyRound } from "lucide-react";
 import { GOOGLE_LOGIN } from "./data.js";
 import { backend, errorText } from "./backend.js";
-import { Sheet } from "./ui.jsx";
+import { Logo } from "./ui.jsx";
 import { t } from "./i18n.js";
 
-const TITLES = { login: t("Konekte", "Connexion"), signup: t("Kreye yon kont", "Créer un compte"), reset: t("Modpas bliye", "Mot de passe oublié") };
+const HEAD = {
+  login: { title: t("Bon retou! 👋", "Bon retour ! 👋"), sub: t("Konekte pou w jwenn Wallet ou ak kòmand ou yo.", "Connectez-vous pour retrouver votre Wallet et vos commandes.") },
+  signup: { title: t("Kreye kont ou ✨", "Créez votre compte ✨"), sub: t("Kont gratis, an 30 segonn. Achte pi vit chak fwa.", "Compte gratuit, en 30 secondes. Achetez plus vite à chaque fois.") },
+  reset: { title: t("Modpas bliye?", "Mot de passe oublié ?"), sub: t("Mete imèl ou, n ap voye yon lyen pou w chanje l.", "Entrez votre e-mail, nous vous enverrons un lien pour le changer.") },
+};
 
-function Field({ id, label, icon: Icon, ...props }) {
+const PERKS = [
+  { icon: Zap, label: t("Livrezon rapid", "Livraison rapide") },
+  { icon: Wallet, label: t("Wallet MonCash", "Wallet MonCash") },
+  { icon: ShieldCheck, label: t("100% an sekirite", "100% sécurisé") },
+];
+
+function Field({ id, label, icon: Icon, trailing, ...props }) {
   return (
     <label htmlFor={id} className="block">
-      <span className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300">{label}</span>
-      <span className="flex items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white px-4 transition focus-within:border-sky-400 dark:border-slate-700 dark:bg-slate-950">
-        <Icon className="h-5 w-5 shrink-0 text-slate-400" />
+      <span className="mb-1.5 block text-[13px] font-semibold text-slate-600 dark:text-slate-300">{label}</span>
+      <span className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-sky-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-sky-400/15 dark:border-slate-700 dark:bg-slate-800/60 dark:focus-within:bg-slate-900">
+        <Icon className="h-5 w-5 shrink-0 text-slate-400 transition group-focus-within:text-sky-500" />
         <input id={id} className="w-full bg-transparent py-3.5 text-base text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-white" {...props} />
+        {trailing}
       </span>
     </label>
   );
@@ -35,9 +47,17 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
+
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   const switchMode = (m) => {
     setMode(m);
@@ -72,93 +92,173 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
 
   const google = async () => {
     setError("");
+    setGoogleBusy(true);
     try {
       await backend.googleSignIn();
       onClose();
     } catch (err) {
       setError(errorText(err));
+    } finally {
+      setGoogleBusy(false);
     }
   };
 
-  return (
-    <Sheet open onClose={onClose} title={TITLES[mode]} icon={<UserRound className="h-6 w-6" />}>
-      {done ? (
-        <div className="py-4 text-center">
-          <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" />
-          <p className="mx-auto mt-3 max-w-sm text-slate-600 dark:text-slate-300">{done}</p>
-          <button type="button" onClick={() => switchMode("login")} className="mt-5 rounded-2xl bg-sky-500 px-6 py-3 font-bold text-white hover:bg-sky-600">
-            {t("Konekte", "Connexion")}
-          </button>
-        </div>
-      ) : (
-        <form onSubmit={submit} className="space-y-4">
-          {mode !== "reset" && (
-            <div className="grid grid-cols-2 gap-1 rounded-2xl bg-slate-100 p-1 dark:bg-slate-800">
-              {["login", "signup"].map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => switchMode(m)}
-                  className={`rounded-xl py-2.5 text-sm font-bold transition ${mode === m ? "bg-white text-slate-900 shadow-sm dark:bg-slate-950 dark:text-white" : "text-slate-500"}`}
-                >
-                  {m === "login" ? t("Konekte", "Connexion") : t("Kreye kont", "Créer un compte")}
-                </button>
+  const head = HEAD[mode];
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label={head.title}>
+      <div className="absolute inset-0 animate-fade-in bg-slate-950/70" onClick={onClose} />
+      <div className="relative flex max-h-[94vh] w-full max-w-md animate-sheet-up flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl dark:bg-slate-900 sm:rounded-[28px]">
+        {/* Anlè: koulè mak la ak avantaj yo */}
+        <div className="relative shrink-0 overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-sky-700 px-6 pb-6 pt-5 text-white">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-sky-400/30 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -left-10 h-48 w-48 rounded-full bg-fuchsia-500/20 blur-3xl" />
+          <div className="relative flex items-center justify-between">
+            {mode === "reset" ? (
+              <button type="button" onClick={() => switchMode("login")} className="-ml-1 flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-sm font-semibold text-white/80 hover:bg-white/10 hover:text-white">
+                <ArrowLeft className="h-4 w-4" /> {t("Retounen", "Retour")}
+              </button>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Logo className="h-8 w-8 drop-shadow" />
+                <span className="text-lg font-black tracking-tight">AWENS <span className="text-xs font-extrabold tracking-[.2em] text-sky-300">TOPUP</span></span>
+              </span>
+            )}
+            <button type="button" aria-label={t("Fèmen", "Fermer")} onClick={onClose} className="grid h-9 w-9 place-items-center rounded-xl bg-white/10 text-white/90 transition hover:bg-white/20">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <h2 className="relative mt-5 text-[26px] font-extrabold leading-tight tracking-tight">{head.title}</h2>
+          <p className="relative mt-1.5 text-[15px] leading-snug text-sky-100/85">{head.sub}</p>
+          {mode === "signup" && (
+            <div className="relative mt-4 flex flex-wrap gap-2">
+              {PERKS.map(({ icon: Icon, label }) => (
+                <span key={label} className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/15">
+                  <Icon className="h-3.5 w-3.5 text-sky-300" /> {label}
+                </span>
               ))}
             </div>
           )}
+        </div>
 
-          {GOOGLE_LOGIN && mode !== "reset" && (
-            <>
-              <button
-                type="button"
-                onClick={google}
-                className="flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-slate-200 py-3 font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                <GoogleIcon /> {t("Kontinye ak Google", "Continuer avec Google")}
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-5 sm:pb-6">
+          {done ? (
+            <div className="py-4 text-center">
+              <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 ring-8 ring-emerald-50/50 dark:bg-emerald-500/10 dark:ring-emerald-500/5">
+                <CheckCircle2 className="h-9 w-9 text-emerald-500" />
+              </span>
+              <p className="mx-auto mt-5 max-w-sm text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">{done}</p>
+              <button type="button" onClick={() => switchMode("login")} className="mt-6 w-full rounded-2xl bg-sky-500 py-3.5 font-bold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 active:scale-[.98]">
+                {t("Retounen pou konekte", "Retour à la connexion")}
               </button>
-              <p className="text-center text-xs font-semibold uppercase tracking-widest text-slate-400">{t("oswa ak imèl", "ou par e-mail")}</p>
-            </>
+            </div>
+          ) : (
+            <form onSubmit={submit} className="space-y-4">
+              {mode !== "reset" && (
+                <div className="relative grid grid-cols-2 rounded-2xl bg-slate-100 p-1 dark:bg-slate-800">
+                  <span
+                    aria-hidden="true"
+                    className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-xl bg-white shadow-sm transition-transform duration-300 ease-out dark:bg-slate-950 ${mode === "signup" ? "translate-x-full" : ""}`}
+                  />
+                  {["login", "signup"].map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => switchMode(m)}
+                      aria-pressed={mode === m}
+                      className={`relative z-10 rounded-xl py-2.5 text-sm font-bold transition-colors ${mode === m ? "text-slate-900 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}
+                    >
+                      {m === "login" ? t("Konekte", "Connexion") : t("Kreye kont", "Créer un compte")}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {GOOGLE_LOGIN && mode !== "reset" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={google}
+                    disabled={googleBusy}
+                    className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-3.5 font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:shadow active:scale-[.98] disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  >
+                    {googleBusy ? <Loader2 className="h-5 w-5 animate-spin" /> : <GoogleIcon />}
+                    {t("Kontinye ak Google", "Continuer avec Google")}
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <span className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{t("oswa ak imèl", "ou par e-mail")}</span>
+                    <span className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+                  </div>
+                </>
+              )}
+
+              {mode === "signup" && (
+                <Field id="auth-name" label={t("Non ou", "Votre nom")} icon={User} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Jean Baptiste" />
+              )}
+              <Field id="auth-email" label={t("Imèl", "E-mail")} icon={Mail} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" inputMode="email" placeholder="ou@gmail.com" />
+              {mode !== "reset" && (
+                <Field
+                  id="auth-password"
+                  label={t("Modpas", "Mot de passe")}
+                  icon={Lock}
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  placeholder={t("Omwen 6 karaktè", "Au moins 6 caractères")}
+                  trailing={(
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? t("Kache modpas la", "Masquer le mot de passe") : t("Montre modpas la", "Afficher le mot de passe")}
+                      className="-mr-1 grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  )}
+                />
+              )}
+
+              {mode === "login" && (
+                <div className="-mt-1 flex justify-end">
+                  <button type="button" onClick={() => switchMode("reset")} className="flex items-center gap-1.5 text-sm font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400">
+                    <KeyRound className="h-4 w-4" /> {t("Ou bliye modpas ou?", "Mot de passe oublié ?")}
+                  </button>
+                </div>
+              )}
+
+              {error && <p className="animate-fade-in rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 ring-1 ring-red-100 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20" role="alert">{error}</p>}
+
+              <button
+                type="submit"
+                disabled={busy}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/30 transition hover:brightness-110 active:scale-[.98] disabled:opacity-60"
+              >
+                {busy && <Loader2 className="h-5 w-5 animate-spin" />}
+                {mode === "login" ? t("Konekte", "Connexion") : mode === "signup" ? t("Kreye kont mwen", "Créer mon compte") : t("Voye lyen an", "Envoyer le lien")}
+              </button>
+
+              {mode !== "reset" && (
+                <p className="text-center text-sm text-slate-500 dark:text-slate-400">
+                  {mode === "login" ? t("Ou poko gen kont?", "Pas encore de compte ?") : t("Ou deja gen kont?", "Déjà un compte ?")}{" "}
+                  <button type="button" onClick={() => switchMode(mode === "login" ? "signup" : "login")} className="font-bold text-sky-600 dark:text-sky-400">
+                    {mode === "login" ? t("Kreye youn", "Créez-en un") : t("Konekte", "Connectez-vous")}
+                  </button>
+                </p>
+              )}
+              {mode === "signup" && (
+                <p className="flex items-center justify-center gap-1.5 text-center text-xs text-slate-400">
+                  <ShieldCheck className="h-3.5 w-3.5" /> {t("Nou pa janm pataje imèl ou.", "Nous ne partageons jamais votre e-mail.")}
+                </p>
+              )}
+            </form>
           )}
-
-          {mode === "signup" && (
-            <Field id="auth-name" label={t("Non ou", "Votre nom")} icon={User} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Jean Baptiste" />
-          )}
-          <Field id="auth-email" label={t("Imèl", "E-mail")} icon={Mail} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="ou@gmail.com" />
-          {mode !== "reset" && (
-            <Field
-              id="auth-password"
-              label={t("Modpas", "Mot de passe")}
-              icon={Lock}
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
-              placeholder={t("Omwen 6 karaktè", "Au moins 6 caractères")}
-            />
-          )}
-
-          {error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-500/10 dark:text-red-300" role="alert">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={busy}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 disabled:opacity-60"
-          >
-            {busy && <Loader2 className="h-5 w-5 animate-spin" />}
-            {mode === "login" ? t("Konekte", "Connexion") : mode === "signup" ? t("Kreye kont mwen", "Créer mon compte") : t("Voye lyen an", "Envoyer le lien")}
-          </button>
-
-          <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-            {mode === "reset" ? (
-              <button type="button" onClick={() => switchMode("login")} className="font-semibold text-sky-600 dark:text-sky-400">{t("Retounen pou konekte", "Retour à la connexion")}</button>
-            ) : (
-              <button type="button" onClick={() => switchMode("reset")} className="font-semibold text-sky-600 dark:text-sky-400">{t("Ou bliye modpas ou?", "Mot de passe oublié ?")}</button>
-            )}
-          </p>
-        </form>
-      )}
-    </Sheet>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
