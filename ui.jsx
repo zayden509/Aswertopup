@@ -73,13 +73,13 @@ export function WhatsAppIcon({ className = "" }) {
 }
 
 /* ============ KOMPOZAN ============ */
-// Bouton KR / FR: lang sit la pou kliyan an (paj la rechaje ak nouvo lang lan)
+// Bouton FR / KR: lang sit la pou kliyan an (paj la rechaje ak nouvo lang lan)
 // `compact`: vèsyon ki pi piti a pou ba anlè a sou telefòn
 export function LangSwitch({ className = "", compact = false }) {
   const current = lang();
   return (
     <div role="group" aria-label={t("Lang", "Langue")} className={`flex shrink-0 rounded-full bg-slate-200/80 p-0.5 font-extrabold dark:bg-slate-800 ${compact ? "text-[10px]" : "text-[11px]"} ${className}`}>
-      {[["kr", "KR", "Kreyòl"], ["fr", "FR", "Français"]].map(([id, short, name]) => (
+      {[["fr", "FR", "Français"], ["kr", "KR", "Kreyòl"]].map(([id, short, name]) => (
         <button
           key={id}
           type="button"

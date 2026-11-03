@@ -1,12 +1,12 @@
-// Lang sit la pou kliyan yo: Kreyòl (default) oswa Franse, ak bouton KR / FR la.
+// Lang sit la pou kliyan yo: Franse (default) oswa Kreyòl, ak bouton FR / KR la.
 // Chak tèks ekri de fwa kote l parèt: t("Kreyòl", "Français"). Panneau admin lan rete an Kreyòl.
 // Lè kliyan an chanje lang, paj la rechaje: tout tèks yo (menm banye yo) pran nouvo lang lan.
 const KEY = "awens.lang";
-let current = "kr";
+let current = "fr";
 try {
-  if (typeof localStorage !== "undefined" && localStorage.getItem(KEY) === "fr") current = "fr";
+  if (typeof localStorage !== "undefined" && localStorage.getItem(KEY) === "kr") current = "kr";
 } catch {
-  // navigatè a pa kenbe anyen: Kreyòl
+  // navigatè a pa kenbe anyen: Franse
 }
 if (typeof document !== "undefined") document.documentElement.lang = current === "fr" ? "fr" : "ht";
 

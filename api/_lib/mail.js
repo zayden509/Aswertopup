@@ -36,19 +36,20 @@ const htg = (n) => `${Number(n || 0).toLocaleString("fr-FR").replace(/ /g, " "
 
 // Koulè chak kalite imèl
 const THEMES = {
-  placed: { color: "#0ea5e9", soft: "#e0f2fe", badge: "Kòmand resevwa", icon: "🛒" },
-  delivered: { color: "#10b981", soft: "#d1fae5", badge: "Livre", icon: "✅" },
-  refused: { color: "#ef4444", soft: "#fee2e2", badge: "Refize", icon: "↩️" },
+  placed: { color: "#0ea5e9", soft: "#e0f2fe", badge: "Commande reçue", icon: "🛒" },
+  delivered: { color: "#10b981", soft: "#d1fae5", badge: "Livrée", icon: "✅" },
+  refused: { color: "#ef4444", soft: "#fee2e2", badge: "Refusée", icon: "↩️" },
   admin: { color: "#6366f1", soft: "#e0e7ff", badge: "Nouvo kòmand", icon: "🔔" },
 };
 
-function detailRows(order, extra = []) {
+// fr: imèl kliyan yo an franse (lang prensipal sit la); imèl admin yo rete an kreyòl
+function detailRows(order, extra = [], fr = true) {
   return [
-    ["Kòmand", order.code],
-    ["Pwodwi", order.product_name],
-    ["Pake", order.package_label],
+    [fr ? "Commande" : "Kòmand", order.code],
+    [fr ? "Produit" : "Pwodwi", order.product_name],
+    [fr ? "Forfait" : "Pake", order.package_label],
     order.player_id ? ["Player ID", order.player_id] : null,
-    order.promo ? ["Kòd pwomo", order.promo] : null,
+    order.promo ? [fr ? "Code promo" : "Kòd pwomo", order.promo] : null,
     ...extra,
     ["Total", htg(order.price)],
   ].filter(Boolean);
@@ -74,7 +75,7 @@ function render({ theme, preheader, title, greeting, lines, rows, highlight, but
 <a href="${esc(button.url)}" style="display:inline-block;background:${t.color};color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;padding:14px 32px;border-radius:999px">${esc(button.label)}</a>
 </td></tr>` : "";
 
-  const html = `<!doctype html><html lang="ht"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${esc(title)}</title></head>
+  const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${esc(title)}</title></head>
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(preheader)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9"><tr><td align="center" style="padding:24px 12px">
@@ -94,7 +95,7 @@ ${highlightHtml}
 <tr><td style="padding:8px 32px 4px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rowsHtml}</table></td></tr>
 ${buttonHtml}
 <tr><td style="padding:18px 32px 28px;color:#94a3b8;font-size:12px;line-height:1.6;text-align:center">
-${footnote ? `${esc(footnote)}<br>` : ""}Awens Topup · Top-up jwèt ak kat kado an Ayiti<br>
+${footnote ? `${esc(footnote)}<br>` : ""}Awens Topup · Recharges de jeux et cartes cadeaux en Haïti<br>
 <a href="${SITE}" style="color:#0ea5e9;text-decoration:none">${esc(SITE.replace(/^https?:\/\//, ""))}</a>
 </td></tr>
 </table></td></tr></table></body></html>`;
@@ -112,7 +113,7 @@ async function send(messages) {
   return { sent: results.filter((r) => r.status === "fulfilled").length };
 }
 
-const hello = (customer) => (customer?.full_name ? `Bonjou ${customer.full_name.split(" ")[0]} 👋` : "Bonjou 👋");
+const hello = (customer) => (customer?.full_name ? `Bonjour ${customer.full_name.split(" ")[0]} 👋` : "Bonjour 👋");
 
 // Nouvo kòmand: imèl pou kliyan an + imèl pou chak admin (adminEmails) ak ADMIN_EMAIL
 export async function sendOrderEmails(order, customer, adminEmails = []) {
@@ -122,19 +123,19 @@ export async function sendOrderEmails(order, customer, adminEmails = []) {
   if (customer?.email) {
     messages.push({
       to: customer.email,
-      subject: `🛒 Kòmand ${order.code} resevwa · Awens Topup`,
+      subject: `🛒 Commande ${order.code} reçue · Awens Topup`,
       ...render({
         theme: "placed",
-        preheader: `${order.product_name} · ${order.package_label} — n ap trete l kounye a.`,
-        title: "Mèsi pou kòmand ou!",
+        preheader: `${order.product_name} · ${order.package_label} — nous la traitons maintenant.`,
+        title: "Merci pour votre commande !",
         greeting: hello(customer),
         lines: [
-          "Nou resevwa kòmand ou a e n ap trete l kounye a. W ap resevwa yon lòt imèl lè l livre.",
-          "Nous avons bien reçu votre commande. Vous recevrez un autre e-mail dès qu'elle sera livrée.",
+          "Nous avons bien reçu votre commande et nous la traitons maintenant. Vous recevrez un autre e-mail dès qu'elle sera livrée.",
+          "Nou resevwa kòmand ou a, n ap trete l kounye a.",
         ],
         rows: detailRows(order),
-        button: { label: "Swiv kòmand mwen", url: `${SITE}/?page=history` },
-        footnote: "Yon kesyon? Reponn imèl sa a oswa ekri nou sou WhatsApp.",
+        button: { label: "Suivre ma commande", url: `${SITE}/?page=history` },
+        footnote: "Une question ? Répondez à cet e-mail ou écrivez-nous sur WhatsApp.",
       }),
     });
   }
@@ -151,7 +152,7 @@ export async function sendOrderEmails(order, customer, adminEmails = []) {
         title: `Nouvo kòmand ${order.code}`,
         greeting: null,
         lines: [`Kliyan: ${customer?.full_name || "-"} · ${customer?.email || "san imèl"}`],
-        rows: detailRows(order),
+        rows: detailRows(order, [], false),
         button: { label: "Louvri Panneau admin", url: `${SITE}/?page=admin` },
         footnote: "Reponn imèl sa a pou w ekri kliyan an dirèkteman.",
       }),
@@ -167,40 +168,40 @@ export async function sendStatusEmail(order, customer) {
     const code = order.delivery_code;
     return send([{
       to: customer.email,
-      subject: `✅ Kòmand ${order.code} livre · Awens Topup`,
+      subject: `✅ Commande ${order.code} livrée · Awens Topup`,
       ...render({
         theme: "delivered",
-        preheader: `${order.product_name} · ${order.package_label} livre!`,
-        title: "Kòmand ou livre! 🎉",
+        preheader: `${order.product_name} · ${order.package_label} livré !`,
+        title: "Votre commande est livrée ! 🎉",
         greeting: hello(customer),
         lines: code
-          ? ["Kòmand ou a livre. Men kòd ou a anba a. Pa bay pèsonn li.", "Votre commande est livrée. Voici votre code ci-dessous."]
-          : ["Kòmand ou a livre sou kont ou. Bon jwèt!", "Votre commande a été livrée sur votre compte. Bon jeu !"],
-        highlight: code ? { label: "Kòd ou / Votre code", value: code, mono: true } : null,
+          ? ["Votre commande est livrée. Voici votre code ci-dessous. Ne le partagez avec personne.", "Kòmand ou a livre. Men kòd ou a anba a."]
+          : ["Votre commande a été livrée sur votre compte. Bon jeu !", "Kòmand ou a livre sou kont ou. Bon jwèt!"],
+        highlight: code ? { label: "Votre code", value: code, mono: true } : null,
         rows: detailRows(order),
-        button: { label: "Achte ankò", url: SITE },
-        footnote: "Mèsi paske w fè Awens Topup konfyans 💙",
+        button: { label: "Acheter à nouveau", url: SITE },
+        footnote: "Merci de votre confiance 💙",
       }),
     }]);
   }
   if (order.status === "refused") {
-    const refunded = order.payment ? null : `${htg(order.price)} retounen nan Wallet ou.`;
+    const refunded = order.payment ? null : `${htg(order.price)} ont été remboursés dans votre Wallet.`;
     return send([{
       to: customer.email,
-      subject: `↩️ Kòmand ${order.code} refize · Awens Topup`,
+      subject: `↩️ Commande ${order.code} refusée · Awens Topup`,
       ...render({
         theme: "refused",
-        preheader: refunded || "Kòmand ou a pa t ka fèt.",
-        title: "Kòmand ou a pa t ka fèt",
+        preheader: refunded || "Votre commande n'a pas pu être effectuée.",
+        title: "Votre commande n'a pas pu être effectuée",
         greeting: hello(customer),
         lines: [
-          `Nou regrèt, kòmand ${order.code} lan refize.${refunded ? ` ${refunded}` : ""}`,
-          "Nous sommes désolés, votre commande a été refusée." + (refunded ? " Le montant a été remboursé dans votre Wallet." : ""),
+          `Nous sommes désolés, la commande ${order.code} a été refusée.${refunded ? ` ${refunded}` : ""}`,
+          `Nou regrèt, kòmand lan refize.${refunded ? " Kòb la retounen nan Wallet ou." : ""}`,
         ],
-        highlight: order.admin_note ? { label: "Rezon / Raison", value: order.admin_note } : null,
-        rows: detailRows(order, refunded ? [["Ranbousman", "Wallet ✅"]] : []),
-        button: { label: "Eseye ankò", url: SITE },
-        footnote: "Yon kesyon? Reponn imèl sa a oswa ekri nou sou WhatsApp.",
+        highlight: order.admin_note ? { label: "Raison", value: order.admin_note } : null,
+        rows: detailRows(order, refunded ? [["Remboursement", "Wallet ✅"]] : []),
+        button: { label: "Réessayer", url: SITE },
+        footnote: "Une question ? Répondez à cet e-mail ou écrivez-nous sur WhatsApp.",
       }),
     }]);
   }
