@@ -108,12 +108,12 @@ function Delta({ now, before, previous }) {
 
 function Stat({ icon: Icon, label, value, sub, tone }) {
   return (
-    <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+    <div className="rounded-3xl bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.06),0_8px_24px_-12px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 dark:bg-slate-900 dark:shadow-none dark:ring-slate-800">
       <div className="flex items-center gap-2">
-        <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${tone}`}><Icon className="h-4 w-4" /></span>
+        <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${tone}`}><Icon className="h-[18px] w-[18px]" /></span>
         <span className="min-w-0 truncate text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</span>
       </div>
-      <p className="mt-2 truncate text-xl font-extrabold text-slate-900 dark:text-white">{value}</p>
+      <p className="mt-2.5 truncate text-2xl font-extrabold tabular-nums tracking-tight text-slate-900 dark:text-white">{value}</p>
       {sub && <p className="truncate text-xs text-slate-500 dark:text-slate-400">{sub}</p>}
     </div>
   );

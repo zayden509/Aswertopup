@@ -7,7 +7,7 @@ import {
 import { PAYMENT_METHODS } from "./data.js";
 import { backend, errorText } from "./backend.js";
 import { StatusChip, ErrorNote, ProductArt, formatPrice, formatDateTime, orderStatus, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
-import { Chips, CopyText, Empty, AdminButton, SectionHead, panel, inputClass, normalize } from "./adminUi.jsx";
+import { Avatar, Chips, CopyText, Empty, AdminButton, SectionHead, panel, inputClass, normalize } from "./adminUi.jsx";
 import { productForPackage, packageNameFixes } from "./catalog.js";
 import { duplicateOf, isPhoneNumber, smsAmount, smsConnected, smsTooOld } from "./depositCheck.js";
 import { isOperatorSender, senderKey } from "./smsParse.js";
@@ -608,24 +608,36 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   return (
     <div className="-mx-4 -mt-2">
       {/* Ba anlè a rete vizib: retounen, tit, wòl ou, rechaje, ak tout seksyon yo */}
-      <div className="sticky top-0 z-30 border-b border-slate-200/80 bg-slate-100/[.97] dark:border-slate-800 dark:bg-slate-950/[.97]" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 pb-2 pt-3">
-          <button type="button" onClick={onBack} aria-label="Retounen nan Paramètres" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold uppercase tracking-[.16em] text-sky-600 dark:text-sky-400">Awens Topup</p>
-            <h1 className="truncate text-lg font-extrabold leading-tight tracking-tight text-slate-900 dark:text-white">Panneau admin</h1>
+      <div className="sticky top-0 z-30 bg-slate-100/[.97] shadow-[0_1px_0_rgba(15,23,42,0.06)] dark:bg-slate-950/[.97] dark:shadow-[0_1px_0_rgba(255,255,255,0.05)]" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+        <div className="mx-auto max-w-3xl px-3 pt-3">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-sky-800 px-3 py-3 text-white shadow-lg shadow-indigo-900/20">
+            <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-sky-400/30 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 left-10 h-32 w-32 rounded-full bg-fuchsia-500/20 blur-3xl" />
+            <div className="relative flex items-center gap-3">
+              <button type="button" onClick={onBack} aria-label="Retounen nan Paramètres" className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white/10 text-white ring-1 ring-white/15 transition hover:bg-white/20 active:scale-95">
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <span className="hidden min-[440px]:block"><Avatar profile={account.profile} size="h-10 w-10 text-sm ring-2 ring-white/30" /></span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[11px] font-bold uppercase tracking-[.16em] text-sky-300">
+                  Bonjou {(account.profile?.full_name || "").split(" ")[0] || "admin"} 👋
+                </p>
+                <h1 className="truncate text-lg font-extrabold leading-tight tracking-tight">Panneau admin</h1>
+              </div>
+              <span
+                title={owner ? "Pwopriyetè" : limited ? "Kòmand" : "Admin"}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 text-xs font-bold ring-1 min-[420px]:px-2.5 ${owner ? "bg-amber-400/15 text-amber-200 ring-amber-300/30" : "bg-emerald-400/15 text-emerald-200 ring-emerald-300/30"}`}
+              >
+                {owner ? <Crown className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
+                <span className="hidden min-[420px]:inline">{owner ? "Pwopriyetè" : limited ? "Kòmand" : "Admin"}</span>
+              </span>
+              <button type="button" onClick={() => setEpoch((e) => e + 1)} aria-label="Rechaje" className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white/10 text-white ring-1 ring-white/15 transition hover:bg-white/20 active:scale-95">
+                <RefreshCw className={`h-[18px] w-[18px] ${loading ? "animate-spin" : ""}`} />
+              </button>
+            </div>
           </div>
-          <span className={`hidden items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold min-[380px]:inline-flex ${owner ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" : "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300"}`}>
-            {owner ? <Crown className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}
-            {owner ? "Pwopriyetè" : limited ? "Kòmand" : "Admin"}
-          </span>
-          <button type="button" onClick={() => setEpoch((e) => e + 1)} aria-label="Rechaje" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800">
-            <RefreshCw className={`h-[18px] w-[18px] ${loading ? "animate-spin" : ""}`} />
-          </button>
         </div>
-        <nav aria-label="Seksyon admin" className="no-scrollbar mx-auto flex max-w-3xl gap-1 overflow-x-auto px-3 pb-2.5">
+        <nav aria-label="Seksyon admin" className="no-scrollbar mx-auto flex max-w-3xl gap-1.5 overflow-x-auto px-3 py-2.5">
           {tabs.map((t) => {
             const active = t.id === tab;
             return (
@@ -634,16 +646,16 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
                 type="button"
                 onClick={() => setTab(t.id)}
                 aria-current={active ? "page" : undefined}
-                className={`flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition ${
+                className={`flex h-10 shrink-0 items-center gap-1.5 rounded-2xl px-3.5 text-sm font-semibold transition active:scale-95 ${
                   active
-                    ? "bg-slate-900 text-white shadow-sm dark:bg-white dark:text-slate-900"
-                    : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+                    ? "bg-gradient-to-r from-sky-500 to-indigo-500 text-white shadow-md shadow-sky-500/25"
+                    : "bg-white text-slate-600 ring-1 ring-slate-200/80 hover:text-slate-900 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800 dark:hover:text-white"
                 }`}
               >
-                <t.Icon className="h-4 w-4" />
+                <t.Icon className={`h-4 w-4 ${active ? "" : "text-sky-500"}`} />
                 {t.label}
                 {badges[t.id] > 0 && (
-                  <span className="min-w-[18px] rounded-full bg-red-500 px-1 text-center text-[11px] font-bold leading-[18px] text-white">{badges[t.id]}</span>
+                  <span className={`min-w-[20px] rounded-full px-1.5 text-center text-[11px] font-bold leading-5 ${active ? "bg-white text-sky-600" : "bg-red-500 text-white"}`}>{badges[t.id]}</span>
                 )}
               </button>
             );
@@ -651,7 +663,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
         </nav>
       </div>
 
-      <div className="mx-auto max-w-3xl space-y-4 px-4 pt-5">
+      <div key={tab} className="mx-auto max-w-3xl animate-page space-y-4 px-4 pt-5">
         <SectionHead title={current.title} sub={subtitles[tab]} />
 
         {tab === "dashboard" && (
