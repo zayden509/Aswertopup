@@ -822,6 +822,10 @@ export function createBackend(config, options = {}) {
 
     adminDeleteSms: (id) => deleteDoc(doc(db, "smsPayments", id)),
 
+    // Mete sa sit la konprann nan yon SMS ajou (montan, kòd…) apre nou fin amelyore lekti a
+    adminUpdateSmsParse: (id, { method, incoming, amount, reference }) =>
+      updateDoc(doc(db, "smsPayments", id), { method, incoming, amount, reference }),
+
     // Dènye fwa sit la resevwa yon SMS ofisyèl NatCash/MonCash (SIM nan konekte nan httpSMS).
     // Dokiman "seen_…" yo pa gen received_at: yo pa parèt nan lis SMS yo.
     adminMarkSmsSeen: (method) => setDoc(doc(db, "smsPayments", `seen_${method}`), { last_at: serverTimestamp() }),

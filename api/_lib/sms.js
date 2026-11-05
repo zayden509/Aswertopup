@@ -174,7 +174,16 @@ async function pullFromHttpsms(backend, ref) {
 // oswa "moncash_003577973060" ak zewo devan), nou li l ankò epi nou mete l nan bon plas li.
 export async function smsFor(backend, ref) {
   const found = (await Promise.all(["natcash", "moncash"].map((m) => backend.adminGetSms(`${m}_${ref}`)))).filter(Boolean);
-  if (found.length) return found;
+  if (found.length) {
+    // SMS ki te anrejistre anvan sit la te konprann montan an (ex. "G155.00"): nou li l ankò
+    return Promise.all(found.map(async (sms) => {
+      if (sms.status !== "new" || (sms.amount && sms.incoming) || !sms.content) return sms;
+      const parsed = await readSms(backend, sms.content, sms.sender, sms.phone);
+      if (!parsed.amount || parsed.reference !== sms.reference || parsed.method !== sms.method) return sms;
+      await backend.adminUpdateSmsParse(sms.id, parsed);
+      return { ...sms, ...parsed };
+    }));
+  }
   for (const old of await backend.adminRecentSms(Date.now() - SMS_MAX_AGE_MS)) {
     if (old.status !== "new" || !String(old.content || "").toUpperCase().replace(/[^A-Z0-9]/g, "").includes(ref)) continue;
     const parsed = await readSms(backend, old.content, old.sender, old.phone);

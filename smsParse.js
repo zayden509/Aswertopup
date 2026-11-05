@@ -5,6 +5,8 @@
 // Egzanp SMS NatCash (soti nan "NATCOM"):
 //   Vous avez encaisse 100 HTG a 18:09 25/10/2026 de JEAN …, code 207685. Votre solde: 1,438.7 HTG.
 //   TransCode: 26102571206784. Merci
+// Egzanp SMS MonCash:
+//   Ou resevwa G155.00 pa MonCash de 50937963111. Txn ID: 003598068116
 import { normalizeReference } from "./depositCheck.js";
 
 const METHODS = [
@@ -42,10 +44,11 @@ const INCOMING = /re[çc]u|resevwa|received|cr[ée]dit|depot|d[ée]p[ôo]t|trans
 // 1,500.00 · 1.500,00 · 1500 · 1500.50
 const NUMBER = String.raw`(\d{1,3}(?:[,.]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)`;
 const CURRENCY = String.raw`(?:HTG|Gdes?\b|gourdes?|G\b)`;
-const AMOUNT_AFTER = new RegExp(String.raw`(?:HTG|Gdes?|gourdes?)\s*:?\s*` + NUMBER, "i");
+// "HTG 155", "Gdes 155", oswa "G155.00" (MonCash: "Ou resevwa G155.00 pa MonCash de …")
+const AMOUNT_AFTER = new RegExp(String.raw`(?:HTG|Gdes?|gourdes?|\bG)\s*:?\s*` + NUMBER, "i");
 const AMOUNT_BEFORE = new RegExp(NUMBER + String.raw`\s*` + CURRENCY, "i");
 // "Votre solde: 1,438.7 HTG" se sa ki rete sou kont lan, pa kòb ou resevwa a
-const BALANCE = new RegExp(String.raw`\b(?:solde|balance|sold)\b[^0-9]{0,30}` + NUMBER + String.raw`\s*` + CURRENCY + "?", "gi");
+const BALANCE = new RegExp(String.raw`\b(?:solde|balance|balans|sold)\b[^0-9]{0,30}` + NUMBER + String.raw`\s*` + CURRENCY + "?", "gi");
 // "Frais: HTG 0.00", "Taxe 0.00 HTG": se pa kòb ou resevwa a non plis
 const FEES = new RegExp(String.raw`\b(?:frais|fees?|taxes?|komisyon)\b[^0-9]{0,15}` + NUMBER + String.raw`\s*` + CURRENCY + "?", "gi");
 
