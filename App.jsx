@@ -10,6 +10,7 @@ import { UserAvatar } from "./Avatar.jsx";
 import { BrandLogo } from "./Brand.jsx";
 import { FaqHost } from "./Faq.jsx";
 import { FlashBanner } from "./Flash.jsx";
+import { seoPageForPath } from "./seoPages.js";
 import SideMenu from "./SideMenu.jsx";
 import Footer from "./Footer.jsx";
 import { LiveToast } from "./Notifications.jsx";
@@ -322,7 +323,8 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Tout");
   // Paj pwodwi a anrejistre nan istorik navigatè a pou bouton "retounen" telefòn nan mache
-  const [productId, setProductId] = useState(() => window.history.state?.product || null);
+  // Paj Google yo (/recharge/free-fire…) louvri pwodwi a dirèkteman
+  const [productId, setProductId] = useState(() => window.history.state?.product || seoPageForPath(window.location.pathname)?.product || null);
   const [localOrders, setLocalOrders] = useState(loadOrders);
   const [panel, setPanel] = useState(null); // "notifications" | "deposit" | "transfer" | "install"
   const [menuOpen, setMenuOpen] = useState(false);
@@ -422,7 +424,13 @@ export default function App() {
   };
   const closeProduct = () => {
     if (window.history.state?.product) window.history.back();
-    else setProductId(null);
+    else {
+      // Kliyan an te rive sou yon paj Google (/recharge/…): adrès la retounen sou paj akèy la
+      if (seoPageForPath(window.location.pathname)) {
+        try { window.history.replaceState(null, "", "/"); } catch {}
+      }
+      setProductId(null);
+    }
   };
   const goToTab = (id) => {
     if (productId) closeProduct();
