@@ -22,6 +22,7 @@ import AdminSms from "./AdminSms.jsx";
 import { AlertsCard, BackupCard, PromosCard, ReportsCard } from "./AdminTools.jsx";
 import { AdminReviews } from "./Reviews.jsx";
 import { ReferralSettingsCard } from "./Referral.jsx";
+import { LoyaltySettingsCard } from "./Loyalty.jsx";
 
 const TABS = [
   { id: "dashboard", label: "Tablo", Icon: LayoutDashboard, title: "Tablo" },
@@ -707,6 +708,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
         {tab === "settings" && (
           <>
             <AdminSettings account={account} owner={owner} onToast={onToast} onTrusted={recheckDeposits} />
+            <LoyaltySettingsCard owner={owner} onToast={onToast} />
             <ReferralSettingsCard owner={owner} onToast={onToast} />
             <AlertsCard owner={owner} onToast={onToast} />
             <BackupCard owner={owner} onToast={onToast} />

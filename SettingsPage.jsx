@@ -11,6 +11,8 @@ import { InviteCard } from "./Referral.jsx";
 import { QrCard, FeesCard } from "./ProfileTabs.jsx";
 import { squarePhoto } from "./image.js";
 import { t } from "./i18n.js";
+import { useLoyalty } from "./Loyalty.jsx";
+import { LOYALTY_KEYS, loyaltyPercent } from "./pricing.js";
 
 export function rankInfo(spent) {
   const current = [...RANKS].reverse().find((r) => spent >= r.min) || null;
@@ -153,6 +155,8 @@ function EditProfileSheet({ account, onClose, onToast }) {
 
 function RankCard({ spent }) {
   const rank = rankInfo(spent);
+  const loyalty = useLoyalty();
+  const myDiscount = loyaltyPercent(spent, loyalty);
   return (
     <section id="rank" className="relative scroll-mt-24 overflow-hidden rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
       <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-violet-400/15 blur-2xl" />
@@ -164,16 +168,23 @@ function RankCard({ spent }) {
           <p className="text-[11px] font-bold uppercase tracking-widest text-violet-500">{t("Pwogram fidelite", "Programme de fidélité")}</p>
           <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{rank.current ? rank.current.name : t("Poko gen rang", "Pas encore de rang")}</p>
           <p className="text-sm text-slate-500 dark:text-slate-400">{formatPrice(spent)} {t("depanse", "dépensés")}</p>
+          {myDiscount > 0 && (
+            <p className="mt-1 inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+              {t(`−${myDiscount}% sou tout achte ou yo`, `−${myDiscount} % sur tous vos achats`)}
+            </p>
+          )}
         </div>
       </div>
       {/* Tout rang yo: sa w genyen deja yo limen */}
       <div className="relative mt-5 grid grid-cols-4 gap-2">
-        {RANKS.map((r) => {
+        {RANKS.map((r, i) => {
           const reached = spent >= r.min;
+          const pct = Number(loyalty[LOYALTY_KEYS[i]]) || 0;
           return (
             <div key={r.name} className={`rounded-2xl px-1 py-2.5 text-center ring-1 transition ${reached ? "bg-violet-50 ring-violet-200 dark:bg-violet-500/10 dark:ring-violet-500/30" : "bg-slate-50 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700"}`}>
               <span className={`block text-xl ${reached ? "" : "opacity-40 grayscale"}`}>{r.emoji}</span>
               <span className={`mt-0.5 block truncate text-[11px] font-bold ${reached ? "text-violet-700 dark:text-violet-300" : "text-slate-400"}`}>{r.name}</span>
+              {pct > 0 && <span className={`mt-0.5 block text-[11px] font-extrabold ${reached ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>−{pct}%</span>}
             </div>
           );
         })}

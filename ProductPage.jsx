@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   ArrowLeft, Info, CheckCircle2, Flame, ShoppingCart, User, CreditCard, Package, Hash, MessageCircle,
-  ShieldCheck, Wallet, Plus, Loader2, AlertTriangle, LogIn, Phone, Zap, Tag,
+  ShieldCheck, Wallet, Plus, Loader2, AlertTriangle, LogIn, Phone, Zap, Tag, Crown,
 } from "lucide-react";
 import { PAYMENT_METHODS, DIRECT_PAYMENT, categoryLabel } from "./data.js";
 import { backend, errorText } from "./backend.js";
@@ -9,6 +9,8 @@ import { Sheet, StepCard, ProductArt, GemIcon, WhatsAppIcon, ErrorNote, formatPr
 import { loadPlayerId, savePlayerId, newOrderId, orderMessage } from "./orders.js";
 import { PayTo, Input } from "./WalletSheets.jsx";
 import { checkPlayerId } from "./playerCheck.js";
+import { useMyLoyalty } from "./Loyalty.jsx";
+import { discounted } from "./pricing.js";
 import { t } from "./i18n.js";
 
 const ID_PATTERN = /^\d{6,15}$/;
@@ -173,7 +175,10 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
     setPromo(null);
     setPromoError("");
   }, [selectedId]);
-  const finalPrice = item ? (promo ? promo.price : item.price) : 0;
+  // Rabè fidelite rang kliyan an (mòd Wallet, san kòd pwomo): menm kalkil ak sèvè a
+  const loyalty = useMyLoyalty(account.profile);
+  const loyaltyOn = Boolean(item) && !promo && loyalty > 0 && !(DIRECT_PAYMENT && payChoice && payChoice !== "wallet");
+  const finalPrice = item ? (promo ? promo.price : loyaltyOn ? discounted(item.price, loyalty) : item.price) : 0;
 
   const applyPromo = async () => {
     setPromoBusy(true);
@@ -580,7 +585,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-900 dark:text-white">{packageName(item)}</p>
                     <p className="text-2xl font-extrabold tabular-nums text-sky-500">
-                      {promo && <span className="mr-2 text-base font-semibold text-slate-400 line-through">{formatPrice(item.price)}</span>}
+                      {(promo || loyaltyOn) && <span className="mr-2 text-base font-semibold text-slate-400 line-through">{formatPrice(item.price)}</span>}
                       {formatPrice(finalPrice)}
                     </p>
                   </div>
@@ -615,6 +620,12 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                 </dl>
                 {walletMode && !directMethod && (
                   <div className="mt-2 space-y-2" data-testid="promo">
+                    {loyaltyOn && (
+                      <p className="flex items-center gap-2 rounded-xl bg-violet-50 px-3.5 py-2.5 text-sm font-semibold text-violet-800 ring-1 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-200 dark:ring-violet-500/30">
+                        <Crown className="h-4 w-4 shrink-0" />
+                        {t(`Rabè fidelite −${loyalty}% (−${formatPrice(item.price - finalPrice)})`, `Remise fidélité −${loyalty} % (−${formatPrice(item.price - finalPrice)})`)}
+                      </p>
+                    )}
                     {promo ? (
                       <p className="flex items-center justify-between gap-3 rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30">
                         <span><Tag className="mr-1.5 inline h-4 w-4" />{promo.code} · −{promo.percent}% (−{formatPrice(promo.discount)})</span>

@@ -49,12 +49,7 @@ import { t } from "./i18n.js";
 export { WHATSAPP_NUMBER, VIDEO_TUTORIAL_URL, GOOGLE_LOGIN, SITE_URL, SOCIAL_LINKS, DIRECT_PAYMENT } from "./config.js";
 
 // Rang kliyan yo selon kantite kòb yo depanse (an goud)
-export const RANKS = [
-  { name: "Bronze", min: 5000, emoji: "🥉" },
-  { name: "Argent", min: 20000, emoji: "🥈" },
-  { name: "Or", min: 50000, emoji: "🥇" },
-  { name: "Diamant", min: 100000, emoji: "💎" },
-];
+export { RANKS } from "./ranks.js";
 
 /* ============ PEMAN ============ */
 // `number` se nimewo kote kliyan yo voye kòb la. Si l vid, sit la di kliyan an

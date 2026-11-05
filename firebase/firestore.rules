@@ -279,6 +279,7 @@ service cloud.firestore {
     // settings/catalog: pwodwi sit la ki kache yo.
     // settings/payments: nimewo MonCash/NatCash kliyan yo voye kòb la (pwopriyetè a sèlman).
     // settings/automation: konfimasyon depo otomatik ak SMS (pwopriyetè a sèlman, admin yo li l).
+    // settings/loyalty: rabè fidelite chak rang, an pousantaj (pwopriyetè a sèlman, tout moun li l).
     match /settings/{id} {
       allow read: if id != 'automation' || isAdmin();
       allow write: if (isFullAdmin() && id == 'catalog'
@@ -288,6 +289,10 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly(['moncash', 'natcash'])
           && validPayAccount(request.resource.data.get('moncash', null))
           && validPayAccount(request.resource.data.get('natcash', null)))
+        || (isOwner() && id == 'loyalty'
+          && exactKeys(['bronze', 'argent', 'or', 'diamant'])
+          && loyaltyValue(request.resource.data.bronze) && loyaltyValue(request.resource.data.argent)
+          && loyaltyValue(request.resource.data.or) && loyaltyValue(request.resource.data.diamant))
         || (isOwner() && id == 'referral'
           && exactKeys(['bonus', 'min_deposit'])
           && request.resource.data.bonus is int && request.resource.data.bonus >= 0 && request.resource.data.bonus <= 5000
@@ -299,6 +304,8 @@ service cloud.firestore {
           && request.resource.data.max_auto is int
           && request.resource.data.max_auto >= 0 && request.resource.data.max_auto <= 100000);
     }
+
+    function loyaltyValue(v) { return v is int && v >= 0 && v <= 20; }
 
     // SMS NatCash/MonCash sèvè a resevwa nan httpSMS (admin yo sèlman; bot sèvè a se yon admin)
     match /smsPayments/{id} {
@@ -468,9 +475,7 @@ service cloud.firestore {
       let after = getAfter(userDoc(me())).data;
       let promo = d.get('promo', null);
       return (promo == null
-          ? exactKeys(['code', 'user_id', 'package_id', 'product_name', 'package_label', 'price',
-                       'player_id', 'status', 'delivery_code', 'admin_note', 'created_at', 'updated_at'])
-            && d.price == pkg.price
+          ? validOrderLoyalty(d, pkg, before.total_spent)
           : exactKeys(['code', 'user_id', 'package_id', 'product_name', 'package_label', 'price',
                        'player_id', 'status', 'delivery_code', 'admin_note', 'created_at', 'updated_at', 'promo', 'list_price'])
             && validOrderPromo(d, pkg))
@@ -485,6 +490,32 @@ service cloud.firestore {
         && after.balance == before.balance - d.price
         && after.total_spent == before.total_spent + d.price
         && after.last_op == {'kind': 'order', 'id': id};
+    }
+
+    // Kòmand san kòd pwomo: pri pake a, oswa pri a mwens rabè fidelite rang kliyan an
+    // (settings/loyalty). Menm kalkil ak pricing.js.
+    function validOrderLoyalty(d, pkg, spent) {
+      let pct = loyaltyPct(spent);
+      return (pct == 0
+          && exactKeys(['code', 'user_id', 'package_id', 'product_name', 'package_label', 'price',
+                        'player_id', 'status', 'delivery_code', 'admin_note', 'created_at', 'updated_at'])
+          && d.price == pkg.price)
+        || (pct > 0
+          && exactKeys(['code', 'user_id', 'package_id', 'product_name', 'package_label', 'price',
+                        'player_id', 'status', 'delivery_code', 'admin_note', 'created_at', 'updated_at', 'list_price', 'loyalty'])
+          && d.list_price == pkg.price && d.loyalty == pct
+          && d.price == pkg.price - math.floor(pkg.price * pct / 100.0));
+    }
+
+    // Rang yo: Bronze 5 000, Argent 20 000, Or 50 000, Diamant 100 000 HTG depanse (ranks.js)
+    function loyaltyPct(spent) {
+      let path = /databases/$(database)/documents/settings/loyalty;
+      let l = exists(path) ? get(path).data : {'bronze': 0, 'argent': 0, 'or': 0, 'diamant': 0};
+      return spent >= 100000 ? l.diamant
+        : spent >= 50000 ? l.or
+        : spent >= 20000 ? l.argent
+        : spent >= 5000 ? l.bronze
+        : 0;
     }
 
     // Yon kòmand ak kòd pwomo: pri a = pri pake a mwens pousantaj la (arondi anba), kòd la aktif,

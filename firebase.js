@@ -15,6 +15,7 @@ import { UserError } from "./errors.js";
 import { t } from "./i18n.js";
 import { dayKey } from "./days.js";
 import { quote } from "./exchange.js";
+import { LOYALTY_KEYS, LOYALTY_MAX, LOYALTY_OFF, discounted, loyaltyPercent } from "./pricing.js";
 import { DEPOSIT_MAX, DEPOSIT_MIN, isPhoneNumber, normalizeReference } from "./depositCheck.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // san 0/O/1/I pou kliyan yo pa konfonn yo
@@ -373,6 +374,13 @@ export function createBackend(config, options = {}) {
           tx.update(promoRef, { uses: promo.uses + 1 });
           tx.set(useRef, { user_id: uid, order_id: orderRef.id, created_at: serverTimestamp() });
         }
+        // Rabè fidelite rang kliyan an (si pa gen kòd pwomo): menm kalkil ak règ Firestore yo
+        let loyalty = 0;
+        if (!promo) {
+          const loyaltySnap = await tx.get(doc(db, "settings", "loyalty"));
+          loyalty = loyaltySnap.exists() ? loyaltyPercent(me.total_spent, loyaltySnap.data()) : 0;
+          if (loyalty > 0) price = discounted(pkg.price, loyalty);
+        }
         if (me.balance < price) throw new UserError(t("Solde ou pa ase. Ajoute kòb nan Wallet ou.", "Solde insuffisant. Ajoutez de l'argent à votre Wallet."));
 
         const order = {
@@ -380,6 +388,7 @@ export function createBackend(config, options = {}) {
           price, player_id: pid, status: "pending", delivery_code: null, admin_note: null,
           created_at: serverTimestamp(), updated_at: serverTimestamp(),
           ...(promo && { promo: promoId, list_price: pkg.price }),
+          ...(loyalty > 0 && { list_price: pkg.price, loyalty }),
         };
         tx.update(userRef(uid), {
           balance: me.balance - price, total_spent: me.total_spent + price, last_op: { kind: "order", id: orderRef.id },
@@ -594,6 +603,22 @@ export function createBackend(config, options = {}) {
         if (text) batch.set(newNotificationRef(order.user_id), notification("order", text[0], text[1], order.code));
       }
       await batch.commit();
+    },
+
+    /* ---------- Rabè fidelite (settings/loyalty) ---------- */
+    // { bronze, argent, or, diamant }: pousantaj rabè chak rang (0 = pa gen rabè)
+    subscribeLoyalty(callback) {
+      return onSnapshot(doc(db, "settings", "loyalty"), (snap) => callback({ ...LOYALTY_OFF, ...(snap.data() || {}) }), (error) => console.error("loyalty", error));
+    },
+
+    async adminSetLoyalty(values) {
+      const data = {};
+      for (const key of LOYALTY_KEYS) {
+        const n = Number(values[key]);
+        if (!Number.isInteger(n) || n < 0 || n > LOYALTY_MAX) throw new UserError(`Chak rabè dwe ant 0 ak ${LOYALTY_MAX}%.`);
+        data[key] = n;
+      }
+      await setDoc(doc(db, "settings", "loyalty"), data);
     },
 
     /* ---------- Parennaj ---------- */
