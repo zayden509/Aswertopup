@@ -7,6 +7,7 @@
 // Si SMTP_USER/SMTP_PASS vid, pa gen imèl ki pati e kòmand yo mache nòmal.
 import nodemailer from "nodemailer";
 import { SITE_URL } from "../../config.js";
+import { depositPush, orderPush, pushTo } from "./push.js";
 
 const cleanEnv = (value) => String(value || "").trim().replace(/^(["'])(.*)\1$/, "$2").trim();
 const user = () => cleanEnv(process.env.SMTP_USER);
@@ -254,16 +255,32 @@ export async function sendDailyReport(adminEmails, lines) {
   }]);
 }
 
-// Voye imèl estati a yon sèl fwa (backend = bot admin). Pa janm voye erè.
+// Kòmand lan livre oswa refize: imèl + notifikasyon push bay kliyan an, yon sèl fwa
+// (backend = bot admin). Pa janm voye erè.
 export async function notifyStatus(backend, orderId) {
   try {
-    if (!mailReady()) return;
     const order = await backend.adminGetOrder(orderId);
-    if (!order || !["delivered", "refused"].includes(order.status) || order.kind === "exchange") return;
+    if (!order || !["delivered", "refused"].includes(order.status)) return;
     if (!(await backend.adminClaimOrderEmail(`${order.id}_${order.status}`))) return;
-    const customer = await backend.adminGetUser(order.user_id);
-    await sendStatusEmail(order, customer);
+    const message = orderPush(order);
+    await Promise.all([
+      mailReady() && order.kind !== "exchange" ? backend.adminGetUser(order.user_id).then((customer) => sendStatusEmail(order, customer)) : null,
+      message ? pushTo(backend, order.user_id, message) : null,
+    ]);
   } catch (error) {
-    console.error("status email", error);
+    console.error("status notify", error);
+  }
+}
+
+// Depo a konfime oswa refize: notifikasyon push bay kliyan an, yon sèl fwa
+export async function notifyDeposit(backend, depositId) {
+  try {
+    const deposit = await backend.adminGetDeposit(depositId);
+    const message = deposit && depositPush(deposit);
+    if (!message) return;
+    if (!(await backend.adminClaimOrderEmail(`dep_${deposit.id}_${deposit.status}`))) return;
+    await pushTo(backend, deposit.user_id, message);
+  } catch (error) {
+    console.error("deposit notify", error);
   }
 }

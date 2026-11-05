@@ -387,6 +387,7 @@ function DepositCard({ deposit, deposits, automation, seen, profile, onToast }) 
     setError("");
     try {
       await backend.adminReviewDeposit(deposit, approve, note);
+      backend.requestDepositNotify(deposit.id);
       // Premye depo yon zanmi envite: bonis parennaj yo
       const bonus = approve && (await backend.adminRewardReferral({ ...deposit, status: "completed" }).catch(() => false));
       onToast(approve ? `${formatPrice(Number(deposit.amount))} ajoute nan Wallet kliyan an.${bonus ? " Bonis parennaj la bay tou." : ""}` : "Depo a refize.");

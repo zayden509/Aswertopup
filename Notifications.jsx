@@ -3,6 +3,7 @@ import { Bell, ShoppingCart, ArrowDownLeft, Send, X, LogIn, MessageSquareText, M
 import { NOTIFICATIONS } from "./data.js";
 import { Sheet, timeAgo } from "./ui.jsx";
 import { t } from "./i18n.js";
+import { PushCard } from "./Push.jsx";
 
 const KINDS = {
   order: [ShoppingCart, "bg-violet-50 text-violet-500 dark:bg-violet-500/10"],
@@ -58,6 +59,7 @@ export function NotificationsSheet({ account, onClose, onLogin, onOpen }) {
           </button>
         </div>
       )}
+      {account.user && <div className="mb-4"><PushCard compact /></div>}
       {account.enabled ? (
         account.notifications.length === 0 ? (
           <p className="py-8 text-center text-slate-500 dark:text-slate-400">{t("Pa gen notifikasyon pou kounye a.", "Aucune notification pour le moment.")}</p>

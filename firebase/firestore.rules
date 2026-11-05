@@ -326,6 +326,15 @@ service cloud.firestore {
       allow read, write: if isFullAdmin();
     }
 
+    // Abònman notifikasyon push chak kliyan (endpoint navigatè a ak 2 kle piblik li yo).
+    // Kliyan an jere pa l; sèvè a (bot admin) li yo pou voye notifikasyon, epi l retire sa ki mouri.
+    match /pushSubs/{uid} {
+      allow read: if signedIn() && (me() == uid || isFullAdmin());
+      allow write: if signedIn() && (me() == uid || isFullAdmin())
+        && request.resource.data.keys().hasOnly(['subs'])
+        && request.resource.data.subs is list && request.resource.data.subs.size() <= 5;
+    }
+
     // Paramèt prive sèvè a (ex. alèt Telegram pwopriyetè a): admin yo sèlman
     match /private/{id} {
       allow read, write: if isFullAdmin();

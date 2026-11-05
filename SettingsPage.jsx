@@ -13,6 +13,7 @@ import { squarePhoto } from "./image.js";
 import { t } from "./i18n.js";
 import { useLoyalty } from "./Loyalty.jsx";
 import { openFaq } from "./Faq.jsx";
+import { PushCard } from "./Push.jsx";
 import { LOYALTY_KEYS, loyaltyPercent } from "./pricing.js";
 
 export function rankInfo(spent) {
@@ -364,6 +365,8 @@ export default function SettingsPage({
           );
         })}
       </div>
+
+      <PushCard onToast={onToast} />
 
       <div className="relative grid grid-cols-3 rounded-2xl bg-slate-200/70 p-1 dark:bg-slate-800" role="tablist">
         <span

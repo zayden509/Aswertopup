@@ -12,6 +12,7 @@ import { DEPOSIT_MAX, DEPOSIT_MIN, SMS_MAX_AGE_MS, duplicateOf, isPhoneNumber, n
 import { isOperatorSender, methodForReceiver, parsePaymentSms, senderKey } from "../../smsParse.js";
 import { accountNumbers } from "../../paymentAccounts.js";
 import { alert, checkSmsSilence } from "./alert.js";
+import { notifyDeposit } from "./mail.js";
 import { httpsmsApiReady, httpsmsMessagesWithCode } from "./httpsmsApi.js";
 
 export { senderKey };
@@ -105,6 +106,7 @@ export async function tryConfirm(backend, sms, deposit) {
     await backend.adminReviewDeposit(deposit, true, `Konfime otomatikman (SMS ${method}).`);
     // Premye depo yon zanmi envite: bonis parennaj yo (si règ yo pa pèmèt li, depo a rete konfime)
     await backend.adminRewardReferral({ ...deposit, status: "completed" }).catch((error) => console.error("referral", error));
+    await notifyDeposit(backend, deposit.id);
     return { confirmed: true };
   } catch (error) {
     await backend.adminReleaseSms(sms.id).catch(() => {});

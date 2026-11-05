@@ -152,3 +152,12 @@ test("se admin konplè yo sèlman ki mete pwomo flash la", async () => {
   await assertSucceeds(setDoc(doc(as(OWNER), "settings", "flash"), flash));
   await assertSucceeds(getDoc(doc(env.unauthenticatedContext().firestore(), "settings", "flash")));
 });
+
+test("notifikasyon push: chak kliyan jere pa l sèlman, kle sèvè a rete prive", async () => {
+  const sub = { subs: [{ endpoint: "https://push.example/1", p256dh: "k", auth: "a" }] };
+  await assertSucceeds(setDoc(doc(as(ALICE), "pushSubs", ALICE), sub));
+  await assertFails(setDoc(doc(as(ALICE), "pushSubs", BOB), sub));
+  await assertFails(getDoc(doc(as(BOB), "pushSubs", ALICE)));
+  await assertFails(setDoc(doc(as(ALICE), "pushSubs", ALICE), { subs: Array(6).fill(sub.subs[0]) }));
+  await assertFails(getDoc(doc(as(ALICE), "private", "push")));
+});

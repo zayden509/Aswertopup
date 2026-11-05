@@ -797,6 +797,21 @@ export function createBackend(config, options = {}) {
       }
     },
 
+    // Admin nan fin konfime oswa refize yon depo: sèvè a voye notifikasyon push la bay kliyan an
+    async requestDepositNotify(depositId) {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        if (!token) return;
+        await fetch("/api/order-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ depositId }),
+        });
+      } catch {
+        // notifikasyon an pa obligatwa
+      }
+    },
+
     // Admin nan fin livre oswa refize yon kòmand: sèvè a voye yon imèl bay kliyan an
     async requestOrderEmail(orderId) {
       try {
@@ -1068,6 +1083,40 @@ export function createBackend(config, options = {}) {
     },
 
     /* ---------- Alèt Telegram (private/alerts) ---------- */
+    /* ---------- Notifikasyon push (telefòn) ---------- */
+    // Abònman push telefòn kliyan an (pushSubs/{uid}): youn pa aparèy, 5 maksimòm
+    async savePushSubscription(sub) {
+      const uid = currentUid();
+      const ref = doc(db, "pushSubs", uid);
+      const json = sub.toJSON ? sub.toJSON() : sub;
+      const item = { endpoint: String(json.endpoint), p256dh: String(json.keys?.p256dh || ""), auth: String(json.keys?.auth || "") };
+      const snap = await getDoc(ref);
+      const subs = (snap.exists() ? snap.data().subs || [] : []).filter((s) => s.endpoint !== item.endpoint);
+      await setDoc(ref, { subs: [...subs, item].slice(-5) });
+    },
+
+    async removePushSubscription(endpoint) {
+      const uid = currentUid();
+      const ref = doc(db, "pushSubs", uid);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) return;
+      await setDoc(ref, { subs: (snap.data().subs || []).filter((s) => s.endpoint !== endpoint) });
+    },
+
+    // Sèvè a (bot admin): abònman yon kliyan, epi retire sa ki pa mache ankò
+    async adminGetPushSubs(uid) {
+      const snap = await getDoc(doc(db, "pushSubs", uid));
+      return snap.exists() ? snap.data().subs || [] : [];
+    },
+    adminSetPushSubs: (uid, subs) => setDoc(doc(db, "pushSubs", uid), { subs }),
+
+    // Kle VAPID sèvè a (private/push): sèvè a kreye yo premye fwa
+    async adminGetPushKeys() {
+      const snap = await getDoc(doc(db, "private", "push"));
+      return snap.exists() ? snap.data() : null;
+    },
+    adminSetPushKeys: (keys) => setDoc(doc(db, "private", "push"), keys),
+
     async adminGetAlerts() {
       const snap = await getDoc(doc(db, "private", "alerts"));
       return snap.exists() ? snap.data() : {};

@@ -3,7 +3,7 @@
 // - Fichye /assets/ yo (non yo chanje chak vèsyon): kopi telefòn nan an premye.
 // - Foto yo: kopi telefòn nan touswit, epi mete l ajou an kachèt.
 // - /api/ ak Firebase pa janm sou kopi: kòb ak kòmand yo toujou an dirèk.
-const VERSION = "awens-v1";
+const VERSION = "awens-v2";
 const PAGES = `${VERSION}-pages`;
 const ASSETS = `${VERSION}-assets`;
 const IMAGES = `${VERSION}-images`;
@@ -73,4 +73,36 @@ self.addEventListener("fetch", (event) => {
       return hit || fresh;
     })());
   }
+});
+
+// Notifikasyon push: sèvè a voye { title, body, url, tag }
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { title: "Awens Topup", body: event.data?.text() || "" };
+  }
+  event.waitUntil(self.registration.showNotification(data.title || "Awens Topup", {
+    body: data.body || "",
+    icon: "/icon-192.png",
+    badge: "/favicon-48.png",
+    tag: data.tag || undefined,
+    data: { url: data.url || "/" },
+  }));
+});
+
+// Peze notifikasyon an: louvri sit la (oswa fenèt ki deja louvri a) sou bon paj la
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data?.url || "/", self.location.origin).href;
+  event.waitUntil((async () => {
+    const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const win = wins.find((w) => new URL(w.url).origin === self.location.origin);
+    if (win) {
+      await win.focus();
+      return win.navigate(url).catch(() => {});
+    }
+    return self.clients.openWindow(url);
+  })());
 });
