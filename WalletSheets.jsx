@@ -7,6 +7,7 @@ import { openTutorial as openGuide } from "./Tutorial.jsx";
 import { usePaymentMethods } from "./payments.js";
 import { Sheet, ErrorNote, waLink, supportMessage, openExternal, formatPrice, copyText } from "./ui.jsx";
 import { t } from "./i18n.js";
+import { DEPOSIT_MIN } from "./depositCheck.js";
 
 export function Input({ id, label, icon: Icon, hint, ...props }) {
   return (
@@ -182,7 +183,7 @@ const CODE_PROBLEMS = {
 function codeProblemText(found) {
   if (found.status === "amount") {
     const sum = formatPrice(Number(found.amount));
-    return t(`Nou jwenn peman ${sum} ou a, men yon depo dwe ant 50 ak 100 000 HTG. Ekri nou sou WhatsApp, n ap ranje l pou ou.`, `Nous avons trouvé votre paiement de ${sum}, mais un dépôt doit être entre 50 et 100 000 HTG. Écrivez-nous sur WhatsApp, nous allons régler cela.`);
+    return t(`Nou jwenn peman ${sum} ou a, men yon depo dwe ant ${DEPOSIT_MIN} ak 100 000 HTG. Ekri nou sou WhatsApp, n ap ranje l pou ou.`, `Nous avons trouvé votre paiement de ${sum}, mais un dépôt doit être entre ${DEPOSIT_MIN} et 100 000 HTG. Écrivez-nous sur WhatsApp, nous allons régler cela.`);
   }
   if (found.status === "blocked") return t(`Ou mete 5 kòd ki pa bon. Eseye ankò nan ${found.wait_minutes || 30} minit.`, `Vous avez saisi 5 codes incorrects. Réessayez dans ${found.wait_minutes || 30} minutes.`);
   const text = CODE_PROBLEMS[found.status] || CODE_PROBLEMS["not-found"];

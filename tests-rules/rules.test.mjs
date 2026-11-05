@@ -161,3 +161,18 @@ test("notifikasyon push: chak kliyan jere pa l sèlman, kle sèvè a rete prive"
   await assertFails(setDoc(doc(as(ALICE), "pushSubs", ALICE), { subs: Array(6).fill(sub.subs[0]) }));
   await assertFails(getDoc(doc(as(ALICE), "private", "push")));
 });
+
+test("depo minimòm lan se 25 HTG", async () => {
+  const db = as(ALICE);
+  const deposit = (id, amount, ref) => {
+    const batch = writeBatch(db);
+    batch.set(doc(db, "deposits", id), {
+      user_id: ALICE, amount, method: "moncash", reference: ref, sender_phone: null, status: "pending",
+      admin_note: null, created_at: serverTimestamp(), updated_at: serverTimestamp(),
+    });
+    batch.set(doc(db, "depositRefs", `moncash_${ref}`), { deposit_id: id, user_id: ALICE });
+    return batch.commit();
+  };
+  await assertFails(deposit("d1", 24, "1111111111"));
+  await assertSucceeds(deposit("d2", 25, "2222222222"));
+});

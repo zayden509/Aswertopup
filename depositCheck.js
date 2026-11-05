@@ -3,7 +3,7 @@
 
 // Yon SMS ki rive plis pase 24 è anvan (oswa apre) depo a se yon ansyen tranzaksyon: pa otomatik
 // Montan yon depo (an goud): menm limit ak règ Firestore yo (validNewDeposit)
-export const DEPOSIT_MIN = 50;
+export const DEPOSIT_MIN = 25;
 export const DEPOSIT_MAX = 100000;
 
 export const SMS_MAX_AGE_MS = 24 * 3600 * 1000;

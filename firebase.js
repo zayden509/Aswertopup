@@ -479,7 +479,7 @@ export function createBackend(config, options = {}) {
       const uid = currentUid();
       const value = Number(amount);
       if (!Number.isInteger(value)) throw new UserError(t("Mete montan an san vigil (egzanp 1000).", "Entrez un montant sans virgule (exemple 1000)."));
-      if (value < DEPOSIT_MIN || value > DEPOSIT_MAX) throw new UserError(t("Montan an dwe ant 50 ak 100 000 HTG.", "Le montant doit être entre 50 et 100 000 HTG."));
+      if (value < DEPOSIT_MIN || value > DEPOSIT_MAX) throw new UserError(t(`Montan an dwe ant ${DEPOSIT_MIN} ak 100 000 HTG.`, `Le montant doit être entre ${DEPOSIT_MIN} et 100 000 HTG.`));
       if (!METHOD_NAMES[method]) throw new UserError(t("Mòd peman sa a pa egziste.", "Ce mode de paiement n'existe pas."));
       const ref = normalizeReference(reference);
       if (!/^[A-Z0-9]{6,40}$/.test(ref)) throw new UserError(t("Mete ID tranzaksyon an (sèlman lèt ak chif, omwen 6).", "Entrez l'ID de transaction (lettres et chiffres, au moins 6)."));

@@ -3,6 +3,7 @@ import { Share2, Copy, Loader2, ArrowDownLeft, Send, ShoppingCart, RotateCcw, Sh
 import { SITE_URL } from "./data.js";
 import { Logo, copyText } from "./ui.jsx";
 import { t } from "./i18n.js";
+import { DEPOSIT_MIN } from "./depositCheck.js";
 
 // Lyen kòd QR la: lè yon moun eskane l ak kamera li, sit la louvri ak "Envoyer de l'argent" pare
 export const payLink = (code) => `${SITE_URL}/?pay=${code}`;
@@ -66,7 +67,7 @@ const FEES = [
     icon: ArrowDownLeft,
     tone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
     title: t("Depo MonCash / NatCash", "Dépôt MonCash / NatCash"),
-    rows: [[t("Minimòm", "Minimum"), "50 HTG"], [t("Maksimòm", "Maximum"), t("100 000 HTG pa depo", "100 000 HTG par dépôt")], [t("Frè Awens Topup", "Frais Awens Topup"), "0 HTG"]],
+    rows: [[t("Minimòm", "Minimum"), `${DEPOSIT_MIN} HTG`], [t("Maksimòm", "Maximum"), t("100 000 HTG pa depo", "100 000 HTG par dépôt")], [t("Frè Awens Topup", "Frais Awens Topup"), "0 HTG"]],
     note: t("Mete kòd tranzaksyon an sèlman: sit la jwenn montan an epi kòb la antre otomatikman. Yon kòd sèvi yon sèl fwa, nan 24 è.", "Entrez seulement le code de transaction : le site trouve le montant et l'argent arrive automatiquement. Un code ne sert qu'une fois, sous 24 h."),
   },
   {

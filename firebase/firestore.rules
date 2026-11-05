@@ -664,7 +664,7 @@ service cloud.firestore {
       return exactKeys(['user_id', 'amount', 'method', 'reference', 'sender_phone', 'status',
                         'admin_note', 'created_at', 'updated_at'])
         && d.user_id == me() && d.status == 'pending' && d.admin_note == null
-        && d.amount is int && d.amount >= 50 && d.amount <= 100000
+        && d.amount is int && d.amount >= 25 && d.amount <= 100000
         && d.method in ['moncash', 'natcash']
         && d.reference is string && d.reference.matches('^[A-Z0-9]{4,40}$')
         && optString(d.sender_phone, 20)

@@ -12,6 +12,7 @@ import { checkPlayerId } from "./playerCheck.js";
 import { useMyLoyalty } from "./Loyalty.jsx";
 import { discounted } from "./pricing.js";
 import { t } from "./i18n.js";
+import { DEPOSIT_MIN } from "./depositCheck.js";
 
 const ID_PATTERN = /^\d{6,15}$/;
 
@@ -227,8 +228,8 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
   // Sinon: Wallet si solde a ase, oswa MonCash/NatCash dirèkteman.
   const payWith = DIRECT_PAYMENT ? payChoice ?? (loggedIn && item && missing > 0 ? payment.id : "wallet") : "wallet";
   const directMethod = PAYMENT_METHODS.find((m) => m.id === payWith) || null;
-  // Depo a ranpli ak sa k manke a (omwen 50 HTG, minimòm yon depo)
-  const topUp = () => onDeposit(Math.max(50, missing));
+  // Depo a ranpli ak sa k manke a (omwen minimòm yon depo)
+  const topUp = () => onDeposit(Math.max(DEPOSIT_MIN, missing));
 
   // Bouton anba a: li di kliyan an egzakteman sa k manke
   let action = { text: "Acheter", run: () => { setError(""); setOrderId(newOrderId()); setConfirming(true); } };
