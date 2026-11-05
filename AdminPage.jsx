@@ -2,12 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, ShieldCheck, Crown, Check, X, Loader2, RefreshCw, PackageCheck, Clock, Search,
   LayoutDashboard, ShoppingBag, ArrowDownLeft, Users, Package, MessageSquareText, Zap, Settings,
-  CircleCheck, TriangleAlert, Ban, CircleHelp,
+  CircleCheck, TriangleAlert, Ban, CircleHelp, Menu,
 } from "lucide-react";
+import { BrandLogo } from "./Brand.jsx";
 import { PAYMENT_METHODS } from "./data.js";
 import { backend, errorText } from "./backend.js";
 import { StatusChip, ErrorNote, ProductArt, formatPrice, formatDateTime, orderStatus, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
-import { Avatar, Chips, CopyText, Empty, AdminButton, SectionHead, panel, inputClass, normalize } from "./adminUi.jsx";
+import { Avatar, Chips, CopyText, Empty, AdminButton, panel, inputClass, normalize } from "./adminUi.jsx";
 import { productForPackage, packageNameFixes } from "./catalog.js";
 import { duplicateOf, isPhoneNumber, smsAmount, smsConnected, smsTooOld } from "./depositCheck.js";
 import { isOperatorSender, senderKey } from "./smsParse.js";
@@ -36,6 +37,14 @@ const TABS = [
   { id: "auto", label: "Otomatik", Icon: Zap, title: "Livrezon otomatik" },
   { id: "settings", label: "Paramèt", Icon: Settings, title: "Paramèt" },
 ];
+// Meni an, an gwoup
+const NAV_GROUPS = [
+  { label: "Chak jou", ids: ["dashboard", "orders", "deposits", "customers"] },
+  { label: "Boutik", ids: ["catalog", "messages", "auto"] },
+  { label: "Administrasyon", ids: ["team", "settings"] },
+];
+// Rakousi anlè ekran telefòn nan
+const QUICK = ["dashboard", "orders", "deposits", "customers"];
 // Sa yon admin "kòmand sèlman" wè (règ Firestore yo bloke rès la pou li)
 const ORDERS_ONLY_TABS = ["orders", "customers"];
 
@@ -514,6 +523,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   const limited = isOrdersOnly(account.profile);
   const tabs = limited ? TABS.filter((t) => ORDERS_ONLY_TABS.includes(t.id)) : TABS;
   const [selectedTab, setTab] = useState(limited ? "orders" : "dashboard");
+  const [menuOpen, setMenuOpen] = useState(false);
   const tab = tabs.some((t) => t.id === selectedTab) ? selectedTab : tabs[0].id;
   const [orders, setOrders] = useState([]);
   const [deposits, setDeposits] = useState([]);
@@ -641,66 +651,135 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
     settings: "Nimewo peman ak depo otomatik",
   };
 
+  const role = owner ? "Pwopriyetè" : limited ? "Kòmand sèlman" : "Admin";
+  const pick = (id) => {
+    setTab(id);
+    setMenuOpen(false);
+    window.scrollTo({ top: 0 });
+  };
+  // Meni seksyon yo: agoch sou gwo ekran, nan yon tiwa (☰) sou telefòn
+  const nav = (
+    <nav aria-label="Seksyon admin" className="space-y-5">
+      {NAV_GROUPS.map((group) => {
+        const items = tabs.filter((t) => group.ids.includes(t.id));
+        if (!items.length) return null;
+        return (
+          <div key={group.label}>
+            <p className="mb-1.5 px-3 text-[11px] font-bold uppercase tracking-[.16em] text-slate-400 dark:text-slate-500">{group.label}</p>
+            <ul className="space-y-0.5">
+              {items.map((t) => {
+                const active = t.id === tab;
+                return (
+                  <li key={t.id}>
+                    <button
+                      type="button"
+                      onClick={() => pick(t.id)}
+                      aria-current={active ? "page" : undefined}
+                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold transition ${
+                        active
+                          ? "bg-sky-500 text-white shadow-md shadow-sky-500/25"
+                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white"
+                      }`}
+                    >
+                      <t.Icon className={`h-5 w-5 shrink-0 ${active ? "" : "text-slate-400"}`} />
+                      <span className="min-w-0 flex-1 truncate">{t.label}</span>
+                      {badges[t.id] > 0 && (
+                        <span className={`min-w-[22px] rounded-full px-1.5 text-center text-xs font-bold leading-[22px] ${active ? "bg-white text-sky-600" : "bg-red-500 text-white"}`}>{badges[t.id]}</span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+    </nav>
+  );
+  const identity = (
+    <div className="flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <Avatar profile={me} size="h-10 w-10 text-sm" />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-bold text-slate-900 dark:text-white">{me?.full_name || me?.email}</span>
+        <span className={`inline-flex items-center gap-1 text-xs font-semibold ${owner ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+          {owner ? <Crown className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />} {role}
+        </span>
+      </span>
+    </div>
+  );
+  const backButton = (
+    <button type="button" onClick={onBack} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white">
+      <ArrowLeft className="h-4 w-4" /> Retounen sou sit la
+    </button>
+  );
+
   return (
-    <div className="-mx-4 -mt-2">
-      {/* Ba anlè a rete vizib: retounen, tit, wòl ou, rechaje, ak tout seksyon yo */}
-      <div className="sticky top-0 z-30 bg-slate-100/[.97] shadow-[0_1px_0_rgba(15,23,42,0.06)] dark:bg-slate-950/[.97] dark:shadow-[0_1px_0_rgba(255,255,255,0.05)]" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-        <div className="mx-auto max-w-3xl px-3 pt-3">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-sky-800 px-3 py-3 text-white shadow-lg shadow-indigo-900/20">
-            <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-sky-400/30 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-16 left-10 h-32 w-32 rounded-full bg-fuchsia-500/20 blur-3xl" />
-            <div className="relative flex items-center gap-3">
-              <button type="button" onClick={onBack} aria-label="Retounen nan Paramètres" className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white/10 text-white ring-1 ring-white/15 transition hover:bg-white/20 active:scale-95">
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <span className="hidden min-[440px]:block"><Avatar profile={account.profile} size="h-10 w-10 text-sm ring-2 ring-white/30" /></span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[11px] font-bold uppercase tracking-[.16em] text-sky-300">
-                  Bonjou {(account.profile?.full_name || "").split(" ")[0] || "admin"} 👋
-                </p>
-                <h1 className="truncate text-lg font-extrabold leading-tight tracking-tight">Panneau admin</h1>
-              </div>
-              <span
-                title={owner ? "Pwopriyetè" : limited ? "Kòmand" : "Admin"}
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 text-xs font-bold ring-1 min-[420px]:px-2.5 ${owner ? "bg-amber-400/15 text-amber-200 ring-amber-300/30" : "bg-emerald-400/15 text-emerald-200 ring-emerald-300/30"}`}
-              >
-                {owner ? <Crown className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
-                <span className="hidden min-[420px]:inline">{owner ? "Pwopriyetè" : limited ? "Kòmand" : "Admin"}</span>
-              </span>
-              <button type="button" onClick={() => setEpoch((e) => e + 1)} aria-label="Rechaje" className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white/10 text-white ring-1 ring-white/15 transition hover:bg-white/20 active:scale-95">
-                <RefreshCw className={`h-[18px] w-[18px] ${loading ? "animate-spin" : ""}`} />
+    <div className="-mx-4 lg:flex lg:min-h-screen">
+      {/* Gwo ekran: meni an rete agoch */}
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col gap-5 overflow-y-auto border-r border-slate-200/80 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950 lg:flex">
+        <BrandLogo className="mx-2 mt-1 h-9 w-auto self-start" />
+        {identity}
+        <div className="flex-1">{nav}</div>
+        {backButton}
+      </aside>
+
+      {/* Telefòn: tiwa a ak meni an */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Meni admin">
+          <div className="absolute inset-0 animate-fade-in bg-slate-950/60" onClick={() => setMenuOpen(false)} />
+          <aside className="absolute inset-y-0 left-0 flex w-[82%] max-w-[300px] animate-slide-in-left flex-col gap-5 overflow-y-auto bg-slate-50 p-4 shadow-2xl dark:bg-slate-950" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}>
+            <div className="flex items-center justify-between">
+              <BrandLogo className="ml-2 h-9 w-auto" />
+              <button type="button" onClick={() => setMenuOpen(false)} aria-label="Fèmen meni an" className="grid h-10 w-10 place-items-center rounded-xl bg-white text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+                <X className="h-5 w-5" />
               </button>
             </div>
-          </div>
+            {identity}
+            <div className="flex-1">{nav}</div>
+            {backButton}
+          </aside>
         </div>
-        <nav aria-label="Seksyon admin" className="no-scrollbar mx-auto flex max-w-3xl gap-1.5 overflow-x-auto px-3 py-2.5">
-          {tabs.map((t) => {
-            const active = t.id === tab;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTab(t.id)}
-                aria-current={active ? "page" : undefined}
-                className={`flex h-10 shrink-0 items-center gap-1.5 rounded-2xl px-3.5 text-sm font-semibold transition active:scale-95 ${
-                  active
-                    ? "bg-gradient-to-r from-sky-500 to-indigo-500 text-white shadow-md shadow-sky-500/25"
-                    : "bg-white text-slate-600 ring-1 ring-slate-200/80 hover:text-slate-900 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800 dark:hover:text-white"
-                }`}
-              >
-                <t.Icon className={`h-4 w-4 ${active ? "" : "text-sky-500"}`} />
-                {t.label}
-                {badges[t.id] > 0 && (
-                  <span className={`min-w-[20px] rounded-full px-1.5 text-center text-[11px] font-bold leading-5 ${active ? "bg-white text-sky-600" : "bg-red-500 text-white"}`}>{badges[t.id]}</span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
+      )}
 
-      <div key={tab} className="mx-auto max-w-3xl animate-page space-y-4 px-4 pt-5">
-        <SectionHead title={current.title} sub={subtitles[tab]} />
+      <div className="min-w-0 flex-1">
+        {/* Ba anlè a: meni (telefòn), seksyon an, rechaje */}
+        <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-slate-100/[.97] dark:border-slate-800 dark:bg-slate-950/[.97]" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+          <div className="mx-auto flex max-w-4xl items-center gap-2 px-3 py-2.5 lg:px-6">
+            <button type="button" onClick={() => setMenuOpen(true)} aria-label="Louvri meni admin lan" className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800 lg:hidden">
+              <Menu className="h-5 w-5" />
+              {(badges.orders || 0) + (badges.deposits || 0) > 0 && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-red-500 ring-2 ring-slate-100 dark:ring-slate-950" />}
+            </button>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-bold uppercase tracking-[.16em] text-sky-600 dark:text-sky-400">Panneau admin</p>
+              <p className="flex items-center gap-1.5 truncate text-lg font-extrabold leading-tight text-slate-900 dark:text-white">
+                {current && <current.Icon className="h-5 w-5 shrink-0 text-slate-400" />} {current?.title}
+              </p>
+            </div>
+            <button type="button" onClick={() => setEpoch((e) => e + 1)} aria-label="Rechaje" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800">
+              <RefreshCw className={`h-[18px] w-[18px] ${loading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
+          {/* Telefòn: rakousi pou sa k pi itil yo (Kòmand, Depo) san louvri meni an */}
+          <div className="no-scrollbar mx-auto flex max-w-4xl gap-1.5 overflow-x-auto px-3 pb-2.5 lg:hidden">
+            {tabs.filter((t) => QUICK.includes(t.id)).map((t) => {
+              const active = t.id === tab;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => pick(t.id)}
+                  className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition ${active ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900" : "bg-white text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800"}`}
+                >
+                  <t.Icon className="h-4 w-4" /> {t.label}
+                  {badges[t.id] > 0 && <span className="min-w-[18px] rounded-full bg-red-500 px-1 text-center text-[11px] font-bold leading-[18px] text-white">{badges[t.id]}</span>}
+                </button>
+              );
+            })}
+          </div>
+        </header>
+
+      <div key={tab} className="mx-auto max-w-4xl animate-page space-y-4 px-4 pb-10 pt-5 lg:px-6">
+        {subtitles[tab] && <p className="text-sm text-slate-500 dark:text-slate-400">{subtitles[tab]}</p>}
 
         {tab === "dashboard" && (
           <>
@@ -750,6 +829,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
             <BackupCard owner={owner} onToast={onToast} />
           </>
         )}
+      </div>
       </div>
     </div>
   );

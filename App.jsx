@@ -549,7 +549,7 @@ export default function App() {
         </header>
       )}
 
-      <main className={`mx-auto max-w-3xl px-4 pt-2 ${adminView ? "pb-16" : "pb-36"}`}>
+      <main className={`mx-auto px-4 ${adminView ? "max-w-none pb-0 pt-0" : "max-w-3xl pb-36 pt-2"}`}>
         <Suspense fallback={pageSpinner}>
         <div key={product ? `p-${product.id}` : tab} className="animate-page">
         {product?.exchange && (
