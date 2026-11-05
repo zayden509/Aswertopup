@@ -34,15 +34,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <!-- Polis la pa bloke paj la: tèks la parèt touswit, Inter ranplase l lè l rive -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" media="print" id="font-css" />
   <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" /></noscript>
-  <script>
-    // Aplike tèm nan anvan React chaje pou paj la pa flache
-    try {
-      var t = localStorage.getItem("aswer-theme");
-      if (t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches)) document.documentElement.classList.add("dark");
-    } catch (e) {}
-  </script>
+  <script src="/theme.js"></script>
 </head>
 <body class="bg-slate-100 dark:bg-slate-950">
   <!-- Logo a parèt touswit pandan sit la ap chaje (React ranplase l) -->
