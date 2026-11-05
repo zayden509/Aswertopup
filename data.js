@@ -34,10 +34,14 @@ import moncashImg from "./img/moncash.jpg";
 import natcashImg from "./img/natcash.jpg";
 import moncashGuide from "./img/guide-moncash.jpg";
 import natcashGuide from "./img/guide-natcash.jpg";
-import bannerTutoriel from "./img/banners/tutoriel.jpg";
-import bannerFreeFire from "./img/banners/free-fire.jpg";
-import bannerPeman from "./img/banners/peman.jpg";
-import bannerSipo from "./img/banners/sipo.jpg";
+import bannerTutorielKr from "./img/banners/tutoriel.jpg";
+import bannerFreeFireKr from "./img/banners/free-fire.jpg";
+import bannerPemanKr from "./img/banners/peman.jpg";
+import bannerSipoKr from "./img/banners/sipo.jpg";
+import bannerTutorielFr from "./img/banners/tutoriel-fr.jpg";
+import bannerFreeFireFr from "./img/banners/free-fire-fr.jpg";
+import bannerPemanFr from "./img/banners/peman-fr.jpg";
+import bannerSipoFr from "./img/banners/sipo-fr.jpg";
 import { t } from "./i18n.js";
 
 /* ============ KONFIGIRASYON ============ */
@@ -190,7 +194,7 @@ export const SLIDES = [
   {
     emoji: "🔔",
     title: t("Tutoriel kijan pou w top up?", "Tutoriel : comment recharger ?"),
-    image: bannerTutoriel,
+    image: t(bannerTutorielKr, bannerTutorielFr),
     text: t("Videyo sa a se pou nenpòt rechaj ak lòt jwèt sou sit la.", "Cette vidéo vaut pour toutes les recharges et tous les jeux du site."),
     button: "Video Tutoriel",
     action: "video",
@@ -199,7 +203,7 @@ export const SLIDES = [
   {
     emoji: "🔥",
     title: t("Dyaman Free Fire", "Diamants Free Fire"),
-    image: bannerFreeFire,
+    image: t(bannerFreeFireKr, bannerFreeFireFr),
     text: t("Rechaje dyaman ou yo, livrezon an kèk minit sèlman.", "Rechargez vos diamants, livraison en quelques minutes."),
     button: t("Achte kounye a", "Acheter maintenant"),
     action: "product:free-fire",
@@ -208,7 +212,7 @@ export const SLIDES = [
   {
     emoji: "💳",
     title: t("Peye an goud", "Payez en gourdes"),
-    image: bannerPeman,
+    image: t(bannerPemanKr, bannerPemanFr),
     text: t("Peye ak MonCash oswa NatCash, san kat bank, 24h/24.", "Payez avec MonCash ou NatCash, sans carte bancaire, 24h/24."),
     button: t("Kijan pou m peye?", "Comment payer ?"),
     action: "payment",
@@ -217,7 +221,7 @@ export const SLIDES = [
   {
     emoji: "💬",
     title: t("Ou bezwen èd?", "Besoin d'aide ?"),
-    image: bannerSipo,
+    image: t(bannerSipoKr, bannerSipoFr),
     text: t("Ekip Awens Topup la la pou reponn ou sou WhatsApp.", "L'équipe Awens Topup vous répond sur WhatsApp."),
     button: t("Kontakte nou", "Nous contacter"),
     action: "whatsapp",
