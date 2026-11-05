@@ -1,15 +1,18 @@
 import React, { useState } from "react";
-import { Search, Send, Loader2, ShieldCheck, Wallet, ShoppingBag, ArrowDownLeft, CalendarDays } from "lucide-react";
+import { Search, Send, Loader2, Gift, ShieldCheck, Wallet, ShoppingBag, ArrowDownLeft, CalendarDays } from "lucide-react";
 import { backend, errorText } from "./backend.js";
 import { Sheet, StatusChip, ErrorNote, formatPrice, formatDate, formatDateTime, orderStatus, DEPOSIT_STATUS } from "./ui.jsx";
 import { rankInfo } from "./SettingsPage.jsx";
 import { Avatar, Chips, CopyChip, Empty, Field, inputClass, normalize, number } from "./adminUi.jsx";
 
+const DAY = 86400000;
 const SORTS = [
   { id: "new", label: "Nouvo yo", by: (a, b) => String(b.created_at).localeCompare(String(a.created_at)) },
   { id: "spent", label: "Plis depanse", by: (a, b) => b.total_spent - a.total_spent },
   { id: "balance", label: "Plis kòb", by: (a, b) => b.balance - a.balance },
   { id: "admins", label: "Admin yo", by: (a, b) => String(a.email).localeCompare(String(b.email)), filter: (p) => p.is_admin },
+  // Kliyan ki te deja achte, men ki pa achte anyen depi 30 jou (kòmand 31 dènye jou yo chaje)
+  { id: "away", label: "Pa tounen (30 j)", by: (a, b) => b.total_spent - a.total_spent, filter: (p, ctx) => Number(p.total_spent) > 0 && !p.is_admin && !ctx.recent.has(p.id) },
 ];
 const PAGE = 50;
 
@@ -140,6 +143,45 @@ function CustomerSheet({ profile, orders, deposits, onClose, onToast }) {
   );
 }
 
+// Voye yon kòd pwomo pa imèl bay kliyan ki pa tounen yo (100 pi gwo kliyan yo nan lis la)
+function WinbackCard({ customers, onToast }) {
+  const [code, setCode] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const targets = customers.slice(0, 100);
+
+  const send = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const sent = await backend.adminSendWinback(targets.map((p) => p.id), code, message);
+      onToast(`${sent} imèl voye.`);
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="rounded-3xl bg-gradient-to-br from-violet-50 to-sky-50 p-4 ring-1 ring-violet-200 dark:from-violet-500/10 dark:to-sky-500/10 dark:ring-violet-500/30">
+      <p className="flex items-center gap-2 font-bold text-slate-900 dark:text-white"><Gift className="h-5 w-5 text-violet-500" /> Fè yo tounen</p>
+      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+        Voye yon imèl ak yon kòd pwomo bay {number.format(targets.length)} kliyan sa yo. Kreye kòd la anvan nan Pwodwi → Kòd pwomo.
+      </p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-[160px_1fr]">
+        <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} maxLength={20} placeholder="KÒD (egz: RETOU10)" className={`${inputClass} font-mono`} aria-label="Kòd pwomo" />
+        <input value={message} onChange={(e) => setMessage(e.target.value)} maxLength={300} placeholder="Mesaj (opsyonèl, an franse)" className={inputClass} aria-label="Mesaj" />
+      </div>
+      <ErrorNote>{error}</ErrorNote>
+      <button type="button" onClick={send} disabled={busy || code.length < 3} className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-500 py-3 font-bold text-white shadow-md disabled:opacity-50">
+        {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />} Voye imèl yo
+      </button>
+    </section>
+  );
+}
+
 export default function AdminCustomers({ profiles, orders, deposits, onToast }) {
   const [search, setSearch] = useState("");
   const [sortId, setSortId] = useState("new");
@@ -148,8 +190,9 @@ export default function AdminCustomers({ profiles, orders, deposits, onToast }) 
   const sort = SORTS.find((s) => s.id === sortId);
   const q = normalize(search.trim());
 
+  const recent = new Set(orders.filter((o) => Date.now() - Date.parse(o.created_at) < 30 * DAY).map((o) => o.user_id));
   const list = Object.values(profiles)
-    .filter((p) => !sort.filter || sort.filter(p))
+    .filter((p) => !sort.filter || sort.filter(p, { recent }))
     .filter((p) => !q || normalize(`${p.full_name} ${p.email} ${p.wallet_code}`).includes(q))
     .sort(sort.by);
   const open = openId ? profiles[openId] : null;
@@ -162,6 +205,7 @@ export default function AdminCustomers({ profiles, orders, deposits, onToast }) 
       </label>
       <Chips options={SORTS} value={sortId} onChange={(id) => { setSortId(id); setShown(PAGE); }} label="Lòd" />
       <p className="px-1 text-sm text-slate-500 dark:text-slate-400">{number.format(list.length)} kliyan</p>
+      {sortId === "away" && list.length > 0 && <WinbackCard customers={list} onToast={onToast} />}
 
       {list.length === 0 ? (
         <Empty>Pa gen kliyan ki koresponn.</Empty>

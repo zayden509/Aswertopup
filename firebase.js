@@ -907,8 +907,8 @@ export function createBackend(config, options = {}) {
     // Rapò: kòmand ak depo ki fèt ant 2 dat
     async adminPeriodData(from, to) {
       const range = (name) => getDocs(query(collection(db, name), where("created_at", ">=", from), where("created_at", "<", to), orderBy("created_at", "asc")));
-      const [orders, deposits] = await Promise.all([range("orders"), range("deposits")]);
-      return { orders: orders.docs.map(toPlain), deposits: deposits.docs.map(toPlain) };
+      const [orders, deposits, users] = await Promise.all([range("orders"), range("deposits"), range("users")]);
+      return { orders: orders.docs.map(toPlain), deposits: deposits.docs.map(toPlain), newCustomers: users.size };
     },
 
     // Nimewo MonCash/NatCash ki nan Paramèt ({} si pwopriyetè a poko chanje yo)
@@ -1033,6 +1033,29 @@ export function createBackend(config, options = {}) {
     },
 
     // Admin konplè (pa "kòmand sèlman"): ka chanje paramèt FazerCards yo, depo yo…
+    async adminGetPromo(code) {
+      const snap = await getDoc(doc(db, "promos", code));
+      return snap.exists() ? snap.data() : null;
+    },
+
+    // Panneau admin → Kliyan "Pa tounen": imèl ak yon kòd pwomo (sèvè a voye yo)
+    async adminSendWinback(uids, code, message) {
+      const token = await auth.currentUser?.getIdToken();
+      let res;
+      try {
+        res = await fetch("/api/winback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ uids, code, message }),
+        });
+      } catch {
+        throw new UserError("Pa gen koneksyon ak sèvè a. Eseye ankò.");
+      }
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) throw new UserError(data?.error || `Sèvè a pa reponn (HTTP ${res.status}).`);
+      return data.sent;
+    },
+
     async adminIsFullAdmin(uid) {
       const snap = await getDoc(userRef(uid));
       return snap.exists() && snap.data().is_admin === true && snap.data().admin_role !== "orders";

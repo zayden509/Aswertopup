@@ -59,6 +59,37 @@ const SUPPLIER_STATUS = {
   error: ["Pa t ka voye l bay FazerCards", "text-red-600 dark:text-red-400"],
 };
 
+// Rezon refi ki deja ekri (kliyan an wè yo, an franse, lang prensipal sit la): yon sèl klik
+const ORDER_REASONS = [
+  "Player ID incorrect. Vérifiez votre ID et commandez à nouveau.",
+  "Compte du joueur introuvable ou région non compatible.",
+  "Forfait temporairement indisponible. Réessayez plus tard.",
+  "Commande en double : votre autre commande a été livrée.",
+];
+const DEPOSIT_REASONS = [
+  "Transaction introuvable. Vérifiez l'ID de transaction dans votre SMS.",
+  "Le montant reçu ne correspond pas au dépôt.",
+  "Cet ID de transaction a déjà été utilisé.",
+  "Paiement envoyé au mauvais numéro.",
+];
+
+function QuickReasons({ reasons, value, onPick }) {
+  return (
+    <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5">
+      {reasons.map((r) => (
+        <button
+          key={r}
+          type="button"
+          onClick={() => onPick(r)}
+          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition active:scale-95 ${value === r ? "bg-red-600 text-white ring-red-600" : "bg-white text-slate-600 ring-slate-200 hover:bg-red-50 hover:text-red-700 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700"}`}
+        >
+          {r.split(/[.:]/)[0]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // Detay yon kat (Kliyan, Kòmand, Player ID…): etikèt agoch, valè adwat
 function Detail({ label, children }) {
   return (
@@ -258,6 +289,7 @@ function OrderCard({ order, profile, product, auto, limited, onLink, onToast }) 
                   className={`${inputClass} font-mono`}
                 />
               )}
+              {mode === "refuse" && <QuickReasons reasons={ORDER_REASONS} value={note} onPick={setNote} />}
               <input
                 id={`note-${order.id}`}
                 value={note}
@@ -387,6 +419,7 @@ function DepositCard({ deposit, deposits, automation, seen, profile, onToast }) 
         <div className="space-y-2 border-t border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/30">
           <p className="text-sm text-slate-500 dark:text-slate-400">Verifye nan {method?.name} ou ke tranzaksyon sa a rive anvan w konfime.</p>
           <DepositCheck deposit={deposit} deposits={deposits} automation={automation} seen={seen} onBadNote={() => setNote(BAD_REFERENCE_NOTE)} />
+          <QuickReasons reasons={DEPOSIT_REASONS} value={note} onPick={setNote} />
           <input
             id={`dnote-${deposit.id}`}
             value={note}

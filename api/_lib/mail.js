@@ -40,6 +40,8 @@ const THEMES = {
   delivered: { color: "#10b981", soft: "#d1fae5", badge: "Livrée", icon: "✅" },
   refused: { color: "#ef4444", soft: "#fee2e2", badge: "Refusée", icon: "↩️" },
   admin: { color: "#6366f1", soft: "#e0e7ff", badge: "Nouvo kòmand", icon: "🔔" },
+  report: { color: "#0ea5e9", soft: "#e0f2fe", badge: "Rapò", icon: "📊" },
+  gift: { color: "#8b5cf6", soft: "#ede9fe", badge: "Cadeau", icon: "🎁" },
 };
 
 // fr: imèl kliyan yo an franse (lang prensipal sit la); imèl admin yo rete an kreyòl
@@ -206,6 +208,50 @@ export async function sendStatusEmail(order, customer) {
     }]);
   }
   return { sent: 0 };
+}
+
+// Kliyan ki pa achte depi lontan: yon imèl ak yon kòd pwomo pou fè l tounen
+export async function sendWinbackEmail(customer, { code, percent, message }) {
+  if (!mailReady() || !customer?.email) return { sent: 0, skipped: "setup" };
+  return send([{
+    to: customer.email,
+    subject: `🎁 ${percent ? `-${percent}% ` : ""}rien que pour vous · Awens Topup`,
+    ...render({
+      theme: "gift",
+      preheader: message || "Un cadeau vous attend sur Awens Topup.",
+      title: "Vous nous manquez ! 💙",
+      greeting: hello(customer),
+      lines: [
+        message || "Cela fait un moment ! Voici un code promo pour votre prochaine recharge.",
+        "Nou sonje w! Men yon kòd pwomo pou pwochen rechaj ou.",
+      ],
+      highlight: { label: "Votre code promo", value: code, mono: true },
+      rows: percent ? [["Remise", `-${percent} %`]] : [],
+      button: { label: "J'en profite", url: SITE },
+      footnote: "Entrez le code au moment de payer, avant l'achat.",
+    }),
+  }]);
+}
+
+// Rezime chak jou a (menm tèks ak mesaj Telegram lan) pou admin yo
+export async function sendDailyReport(adminEmails, lines) {
+  const to = [...new Set([...adminEmails, ...extraAdmins()].map((e) => e.toLowerCase()))];
+  if (!mailReady() || !to.length) return { sent: 0 };
+  const day = new Intl.DateTimeFormat("fr-FR", { dateStyle: "full", timeZone: "America/Port-au-Prince" }).format(new Date());
+  return send([{
+    to: to.join(", "),
+    subject: `📊 Rapò jounen an · ${day}`,
+    ...render({
+      theme: "report",
+      preheader: lines.slice(1, 3).join(" "),
+      title: "Rapò 24 dènye è yo",
+      greeting: null,
+      lines: lines.filter((l) => l && !l.startsWith("📊")),
+      rows: [],
+      button: { label: "Louvri Panneau admin", url: `${SITE}/?page=admin` },
+      footnote: day,
+    }),
+  }]);
 }
 
 // Voye imèl estati a yon sèl fwa (backend = bot admin). Pa janm voye erè.
