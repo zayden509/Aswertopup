@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import {
   Award, Mail, Copy, Smartphone, Moon, Sun, ShieldCheck, LogOut, ChevronRight, Settings, Share, MoreVertical, Camera, Pencil,
-  Wallet, ShoppingBag, Plus, Send, Bell, PlayCircle, Loader2, Trash2, User, CalendarDays, Languages,
+  Wallet, ShoppingBag, Plus, Send, Bell, PlayCircle, HelpCircle, Loader2, Trash2, User, CalendarDays, Languages,
 } from "lucide-react";
 import { RANKS } from "./data.js";
 import { backend, errorText } from "./backend.js";
@@ -12,6 +12,7 @@ import { QrCard, FeesCard } from "./ProfileTabs.jsx";
 import { squarePhoto } from "./image.js";
 import { t } from "./i18n.js";
 import { useLoyalty } from "./Loyalty.jsx";
+import { openFaq } from "./Faq.jsx";
 import { LOYALTY_KEYS, loyaltyPercent } from "./pricing.js";
 
 export function rankInfo(spent) {
@@ -235,7 +236,7 @@ export default function SettingsPage({
     { label: t("Depoze", "Déposer"), icon: Plus, onClick: onDeposit, tone: "emerald" },
     { label: t("Voye", "Envoyer"), icon: Send, onClick: onTransfer, tone: "indigo" },
     { label: t("Notifikasyon", "Notifications"), icon: Bell, onClick: onNotifications, badge: account.unread, tone: "amber" },
-    { label: "Tutoriel", icon: PlayCircle, onClick: onTutorial, tone: "rose" },
+    { label: "FAQ", icon: HelpCircle, onClick: openFaq, tone: "rose" },
     { label: t("Sipò", "Support"), icon: WhatsAppIcon, href: waLink(supportMessage(t("Bonjou Awens Topup, mwen bezwen èd.", "Bonjour Awens Topup, j'ai besoin d'aide."), profile)), tone: "emerald" },
     profile.is_admin
       ? { label: "Admin", icon: ShieldCheck, onClick: onAdmin, tone: "slate" }

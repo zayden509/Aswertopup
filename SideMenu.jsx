@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
-import { X, Home, ShoppingCart, Wallet, History, Bell, UserRound, PlayCircle, ShieldCheck, Moon, Sun, Download, LogOut, LogIn, ChevronRight, Languages } from "lucide-react";
+import { X, Home, ShoppingCart, Wallet, History, Bell, UserRound, PlayCircle, HelpCircle, ShieldCheck, Moon, Sun, Download, LogOut, LogIn, ChevronRight, Languages } from "lucide-react";
 import { WhatsAppIcon, waLink, supportMessage, formatPrice, LangSwitch } from "./ui.jsx";
 import { UserAvatar } from "./Avatar.jsx";
 import { BrandLogo } from "./Brand.jsx";
+import { openFaq } from "./Faq.jsx";
 import { t } from "./i18n.js";
 
 // Meni sou kote a (bouton ☰ anlè agoch)
@@ -31,6 +32,7 @@ export default function SideMenu({ account, tab, dark, onToggleTheme, onClose, o
     { id: "history", label: "Mes commandes", icon: History },
     { id: "notifications", label: "Notifications", icon: Bell, badge: account.unread, run: () => { onClose(); onNotifications(); } },
     { id: "settings", label: "Mon profil", icon: UserRound },
+    { id: "faq", label: t("Kesyon souvan (FAQ)", "Questions fréquentes"), icon: HelpCircle, run: () => { onClose(); openFaq(); } },
     { id: "tutorial", label: "Aide & tutoriel", icon: PlayCircle, run: () => { onClose(); onTutorial(); } },
     ...(profile?.is_admin ? [{ id: "admin", label: "Panneau admin", icon: ShieldCheck }] : []),
   ];

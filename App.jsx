@@ -8,6 +8,8 @@ import { buildCatalog } from "./catalog.js";
 import { backend } from "./backend.js";
 import { UserAvatar } from "./Avatar.jsx";
 import { BrandLogo } from "./Brand.jsx";
+import { FaqHost } from "./Faq.jsx";
+import { FlashBanner } from "./Flash.jsx";
 import SideMenu from "./SideMenu.jsx";
 import Footer from "./Footer.jsx";
 import { LiveToast } from "./Notifications.jsx";
@@ -578,6 +580,7 @@ export default function App() {
               </>
             ) : (
               <>
+                <FlashBanner onToast={setToast} onOpenProduct={(id) => { const p = catalog.find((x) => x.id === id); if (p) openProduct(p); }} />
                 <div className="mt-5"><Carousel onAction={handleSlideAction} /></div>
                 {HOME_SECTIONS.map((s, i) => (
                   <ProductRail key={s.category} section={s} index={i} catalog={catalog} prices={account.prices} onOpen={openProduct} onSeeAll={seeAll} />
@@ -712,6 +715,7 @@ export default function App() {
       {auth && account.enabled && !signedIn && <AuthSheet initialMode={auth} onClose={() => setAuth(null)} />}
       </Suspense>
 
+      <FaqHost />
       {live && <LiveToast notification={live} onOpen={() => openNotification(live)} onClose={closeLive} />}
       {toast && (
         <div className="fixed inset-x-4 top-20 z-[60] mx-auto max-w-sm rounded-2xl bg-slate-900 px-4 py-3 text-center text-sm font-medium text-white shadow-xl dark:bg-white dark:text-slate-900" role="status">

@@ -108,8 +108,10 @@ export function OrderSheet({ order, catalog = PRODUCTS, profile, onClose, onToas
           return (
             <li key={s} className="flex flex-1 items-center last:flex-none">
               <span className="flex flex-col items-center gap-1">
-                <span className={`grid h-8 w-8 place-items-center rounded-full text-white ${done ? (bad ? "bg-red-500" : "bg-emerald-500") : "bg-slate-200 dark:bg-slate-700"}`}>
-                  {done ? <Check className="h-4 w-4" /> : <span className="h-2 w-2 rounded-full bg-white/80" />}
+                <span className={`relative grid h-8 w-8 place-items-center rounded-full text-white ${done ? (bad ? "bg-red-500" : "bg-emerald-500") : "bg-slate-200 dark:bg-slate-700"}`}>
+                  {/* Etap ki an kou a klere pandan kòmand lan poko livre */}
+                  {i === reached && !bad && s !== "delivered" && <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/60" />}
+                  {done ? <Check className="relative h-4 w-4" /> : <span className="h-2 w-2 rounded-full bg-white/80" />}
                 </span>
                 <span className={`text-xs font-semibold ${done ? "text-slate-800 dark:text-slate-100" : "text-slate-400"}`}>{stepLabel[s]}</span>
               </span>
@@ -155,6 +157,23 @@ export function OrderSheet({ order, catalog = PRODUCTS, profile, onClose, onToas
         <ReceiptButton className="mt-4" receipt={() => orderReceipt(order, profile)} name={`resi-${order.code}.png`} onToast={onToast} />
       )}
     </Sheet>
+  );
+}
+
+// Ti ba pwogrè pou kòmand ki poko livre yo (li chanje an dirèk)
+function MiniProgress({ status }) {
+  const pct = { unpaid: 20, pending: 40, processing: 75 }[status] || 0;
+  return (
+    <span className="mt-2 block">
+      <span className="block h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+        <span className="relative block h-full overflow-hidden rounded-full bg-gradient-to-r from-sky-400 to-indigo-500 transition-[width] duration-700" style={{ width: `${pct}%` }}>
+          <span className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+        </span>
+      </span>
+      <span className="mt-1 block text-[11px] font-semibold text-sky-600 dark:text-sky-400">
+        {status === "processing" ? t("N ap livre l kounye a…", "Livraison en cours…") : t("Kòmand lan ap trete…", "Commande en traitement…")}
+      </span>
+    </span>
   );
 }
 
@@ -217,6 +236,7 @@ function AccountHistory({ account, onShop, onOpenOrder }) {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-bold text-slate-900 dark:text-white">{o.product_name}</span>
                   <span className="block truncate text-sm text-slate-500 dark:text-slate-400">{o.package_label} · {formatDate(o.created_at)}</span>
+                  {["unpaid", "pending", "processing"].includes(o.status) && <MiniProgress status={o.status} />}
                 </span>
                 <span className="flex shrink-0 flex-col items-end gap-1">
                   <span className="font-bold tabular-nums text-slate-900 dark:text-white">{formatPrice(Number(o.price))}</span>

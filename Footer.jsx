@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ShieldCheck, Zap, MessageCircle, ChevronRight, FileText, Lock, UserX, Instagram, Facebook } from "lucide-react";
 import { PAYMENT_METHODS, SOCIAL_LINKS } from "./data.js";
 import { BrandLogo } from "./Brand.jsx";
+import { openFaq } from "./Faq.jsx";
 import { Logo, Sheet, WhatsAppIcon, waLink, supportMessage, formatWhatsApp } from "./ui.jsx";
 import { t } from "./i18n.js";
 
@@ -155,6 +156,7 @@ export default function Footer({ email, onGo, onTutorial, onRank }) {
           <h3 className="mb-1 text-xs font-bold uppercase tracking-[.18em] text-slate-400">{t("Sipò", "Support")}</h3>
           <ul>
             <LinkRow onClick={() => window.open(waLink(supportMessage(t("Bonjou Awens Topup, mwen bezwen èd.", "Bonjour Awens Topup, j'ai besoin d'aide."), email && { email })), "_blank", "noopener,noreferrer")}>{t("Sant èd", "Centre d'aide")}</LinkRow>
+            <LinkRow onClick={openFaq}>FAQ</LinkRow>
             <LinkRow onClick={onTutorial}>Tutoriel</LinkRow>
             <LinkRow onClick={() => onGo("wallet")}>{t("Kijan pou peye", "Comment payer")}</LinkRow>
             <LinkRow onClick={onRank}>{t("Pwogram fidelite", "Programme de fidélité")}</LinkRow>

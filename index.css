@@ -23,6 +23,9 @@ body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-
 .animate-fade-in { animation: fade-in 0.2s ease-out; }
 .animate-sheet-up { animation: sheet-up 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .animate-slide-in-left { animation: slide-in-left 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+/* Ba pwogrè kòmand yo: yon limyè ki pase sou li */
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+.animate-shimmer { animation: shimmer 1.6s ease-in-out infinite; }
 /* Chanjman paj: yon ti glisman dous */
 /* opacity sèlman: yon transform ta deplase bouton "fixed" yo pandan animasyon an */
 @keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
@@ -30,6 +33,6 @@ body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-
 html { scroll-behavior: smooth; }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-slide-down, .animate-fade-in, .animate-sheet-up, .animate-slide-in-left, .animate-page { animation: none; }
+  .animate-slide-down, .animate-fade-in, .animate-sheet-up, .animate-slide-in-left, .animate-page, .animate-shimmer { animation: none; }
   html { scroll-behavior: auto; }
 }

@@ -605,6 +605,25 @@ export function createBackend(config, options = {}) {
       await batch.commit();
     },
 
+    /* ---------- Pwomo ak kontè (settings/flash) ---------- */
+    subscribeFlash(callback) {
+      return onSnapshot(doc(db, "settings", "flash"), (snap) => callback(snap.exists() ? toPlain(snap) : null), (error) => console.error("flash", error));
+    },
+
+    async adminSetFlash({ active, title, text, endsAt, productId, code }) {
+      const end = new Date(endsAt);
+      if (active && !String(title || "").trim()) throw new UserError("Mete yon tit pou pwomo a.");
+      if (active && !(end.getTime() > Date.now())) throw new UserError("Dat ak lè pwomo a fini an dwe nan lavni.");
+      await setDoc(doc(db, "settings", "flash"), {
+        active: Boolean(active),
+        title: String(title || "").trim().slice(0, 80),
+        text: String(text || "").trim().slice(0, 160) || null,
+        ends_at: Number.isNaN(end.getTime()) ? new Date() : end,
+        product_id: productId || null,
+        code: normalizePromo(code) || null,
+      });
+    },
+
     /* ---------- Rabè fidelite (settings/loyalty) ---------- */
     // { bronze, argent, or, diamant }: pousantaj rabè chak rang (0 = pa gen rabè)
     subscribeLoyalty(callback) {

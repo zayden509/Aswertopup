@@ -279,6 +279,7 @@ service cloud.firestore {
     // settings/catalog: pwodwi sit la ki kache yo.
     // settings/payments: nimewo MonCash/NatCash kliyan yo voye kòb la (pwopriyetè a sèlman).
     // settings/automation: konfimasyon depo otomatik ak SMS (pwopriyetè a sèlman, admin yo li l).
+    // settings/flash: pwomo ak kontè sou paj akèy la (admin konplè yo).
     // settings/loyalty: rabè fidelite chak rang, an pousantaj (pwopriyetè a sèlman, tout moun li l).
     match /settings/{id} {
       allow read: if id != 'automation' || isAdmin();
@@ -289,6 +290,14 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly(['moncash', 'natcash'])
           && validPayAccount(request.resource.data.get('moncash', null))
           && validPayAccount(request.resource.data.get('natcash', null)))
+        || (isFullAdmin() && id == 'flash'
+          && exactKeys(['active', 'title', 'text', 'ends_at', 'product_id', 'code'])
+          && request.resource.data.active is bool
+          && request.resource.data.title is string && request.resource.data.title.size() <= 80
+          && optString(request.resource.data.text, 160)
+          && request.resource.data.ends_at is timestamp
+          && optString(request.resource.data.product_id, 60)
+          && optString(request.resource.data.code, 20))
         || (isOwner() && id == 'loyalty'
           && exactKeys(['bronze', 'argent', 'or', 'diamant'])
           && loyaltyValue(request.resource.data.bronze) && loyaltyValue(request.resource.data.argent)

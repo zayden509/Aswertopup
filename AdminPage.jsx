@@ -23,6 +23,7 @@ import { AlertsCard, BackupCard, PromosCard, ReportsCard } from "./AdminTools.js
 import { AdminReviews } from "./Reviews.jsx";
 import { ReferralSettingsCard } from "./Referral.jsx";
 import { LoyaltySettingsCard } from "./Loyalty.jsx";
+import { FlashPromoCard } from "./Flash.jsx";
 
 const TABS = [
   { id: "dashboard", label: "Tablo", Icon: LayoutDashboard, title: "Tablo" },
@@ -694,6 +695,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
         {tab === "catalog" && (
           <>
             <AdminCatalog account={account} onToast={onToast} />
+            <FlashPromoCard catalog={catalog} onToast={onToast} />
             <PromosCard onToast={onToast} />
           </>
         )}

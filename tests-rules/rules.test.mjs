@@ -144,3 +144,11 @@ test("yon kliyan pa ka li SMS peman yo ni paramèt prive yo", async () => {
   await assertFails(getDoc(doc(as(ALICE), "private", "alerts")));
   await assertFails(getDoc(doc(as(ALICE), "settings", "automation")));
 });
+
+test("se admin konplè yo sèlman ki mete pwomo flash la", async () => {
+  const flash = { active: true, title: "-10% Free Fire", text: null, ends_at: new Date(Date.now() + 3600000), product_id: "free-fire", code: "FLASH10" };
+  await assertFails(setDoc(doc(as(ALICE), "settings", "flash"), flash));
+  await assertFails(setDoc(doc(as(STAFF), "settings", "flash"), flash));
+  await assertSucceeds(setDoc(doc(as(OWNER), "settings", "flash"), flash));
+  await assertSucceeds(getDoc(doc(env.unauthenticatedContext().firestore(), "settings", "flash")));
+});
