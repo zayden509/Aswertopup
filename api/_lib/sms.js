@@ -65,7 +65,14 @@ export async function saveIncomingSms(backend, { content, contact, owner, messag
   };
   const id = smsId(record);
   const sms = await backend.adminSaveSms(id, receivedAt ? { ...record, received_at: receivedAt } : record);
-  if (parsed.method && isOfficial(await backend.adminGetAutomation(), record.sender)) await backend.adminMarkSmsSeen(parsed.method);
+  const official = isOfficial(await backend.adminGetAutomation(), record.sender);
+  if (parsed.method && official) await backend.adminMarkSmsSeen(parsed.method);
+  // Yon SMS operatè ki sanble yon peman, men sit la pa konprann li nèt (fòma a chanje?):
+  // pwopriyetè a resevwa yon alèt Telegram pou depo yo pa bloke san li pa konnen
+  if (official && !encrypted && parsed.incoming && (!parsed.method || !parsed.amount || !parsed.reference)) {
+    const missing = [!parsed.method && "mòd peman", !parsed.amount && "montan", !parsed.reference && "kòd tranzaksyon"].filter(Boolean).join(", ");
+    await alert(backend, `⚠️ Sit la pa konprann yon SMS ${record.sender} (${missing} manke). Depo sa a pap konfime poukont li: verifye l nan Panneau admin → Depo, epi voye SMS la bay devlopè a.\n\n"${text.slice(0, 300)}"`, { key: "unparsed_sms", everyMs: 30 * 60000 });
+  }
   return { ...sms, id, parsed };
 }
 
