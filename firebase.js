@@ -18,6 +18,7 @@ import { quote } from "./exchange.js";
 import { LOYALTY_KEYS, LOYALTY_MAX, LOYALTY_OFF, discounted, loyaltyPercent } from "./pricing.js";
 import { DEPOSIT_MAX, DEPOSIT_MIN, isPhoneNumber, normalizeReference } from "./depositCheck.js";
 
+const TIMED_OUT = Symbol("timeout");
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // san 0/O/1/I pou kliyan yo pa konfonn yo
 const METHOD_NAMES = { moncash: "MonCash", natcash: "NatCash" };
 
@@ -502,9 +503,23 @@ export function createBackend(config, options = {}) {
       return { ...deposit, id: depositRef.id };
     },
 
+    // Non moun ki gen AWENS-ID a. Si Firebase pa reponn nan 5 segonn sou telefòn nan,
+    // nou mande sèvè a (/api/wallet-lookup) olye nou kite fenèt la bloke.
     async lookupWallet(code) {
-      const snap = await getDoc(doc(db, "walletCodes", String(code).toUpperCase()));
-      return snap.exists() ? snap.data().name : null;
+      const id = String(code).toUpperCase();
+      const direct = getDoc(doc(db, "walletCodes", id)).then((snap) => (snap.exists() ? snap.data().name : null));
+      const timeout = new Promise((resolve) => setTimeout(() => resolve(TIMED_OUT), 5000));
+      const first = await Promise.race([direct.catch(() => TIMED_OUT), timeout]);
+      if (first !== TIMED_OUT || !auth.currentUser) return first === TIMED_OUT ? direct : first;
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch("/api/wallet-lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ code: id }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) throw new UserError(t("Nou pa rive verifye AWENS-ID a. Eseye ankò.", "Impossible de vérifier l'AWENS-ID. Réessayez."));
+      return data.name || null;
     },
 
     async transferFunds(code, amount) {
@@ -513,13 +528,13 @@ export function createBackend(config, options = {}) {
       if (!Number.isInteger(value)) throw new UserError(t("Mete montan an san vigil (egzanp 500).", "Entrez un montant sans virgule (exemple 500)."));
       if (value < 10) throw new UserError(t("Montan minimòm lan se 10 HTG.", "Le montant minimum est de 10 HTG."));
       const toCode = String(code).toUpperCase();
-      const codeSnap = await getDoc(doc(db, "walletCodes", toCode));
-      if (!codeSnap.exists()) throw new UserError(t("Nou pa jwenn AWENS-ID sa a.", "AWENS-ID introuvable."));
-      const { uid: to, name: toName } = codeSnap.data();
-      if (to === uid) throw new UserError(t("Ou pa ka voye kòb ba tèt ou.", "Vous ne pouvez pas vous envoyer de l'argent."));
-
       const transferRef = doc(collection(db, "transfers"));
       return runTransaction(db, async (tx) => {
+        // AWENS-ID a li andedan tranzaksyon an (menm chemen ak rès tranzaksyon an)
+        const codeSnap = await tx.get(doc(db, "walletCodes", toCode));
+        if (!codeSnap.exists()) throw new UserError(t("Nou pa jwenn AWENS-ID sa a.", "AWENS-ID introuvable."));
+        const { uid: to, name: toName } = codeSnap.data();
+        if (to === uid) throw new UserError(t("Ou pa ka voye kòb ba tèt ou.", "Vous ne pouvez pas vous envoyer de l'argent."));
         const me = (await tx.get(userRef(uid))).data();
         if (me.balance < value) throw new UserError(t("Solde ou pa ase.", "Solde insuffisant."));
         const myName = publicName(me.full_name, me.email);

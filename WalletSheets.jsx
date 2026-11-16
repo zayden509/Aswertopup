@@ -354,17 +354,19 @@ export function TransferSheet({ profile, initialCode = "", onClose }) {
   const balance = Number(profile?.balance || 0);
   const value = Number(amount);
 
-  // Chèche non moun nan lè AWENS-ID a konplè
+  // Chèche non moun nan lè AWENS-ID a konplè (toujou yon rezilta: non an, pa jwenn, oswa erè)
+  const [lookupTry, setLookupTry] = useState(0);
   useEffect(() => {
     setRecipient(null);
     if (code.length !== 8) return;
     let stale = false;
+    setRecipient({ checking: true });
     backend.lookupWallet(code).then(
       (name) => !stale && setRecipient(name ? { name } : { missing: true }),
-      () => !stale && setRecipient({ missing: true }),
+      () => !stale && setRecipient({ failed: true }),
     );
     return () => { stale = true; };
-  }, [code]);
+  }, [code, lookupTry]);
 
   const canSend = recipient?.name && code !== profile?.wallet_code && Number.isInteger(value) && value >= 10 && value <= balance;
 
@@ -423,6 +425,15 @@ export function TransferSheet({ profile, initialCode = "", onClose }) {
             <p className="flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-4 w-4" /> {recipient.name}</p>
           ) : recipient?.missing ? (
             <p className="text-sm font-medium text-red-500">{t("Nou pa jwenn AWENS-ID sa a.", "AWENS-ID introuvable.")}</p>
+          ) : recipient?.checking ? (
+            <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> {t("N ap chèche moun nan…", "Recherche du destinataire…")}</p>
+          ) : recipient?.failed ? (
+            <p className="flex items-center gap-2 text-sm font-medium text-red-500">
+              {t("Nou pa rive verifye AWENS-ID a.", "Impossible de vérifier l'AWENS-ID.")}
+              <button type="button" onClick={() => setLookupTry((n) => n + 1)} className="font-bold underline">{t("Eseye ankò", "Réessayer")}</button>
+            </p>
+          ) : code.length > 0 && code.length < 8 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t(`AWENS-ID a gen 8 karaktè (${code.length}/8).`, `L'AWENS-ID compte 8 caractères (${code.length}/8).`)}</p>
           ) : null}
           <Input
             id="transfer-amount"
