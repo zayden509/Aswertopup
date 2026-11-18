@@ -39,7 +39,8 @@ export function methodForReceiver(receiver, accounts) {
   return found ? found[0] : null;
 }
 
-const INCOMING = /re[çc]u|resevwa|received|cr[ée]dit|depot|d[ée]p[ôo]t|transfert de|de la part|soti nan|vous avez (?:bien )?encaiss/i;
+// "reçu" rive pafwa ak aksan an kase: "re??u", "re�u", "reÃ§u" (NatCash, nov. 2026)
+const INCOMING = /re(?:[çc]|\?{1,2}|\uFFFD|Ã§|&#231;)u\b|resevwa|received|cr[ée]dit|depot|d[ée]p[ôo]t|transfert de|de la part|soti nan|vous avez (?:bien )?encaiss/i;
 
 // 1,500.00 · 1.500,00 · 1500 · 1500.50
 const NUMBER = String.raw`(\d{1,3}(?:[,.]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)`;

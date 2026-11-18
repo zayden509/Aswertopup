@@ -50,7 +50,10 @@ export default function AdminSms({ owner, onToast, onTrusted }) {
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
           {list.map((saved) => {
             // Yon SMS sit la pa t konprann anvan: nou li l ankò ak fason sit la li SMS kounye a
-            const sms = saved.id.startsWith("msg_") && saved.status === "new" ? { ...saved, ...parsePaymentSms(saved.content, saved.sender, methodForReceiver(saved.phone, accounts)) } : saved;
+            // SMS sit la pa t konprann lè l te rive (ex. "re??u"): nou li l ankò ak dènye vèsyon lekti a.
+            // Sèvè a mete l ajou tou lè kliyan an (oswa yon nouvo verifikasyon) chèche kòd la.
+            const incomplete = !saved.incoming || !saved.amount || !saved.reference || !saved.method;
+            const sms = saved.status === "new" && (incomplete || saved.id.startsWith("msg_")) ? { ...saved, ...parsePaymentSms(saved.content, saved.sender, methodForReceiver(saved.phone, accounts)) } : saved;
             const [label, tone, Icon] = smsState(sms);
             const trusted = isOperatorSender(sms.sender) || official.includes(senderKey(sms.sender));
             return (

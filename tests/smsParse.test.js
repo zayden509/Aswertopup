@@ -14,6 +14,13 @@ const CASES = [
     { method: "moncash", incoming: true, amount: 250, reference: "3598068118" }],
   ["Vous avez encaisse 100 HTG a 18:09 25/10/2026 de JEAN PIERRE, code 207685. Votre solde: 1,438.7 HTG. TransCode: 26102571206784. Merci", "NATCOM",
     { method: "natcash", incoming: true, amount: 100, reference: "26102571206784" }],
+  // NatCash, nov. 2026: aksan "reçu" a rive kase ("re??u")
+  ["Vous avez re??u 250 HTG de Unknow 41470802 a 18:36 17/11/2026, contenu: 333. Votre solde: 1,210.7 HTG. TransCode: 26111734083562. Merci", "Natcash",
+    { method: "natcash", incoming: true, amount: 250, reference: "26111734083562" }],
+  ["Vous avez re??u 499 HTG de ALICIO ALEXANDRE 42030829 a 18:09 17/11/2026, contenu: Q. Votre solde: 1,210.7 HTG. TransCode: 26111733972683. Merci", "Natcash",
+    { method: "natcash", incoming: true, amount: 499, reference: "26111733972683" }],
+  ["Vous avez reçu 300 HTG de PAUL 41112222 a 10:00 18/11/2026, contenu: x. Votre solde: 500 HTG. TransCode: 26111800000001. Merci", "Natcash",
+    { method: "natcash", incoming: true, amount: 300, reference: "26111800000001" }],
   ["Vous avez encaisse 2,500 HTG a 09:12 01/11/2026 de MARIE, code 118822. Votre solde: 12,000.00 HTG. TransCode: 26110198765432. Merci", "NATCOM",
     { method: "natcash", incoming: true, amount: 2500, reference: "26110198765432" }],
 ];
@@ -32,6 +39,8 @@ test("balans lan pa janm pran pou montan an", () => {
 test("yon SMS ki pa yon peman resevwa pa make incoming", () => {
   const r = parsePaymentSms("Ou voye G500.00 bay 50934431664. Txn ID: 003598060000", "MonCash");
   assert.equal(r.incoming, false);
+  const out = parsePaymentSms("Vous avez transfere 250 HTG a Unknow 41470802 a 18:24 17/11/2026, frais: 0 HTG. TransCode: 26111734035970. Merci", "Natcash");
+  assert.equal(out.incoming, false);
 });
 
 test("operatè yo rekonèt, men pa yon nimewo moun", () => {
