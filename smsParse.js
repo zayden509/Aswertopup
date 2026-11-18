@@ -39,8 +39,9 @@ export function methodForReceiver(receiver, accounts) {
   return found ? found[0] : null;
 }
 
-// "reçu" rive pafwa ak aksan an kase: "re??u", "re�u", "reÃ§u" (NatCash, nov. 2026)
-const INCOMING = /re(?:[çc]|\?{1,2}|\uFFFD|Ã§|&#231;)u\b|resevwa|received|cr[ée]dit|depot|d[ée]p[ôo]t|transfert de|de la part|soti nan|vous avez (?:bien )?encaiss/i;
+// "reçu" rive pafwa ak aksan an kase (NatCash, nov. 2026): "re??u", "re��u", "reÃ§u", "re&#231;u"…
+// Nenpòt 1 a 6 karaktè ki pa lèt ni espas ant "re" ak "u" konte.
+const INCOMING = /\bre(?:[çc]|[^\sa-z]{1,6})u\b|resevwa|received|cr[ée]dit|depot|d[ée]p[ôo]t|transfert de|de la part|soti nan|vous avez (?:bien )?encaiss|vous avez (?!transf|envoy|pay|retir|achet)\S{2,12} [\d.,]+ (?:HTG|Gdes?|G)\s+de\b/i;
 
 // 1,500.00 · 1.500,00 · 1500 · 1500.50
 const NUMBER = String.raw`(\d{1,3}(?:[,.]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)`;

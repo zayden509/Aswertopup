@@ -54,3 +54,15 @@ test("SIM ki resevwa SMS la di ki mòd peman", () => {
   assert.equal(methodForReceiver("+50934431664", { moncash: "34431664", natcash: "41112222" }), "moncash");
   assert.equal(methodForReceiver("+50999999999", { moncash: "34431664" }), null);
 });
+
+test("« reçu » kase nenpòt jan li rive", () => {
+  for (const broken of ["reçu", "recu", "re??u", "re?u", "re\u0087u", "re\u00c3\u00a7u", "re\uFFFD\uFFFDu", "re\uFFFDu", "reÃ§u", "re&#231;u", "RE??U"]) {
+    const r = parsePaymentSms(`Vous avez ${broken} 1,385 HTG de ALICIO ALEXANDRE 42030829 a 07:18 18/11/2026, contenu: Q. Votre solde: 2,595.7 HTG. TransCode: 26111834821628. Merci`, "Natcash");
+    assert.deepEqual(r, { method: "natcash", incoming: true, amount: 1385, reference: "26111834821628" }, broken);
+  }
+});
+
+test("« Votre » oswa « transfere » pa pran pou « reçu »", () => {
+  const r = parsePaymentSms("Vous avez transfere 250 HTG a Unknow 41470802. Votre solde: 1,210.7 HTG. TransCode: 26111734035970. Merci", "Natcash");
+  assert.equal(r.incoming, false);
+});
