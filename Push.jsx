@@ -44,7 +44,7 @@ export function usePush() {
       }
       const reg = (await navigator.serviceWorker.getRegistration()) || (await navigator.serviceWorker.register("/sw.js"));
       await navigator.serviceWorker.ready;
-      const res = await fetch("/api/push-key");
+      const res = await fetch("/api/client");
       const { publicKey } = await res.json();
       if (!publicKey) throw new Error("no key");
       const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(publicKey) }));

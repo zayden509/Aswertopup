@@ -1,6 +1,19 @@
-// POST /api/wallet-lookup { code } — non piblik moun ki gen yon AWENS-ID (pou fenèt "Envoyer").
-// Dezyèm chemen lè telefòn kliyan an pa rive li l dirèkteman nan Firebase. Kliyan konekte sèlman.
+// Ti demann kliyan yo (yon sèl fonksyon Vercel pou rete anba limit 12 fonksyon plan gratis la):
+//   GET  /api/client            → kle piblik notifikasyon push yo (VAPID)
+//   POST /api/client { code }   → non piblik moun ki gen AWENS-ID sa a (fenèt "Envoyer")
 import { SetupError, bot, callerId, fail, json, resetBotOnDenied } from "./_lib/autotopup.js";
+import { pushKeys } from "./_lib/push.js";
+
+export async function GET() {
+  try {
+    const { publicKey } = await pushKeys(await bot());
+    return json({ ok: true, publicKey }, 200);
+  } catch (error) {
+    if (error instanceof SetupError) return fail("Notifikasyon yo poko disponib.", 503);
+    console.error("push-key", error);
+    return fail("error", 500);
+  }
+}
 
 const hits = new Map();
 function tooMany(uid) {

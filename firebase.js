@@ -504,7 +504,7 @@ export function createBackend(config, options = {}) {
     },
 
     // Non moun ki gen AWENS-ID a. Si Firebase pa reponn nan 5 segonn sou telefòn nan,
-    // nou mande sèvè a (/api/wallet-lookup) olye nou kite fenèt la bloke.
+    // nou mande sèvè a (/api/client) olye nou kite fenèt la bloke.
     async lookupWallet(code) {
       const id = String(code).toUpperCase();
       const direct = getDoc(doc(db, "walletCodes", id)).then((snap) => (snap.exists() ? snap.data().name : null));
@@ -512,7 +512,7 @@ export function createBackend(config, options = {}) {
       const first = await Promise.race([direct.catch(() => TIMED_OUT), timeout]);
       if (first !== TIMED_OUT || !auth.currentUser) return first === TIMED_OUT ? direct : first;
       const token = await auth.currentUser.getIdToken();
-      const res = await fetch("/api/wallet-lookup", {
+      const res = await fetch("/api/client", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ code: id }),
