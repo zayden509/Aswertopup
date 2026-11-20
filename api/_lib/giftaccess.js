@@ -136,7 +136,8 @@ export async function giftCreateOrder(order, map) {
       recipient_name: "Awens Topup",
       ...(email && { recipient_email: email }),
       awens_order: order.code,
-      ...(order.player_id && { player_id: order.player_id }),
+      // Top-up dirèk sou kont jwè a (ex. Free Fire LATAM): Gift Access mande "userid"
+      ...(order.player_id && { userid: order.player_id, player_id: order.player_id }),
     },
     ...(Number(map.amount) > 0 && { amount: Number(map.amount) }),
     ...(map.variation_ref && map.variation_ref !== map.product_id && { variation_ref: String(map.variation_ref) }),

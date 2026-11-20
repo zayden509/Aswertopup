@@ -873,11 +873,17 @@ export function createBackend(config, options = {}) {
     }),
 
     // Pake ki konekte ak Gift Access (kòd PIN): ID pwodwi Gift Access la, ak varyasyon/montan si genyen
-    adminSetGiftMap: (packageId, data) => setDoc(doc(db, "supplierMap", packageId), {
-      provider: "giftaccess", product_id: String(data.product_id).trim(), variation_ref: String(data.variation_ref || "").trim() || null,
-      amount: Number(data.amount) > 0 ? Number(data.amount) : null, offer_name: String(data.offer_name || "").trim().slice(0, 120) || null,
-      auto: Boolean(data.auto),
-    }),
+    // Gift Access voye dyaman yo sou kont jwè a: pake a vin mande Player ID kliyan an (needs_id)
+    async adminSetGiftMap(packageId, data) {
+      const batch = writeBatch(db);
+      batch.set(doc(db, "supplierMap", packageId), {
+        provider: "giftaccess", product_id: String(data.product_id).trim(), variation_ref: String(data.variation_ref || "").trim() || null,
+        amount: Number(data.amount) > 0 ? Number(data.amount) : null, offer_name: String(data.offer_name || "").trim().slice(0, 120) || null,
+        auto: Boolean(data.auto),
+      });
+      if (data.needs_id !== false) batch.update(doc(db, "packages", packageId), { needs_id: true });
+      await batch.commit();
+    },
 
     adminDeleteSupplierMap: (packageId) => deleteDoc(doc(db, "supplierMap", packageId)),
 

@@ -160,6 +160,11 @@ export async function applyGiftStatus(backend, order, ga, offerName = null) {
 // Voye yon kòmand Gift Access (pake ki konekte ak yon ID pwodwi Gift Access)
 async function fulfillGift(backend, order, map) {
   if (!giftReady()) throw new SetupError("GIFTACCESS_API_KEY ak GIFTACCESS_API_SECRET poko mete nan Vercel.");
+  if (!order.player_id) {
+    const error = "Kòmand lan pa gen Player ID: Gift Access bezwen l. Mande kliyan an ID li, oswa livre l alamen.";
+    await backend.adminSetSupplier(order.id, { provider: GIFT, status: "error", error, offer_name: map.offer_name ?? null });
+    return { ok: false, error };
+  }
   const claimed = await backend.adminClaimSupplier(order.id, GIFT);
   if (!claimed) return { ok: true, status: "busy" };
   try {
