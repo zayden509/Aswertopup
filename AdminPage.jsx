@@ -66,6 +66,7 @@ const SUPPLIER_STATUS = {
   failed: ["FazerCards echwe: kliyan an ranbouse", "text-red-600 dark:text-red-400"],
   refund: ["FazerCards ranbouse: kliyan an ranbouse", "text-red-600 dark:text-red-400"],
   error: ["Pa t ka voye l bay FazerCards", "text-red-600 dark:text-red-400"],
+  awaiting: ["FazerCards ap prepare kòd PIN yo…", "text-violet-600 dark:text-violet-300"],
 };
 
 // Rezon refi ki deja ekri (kliyan an wè yo, an franse, lang prensipal sit la): yon sèl klik
@@ -124,18 +125,20 @@ function SupplierLine({ order, auto, onToast }) {
   const [busy, setBusy] = useState(null);
   const s = order.supplier;
   if (!s && !(auto && order.status === "pending")) return null;
+  const providerName = s?.provider === "giftaccess" ? "Gift Access" : "FazerCards";
   const run = async (action) => {
     setBusy(action);
     try {
       const res = await backend.adminFazer(action, { orderId: order.id });
-      onToast(res.status ? `FazerCards: ${SUPPLIER_STATUS[res.status]?.[0] || res.status}` : "Pa gen anyen pou voye.");
+      onToast(res.status ? (SUPPLIER_STATUS[res.status]?.[0] || res.status).replace("FazerCards", providerName) : "Pa gen anyen pou voye.");
     } catch (err) {
       onToast(errorText(err));
     } finally {
       setBusy(null);
     }
   };
-  const [label, tone] = s ? SUPPLIER_STATUS[s.status] || [s.status, "text-slate-600"] : ["Otomatik, poko voye", "text-amber-600 dark:text-amber-400"];
+  const [rawLabel, tone] = s ? SUPPLIER_STATUS[s.status] || [s.status, "text-slate-600"] : ["Otomatik, poko voye", "text-amber-600 dark:text-amber-400"];
+  const label = rawLabel.replace("FazerCards", providerName);
   const canRetry = !s || s.status === "error" || (s.status === "sending" && !s.order_id);
   const canSync = s?.order_id && !["completed", "failed", "refund"].includes(s.status);
   return (

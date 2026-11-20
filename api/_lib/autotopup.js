@@ -8,6 +8,7 @@ import { createBackend } from "../../firebase.js";
 import { FIREBASE_CONFIG } from "../../config.js";
 import { alert, checkFazerBalance, HOUR } from "./alert.js";
 import { notifyStatus } from "./mail.js";
+import { GiftAccessError, cardsText, giftCards, giftCreateOrder, giftGetOrder, giftOrderId, giftReady, giftStatus, PROVIDER as GIFT } from "./giftaccess.js";
 
 const env = process.env;
 const firebaseConfig = env.TEST_FIREBASE_CONFIG ? JSON.parse(env.TEST_FIREBASE_CONFIG) : FIREBASE_CONFIG;
@@ -23,6 +24,7 @@ export function fazerError(error) {
   if (error instanceof SetupError) return error.message;
   if (error instanceof FazerCardsAuthError) return "Kle API FazerCards la pa bon (oswa abònman an fini).";
   if (error instanceof FazerCardsError) return `FazerCards: ${error.message}`;
+  if (error instanceof GiftAccessError) return `Gift Access: ${error.message}`;
   return "Pa ka kontakte FazerCards kounye a. Eseye ankò.";
 }
 
@@ -125,12 +127,68 @@ export async function applyStatus(backend, order, fz) {
   }
 }
 
-// Voye yon kòmand bay FazerCards si pake a otomatik, oswa mete estati l ajou si l deja ale
+// Mete estati kòmand Gift Access la sou kòmand nou an: PIN yo ale nan kòd livrezon an
+export async function applyGiftStatus(backend, order, ga, offerName = null) {
+  const state = giftStatus(ga);
+  const cards = giftCards(ga);
+  const reason = ga?.error?.message || ga?.failure_reason || ga?.message || null;
+  const supplier = {
+    provider: GIFT,
+    order_id: giftOrderId(ga) || order.supplier?.order_id || null,
+    // Gift Access di "livre" men kòd yo poko la: nou tann (nou mande ankò pita oswa webhook la)
+    status: state === "completed" && !cards.length ? "awaiting" : state,
+    offer_name: (offerName || order.supplier?.offer_name || null)?.slice(0, 120) ?? null,
+    error: reason && state === "failed" ? String(reason).slice(0, 300) : null,
+  };
+  if (order.supplier?.order_id === supplier.order_id && order.supplier?.status === supplier.status) return;
+
+  if (state === "completed" && cards.length && order.status !== "delivered" && order.status !== "refused") {
+    await backend.adminUpdateOrder(order, "delivered", cardsText(cards), null, supplier);
+    await notifyStatus(backend, order.id);
+  } else if (state === "failed" && order.status !== "delivered" && order.status !== "refused") {
+    const note = `Livrezon otomatik la pa mache${reason ? ` (${reason})` : ""}. Kòb ou retounen nan Wallet ou.`;
+    await backend.adminUpdateOrder(order, "refused", "", note.slice(0, 300), supplier);
+    await notifyStatus(backend, order.id);
+    await alert(backend, `⚠️ Kòmand ${order.code} (${order.product_name} ${order.package_label}) echwe kote Gift Access${reason ? `: ${reason}` : ""}. Kliyan an ranbouse.`, { key: `fail_${order.id}`, everyMs: 24 * HOUR });
+  } else if (order.status === "pending") {
+    await backend.adminUpdateOrder(order, "processing", "", null, supplier);
+  } else {
+    await backend.adminSetSupplier(order.id, supplier);
+  }
+}
+
+// Voye yon kòmand Gift Access (pake ki konekte ak yon ID pwodwi Gift Access)
+async function fulfillGift(backend, order, map) {
+  if (!giftReady()) throw new SetupError("GIFTACCESS_API_KEY ak GIFTACCESS_API_SECRET poko mete nan Vercel.");
+  const claimed = await backend.adminClaimSupplier(order.id, GIFT);
+  if (!claimed) return { ok: true, status: "busy" };
+  try {
+    const ga = await giftCreateOrder(claimed, map);
+    await applyGiftStatus(backend, { ...claimed, supplier: { provider: GIFT, status: "sending" } }, ga, map.offer_name);
+    return { ok: true, status: giftStatus(ga) };
+  } catch (error) {
+    const message = fazerError(error);
+    await backend.adminSetSupplier(order.id, { provider: GIFT, status: "error", error: message.slice(0, 300), offer_name: map.offer_name ?? null });
+    await alert(backend, `⚠️ Pa ka voye kòmand ${order.code} (${order.product_name} ${order.package_label}) bay Gift Access: ${message}`, { key: `send_${order.id}`, everyMs: 6 * HOUR });
+    return { ok: false, error: message };
+  }
+}
+
+// Voye yon kòmand bay founisè a (FazerCards oswa Gift Access) si pake a otomatik,
+// oswa mete estati l ajou si l deja ale
 export async function fulfill(orderId) {
   const backend = await bot();
   const order = await backend.adminGetOrder(orderId);
   if (!order) return { ok: false, error: "Kòmand sa a pa egziste." };
   if (order.kind === "exchange") return { ok: true, auto: false };
+
+  // Deja voye kote Gift Access: nou mande ki kote l ye
+  if (order.supplier?.provider === GIFT && order.supplier?.order_id) {
+    if (["completed", "failed"].includes(order.supplier.status)) return { ok: true, status: order.supplier.status };
+    const ga = await giftGetOrder(order.supplier.order_id);
+    await applyGiftStatus(backend, order, ga);
+    return { ok: true, status: giftStatus(ga) };
+  }
 
   // Deja voye: nou mande FazerCards ki kote l ye
   if (order.supplier?.order_id) {
@@ -143,6 +201,7 @@ export async function fulfill(orderId) {
 
   const map = await backend.adminGetSupplierMap(order.package_id);
   if (!map?.auto) return { ok: true, auto: false };
+  if (map.provider === GIFT) return fulfillGift(backend, order, map);
 
   const fields = {};
   if (map.field_key) {

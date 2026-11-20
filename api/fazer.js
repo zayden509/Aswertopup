@@ -6,6 +6,7 @@
 //   sync           mande FazerCards estati yon kòmand (orderId)
 //   retry          voye yon kòmand ankò apre yon erè (orderId)
 import { bot, callerId, fail, fazer, fazerError, fulfill, json, resetBotOnDenied } from "./_lib/autotopup.js";
+import { giftBalance, giftPing, giftReady } from "./_lib/giftaccess.js";
 
 // Adrès webhook la: menm domèn admin lan itilize a (domèn sa a sèvi sit la, li pa redirije),
 // pou FazerCards pa tonbe sou yon redireksyon ant awenstopup.com ak www.awenstopup.com
@@ -58,6 +59,14 @@ export async function POST(request) {
     switch (body.action) {
       case "status":
         return json({ ok: true, ...(await status()) });
+      // Gift Access: koneksyon, balans, ak adrès webhook pou mete nan portal.gift-access.com
+      case "ga-status": {
+        const webhook = `${siteOrigin(request)}/api/fazer-webhook`;
+        if (!giftReady()) return json({ ok: true, ready: false, webhook, webhook_secret: Boolean(process.env.GIFTACCESS_WEBHOOK_SECRET) });
+        await giftPing();
+        const balance = await giftBalance();
+        return json({ ok: true, ready: true, balance: balance?.data ?? balance, webhook, webhook_secret: Boolean(process.env.GIFTACCESS_WEBHOOK_SECRET) });
+      }
       case "setup-webhook": {
         const url = `${siteOrigin(request)}/api/fazer-webhook`;
         await fazer().webhooks.set({ url, enabled: true });
@@ -79,7 +88,7 @@ export async function POST(request) {
         // Apre yon erè (oswa si l rete bloke nan "sending"), nou ka eseye ankò. Menm
         // Idempotency-Key la anpeche FazerCards fè kòmand lan de fwa.
         if (body.action === "retry" && order.supplier && !order.supplier.order_id) {
-          await backend.adminSetSupplier(order.id, { provider: "fazercards", status: "error", error: "Ap eseye ankò", offer_name: order.supplier.offer_name ?? null });
+          await backend.adminSetSupplier(order.id, { provider: order.supplier.provider || "fazercards", status: "error", error: "Ap eseye ankò", offer_name: order.supplier.offer_name ?? null });
         }
         const result = await fulfill(order.id);
         return json(result, result.ok ? 200 : 502);

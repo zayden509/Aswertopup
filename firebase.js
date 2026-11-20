@@ -872,6 +872,13 @@ export function createBackend(config, options = {}) {
       field_key: data.field_key || null, auto: Boolean(data.auto),
     }),
 
+    // Pake ki konekte ak Gift Access (kòd PIN): ID pwodwi Gift Access la, ak varyasyon/montan si genyen
+    adminSetGiftMap: (packageId, data) => setDoc(doc(db, "supplierMap", packageId), {
+      provider: "giftaccess", product_id: String(data.product_id).trim(), variation_ref: String(data.variation_ref || "").trim() || null,
+      amount: Number(data.amount) > 0 ? Number(data.amount) : null, offer_name: String(data.offer_name || "").trim().slice(0, 120) || null,
+      auto: Boolean(data.auto),
+    }),
+
     adminDeleteSupplierMap: (packageId) => deleteDoc(doc(db, "supplierMap", packageId)),
 
     /* ---------- SMS peman (httpSMS) ---------- */
@@ -1204,14 +1211,14 @@ export function createBackend(config, options = {}) {
 
     // Make kòmand lan "ap voye" yon sèl fwa, menm si de demand rive an menm tan.
     // Retounen kòmand lan si se nou ki pran l, oswa null si yon lòt demand deja la.
-    async adminClaimSupplier(orderId) {
+    async adminClaimSupplier(orderId, provider = "fazercards") {
       const ref = doc(db, "orders", orderId);
       return runTransaction(db, async (tx) => {
         const snap = await tx.get(ref);
         if (!snap.exists()) return null;
         const order = toPlain(snap);
         if (order.status !== "pending" || (order.supplier && order.supplier.status !== "error")) return null;
-        tx.update(ref, { supplier: { provider: "fazercards", status: "sending", at: serverTimestamp() }, updated_at: serverTimestamp() });
+        tx.update(ref, { supplier: { provider, status: "sending", at: serverTimestamp() }, updated_at: serverTimestamp() });
         return order;
       });
     },

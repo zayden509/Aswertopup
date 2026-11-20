@@ -12,6 +12,123 @@ const regionLabel = (name, word) => {
   return (name.toLowerCase().startsWith(w) ? name.slice(w.length).trim() : "") || name;
 };
 
+// Gift Access (kòd PIN): koneksyon, balans, ak adrès webhook la pou mete nan portal.gift-access.com
+function GiftStatus({ onToast }) {
+  const [info, setInfo] = useState(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const load = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      setInfo(await backend.adminFazer("ga-status"));
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  useEffect(() => { load(); }, []);
+  const bal = info?.balance;
+  const balances = Array.isArray(bal) ? bal : bal && typeof bal === "object" ? (Array.isArray(bal.balances) ? bal.balances : [bal]) : [];
+
+  return (
+    <Card
+      title={<span className="flex items-center gap-2"><Crown className="h-5 w-5 text-sky-500" /> Gift Access (kòd PIN)</span>}
+      subtitle="Konekte yon pake ak yon ID pwodwi Gift Access: lè yon kliyan achte l, sit la achte PIN nan kote Gift Access epi l mete l nan Istorik ak imèl kliyan an."
+      action={<AdminButton icon={RefreshCw} busy={busy} disabled={busy} onClick={load}>Rechaje</AdminButton>}
+    >
+      {info && !info.ready ? (
+        <div className="space-y-2 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-100 dark:ring-amber-500/30">
+          <p className="font-bold">Gift Access poko konekte.</p>
+          <p>Nan Vercel → Settings → Environment Variables, ajoute <b>GIFTACCESS_API_KEY</b> ak <b>GIFTACCESS_API_SECRET</b> (nan portal.gift-access.com → Accès API), epi fè Redeploy.</p>
+        </div>
+      ) : info ? (
+        <div className="space-y-2 text-sm">
+          <p className="flex items-center gap-2 font-semibold text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-4 w-4" /> Koneksyon Gift Access la mache</p>
+          {balances.length > 0 && (
+            <p className="flex flex-wrap items-center gap-2"><Wallet className="h-4 w-4 text-slate-400" />
+              {balances.map((b, i) => <span key={i} className="rounded-lg bg-slate-100 px-2 py-0.5 font-bold tabular-nums dark:bg-slate-800">{b.balance ?? b.amount ?? b.available ?? JSON.stringify(b)} {b.currency || ""}</span>)}
+            </p>
+          )}
+        </div>
+      ) : !error ? <Loader2 className="h-5 w-5 animate-spin text-sky-500" /> : null}
+      {info && (
+        <div className="mt-3 space-y-1 rounded-2xl bg-slate-50 p-3 text-sm ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
+          <p className="flex items-center gap-2 font-semibold"><Webhook className="h-4 w-4 text-slate-400" /> Webhook pou mete nan Gift Access:</p>
+          <button type="button" onClick={() => navigator.clipboard?.writeText(info.webhook).then(() => onToast("Adrès webhook la kopye."))} className="break-all text-left font-mono text-xs text-sky-600 underline dark:text-sky-400">{info.webhook}</button>
+          {!info.webhook_secret && <p className="text-xs text-amber-700 dark:text-amber-300">Mete menm sekrè webhook la nan Gift Access ak nan Vercel (<b>GIFTACCESS_WEBHOOK_SECRET</b>). San li, sit la ap mande Gift Access estati a chak 10 minit.</p>}
+        </div>
+      )}
+      <ErrorNote>{error}</ErrorNote>
+    </Card>
+  );
+}
+
+// Konekte yon pake ak Gift Access: ID pwodwi a (ak varyasyon/montan si Gift Access mande l)
+function GiftSheet({ pkg, current, onClose, onToast }) {
+  const gift = current?.provider === "giftaccess" ? current : null;
+  const [form, setForm] = useState({
+    product_id: gift?.product_id || "", variation_ref: gift?.variation_ref || "", amount: gift?.amount ? String(gift.amount) : "",
+    offer_name: gift?.offer_name || `${pkg.product_name} ${pkg.label}`, auto: gift ? Boolean(gift.auto) : true,
+  });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  const run = async (task) => {
+    setBusy(true);
+    setError("");
+    try {
+      await task();
+      onClose();
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const save = () => {
+    if (!form.product_id.trim()) return setError("Mete ID pwodwi Gift Access la.");
+    return run(async () => {
+      await backend.adminSetGiftMap(pkg.id, form);
+      onToast(form.auto ? `${pkg.label}: konekte ak Gift Access ⚡` : `${pkg.label}: anrejistre (manyèl).`);
+    });
+  };
+  const remove = () => run(async () => {
+    await backend.adminDeleteSupplierMap(pkg.id);
+    onToast(`${pkg.label}: pa konekte ankò.`);
+  });
+
+  return (
+    <Sheet open onClose={onClose} title="Gift Access" icon={<Crown className="h-6 w-6" />}>
+      <p className="mb-3 text-sm text-slate-600 dark:text-slate-300"><b>{pkg.product_name}</b> · {pkg.label} · {formatPrice(pkg.price)}</p>
+      {current && current.provider !== "giftaccess" && (
+        <p className="mb-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">Pake sa a konekte ak FazerCards kounye a. Si w sove, l ap pase sou Gift Access.</p>
+      )}
+      <div className="space-y-3">
+        <Field label="ID pwodwi Gift Access" hint="Nan portal.gift-access.com, ID API pwodwi a (oswa varyasyon an).">
+          <input value={form.product_id} onChange={set("product_id")} className={`${inputClass} font-mono`} placeholder="egz: 1024" />
+        </Field>
+        <Field label="Referans varyasyon (opsyonèl)">
+          <input value={form.variation_ref} onChange={set("variation_ref")} className={`${inputClass} font-mono`} />
+        </Field>
+        <Field label="Montan kat la (opsyonèl)" hint="Sèlman si Gift Access mande yon montan (kat ak montan lib). Kite l vid pou pwodwi ki gen pri fiks.">
+          <input inputMode="decimal" value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value.replace(/[^\d.]/g, "") }))} className={inputClass} />
+        </Field>
+        <Field label="Non pou ou (opsyonèl)">
+          <input value={form.offer_name} onChange={set("offer_name")} className={inputClass} />
+        </Field>
+        <Toggle on={form.auto} onChange={(v) => setForm((f) => ({ ...f, auto: v }))} label="Otomatik: voye chak kòmand bay Gift Access touswit" />
+      </div>
+      <ErrorNote>{error}</ErrorNote>
+      <div className="mt-4 flex justify-between gap-2">
+        {current ? <AdminButton tone="danger" icon={Trash2} disabled={busy} onClick={remove}>Dekonekte</AdminButton> : <span />}
+        <AdminButton tone="primary" icon={Zap} busy={busy} disabled={busy} onClick={save}>Sove</AdminButton>
+      </div>
+    </Sheet>
+  );
+}
+
 // Balans, plan ak webhook FazerCards la
 function FazerStatus({ onToast }) {
   const [state, setState] = useState(null);
@@ -439,6 +556,7 @@ function AutoLink({ prices, supplierMap, onToast }) {
 
 export default function AdminAuto({ account, supplierMap, onToast }) {
   const [openId, setOpenId] = useState(null);
+  const [giftId, setGiftId] = useState(null);
   const [search, setSearch] = useState("");
   const q = normalize(search.trim());
   const packages = Object.values(account.prices)
@@ -449,13 +567,14 @@ export default function AdminAuto({ account, supplierMap, onToast }) {
 
   return (
     <div className="space-y-4">
+      <GiftStatus onToast={onToast} />
       <FazerStatus onToast={onToast} />
 
       <AutoLink prices={account.prices} supplierMap={supplierMap} onToast={onToast} />
 
       <Card title={`Pake yo (${autoCount} otomatik)`}>
         <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-          Peze yon pake pou w konekte l ak yon pwodwi FazerCards. Lè l <b>otomatik</b>, kòmand kliyan yo ale kote FazerCards touswit, epi yo make <b>Livré</b> poukont yo. Si FazerCards echwe, kliyan an ranbouse otomatikman.
+          Peze <b>Gift Access</b> oswa <b>FazerCards</b> sou yon pake pou w konekte l. Lè l <b>otomatik</b>, kòmand kliyan yo ale kote founisè a touswit, epi yo make <b>Livré</b> poukont yo (ak kòd PIN nan pou Gift Access). Si founisè a echwe, kliyan an ranbouse otomatikman.
         </p>
         <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Chèche yon pake" className={`${inputClass} mb-3`} />
         {packages.length === 0 ? (
@@ -464,21 +583,23 @@ export default function AdminAuto({ account, supplierMap, onToast }) {
           <ul className="divide-y divide-slate-100 dark:divide-slate-800">
             {packages.map((p) => {
               const m = supplierMap[p.id];
+              const gift = m?.provider === "giftaccess";
               return (
-                <li key={p.id}>
-                  <button type="button" onClick={() => setOpenId(p.id)} className="flex w-full items-center gap-3 py-3 text-left">
+                <li key={p.id} className="flex items-center gap-2">
+                  <button type="button" onClick={() => (gift ? setGiftId(p.id) : setOpenId(p.id))} className="flex min-w-0 flex-1 items-center gap-3 py-3 text-left">
                     <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${m?.auto ? "bg-violet-500 text-white" : m ? "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300" : "bg-slate-100 text-slate-400 dark:bg-slate-800"}`}>
                       {m?.auto ? <Zap className="h-5 w-5" /> : <Link2 className="h-5 w-5" />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold text-slate-900 dark:text-white">{p.label}</span>
                       <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
-                        {p.product_name} · {m ? `${m.offer_name} · ${usd(m.price_usd)}${m.auto ? "" : " · manyèl"}` : "Pa konekte"}
+                        {p.product_name} · {!m ? "Pa konekte" : gift ? `Gift Access · ID ${m.product_id}${m.auto ? "" : " · manyèl"}` : `FazerCards · ${m.offer_name} · ${usd(m.price_usd)}${m.auto ? "" : " · manyèl"}`}
                       </span>
                     </span>
-                    {m?.auto && <CheckCircle2 className="h-5 w-5 shrink-0 text-violet-500" />}
+                    {m?.auto && <CheckCircle2 className={`h-5 w-5 shrink-0 ${gift ? "text-sky-500" : "text-violet-500"}`} />}
                     <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />
                   </button>
+                  <button type="button" onClick={() => setGiftId(p.id)} className="shrink-0 rounded-lg bg-sky-50 px-2.5 py-1.5 text-xs font-bold text-sky-700 ring-1 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30">Gift Access</button>
                 </li>
               );
             })}
@@ -486,6 +607,7 @@ export default function AdminAuto({ account, supplierMap, onToast }) {
         )}
       </Card>
 
+      {giftId && account.prices[giftId] && <GiftSheet key={giftId} pkg={account.prices[giftId]} current={supplierMap[giftId]} onClose={() => setGiftId(null)} onToast={onToast} />}
       {open && <MappingSheet key={open.id} pkg={open} current={supplierMap[open.id]} onClose={() => setOpenId(null)} onToast={onToast} />}
     </div>
   );

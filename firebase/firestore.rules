@@ -267,13 +267,21 @@ service cloud.firestore {
     match /supplierMap/{packageId} {
       allow read: if isAdmin();
       allow delete: if isFullAdmin();
-      allow create, update: if isFullAdmin()
-        && request.resource.data.keys().hasOnly(['provider', 'category_id', 'category_name', 'offer_id', 'offer_name', 'price_usd', 'field_key', 'auto'])
-        && request.resource.data.provider == 'fazercards'
-        && request.resource.data.category_id is string && request.resource.data.category_id.size() <= 100
-        && request.resource.data.offer_id is string && request.resource.data.offer_id.size() <= 100
-        && optString(request.resource.data.get('field_key', null), 60)
-        && request.resource.data.auto is bool;
+      allow create, update: if isFullAdmin() && (
+        (request.resource.data.keys().hasOnly(['provider', 'category_id', 'category_name', 'offer_id', 'offer_name', 'price_usd', 'field_key', 'auto'])
+          && request.resource.data.provider == 'fazercards'
+          && request.resource.data.category_id is string && request.resource.data.category_id.size() <= 100
+          && request.resource.data.offer_id is string && request.resource.data.offer_id.size() <= 100
+          && optString(request.resource.data.get('field_key', null), 60)
+          && request.resource.data.auto is bool)
+        // Gift Access (kòd PIN): ID pwodwi a, varyasyon ak montan opsyonèl
+        || (request.resource.data.keys().hasOnly(['provider', 'product_id', 'variation_ref', 'amount', 'offer_name', 'auto'])
+          && request.resource.data.provider == 'giftaccess'
+          && request.resource.data.product_id is string && request.resource.data.product_id.size() >= 1 && request.resource.data.product_id.size() <= 100
+          && optString(request.resource.data.get('variation_ref', null), 100)
+          && (request.resource.data.get('amount', null) == null || (request.resource.data.amount is number && request.resource.data.amount > 0))
+          && optString(request.resource.data.get('offer_name', null), 120)
+          && request.resource.data.auto is bool));
     }
 
     // settings/catalog: pwodwi sit la ki kache yo.
@@ -643,7 +651,7 @@ service cloud.firestore {
     // Livrezon otomatik (FazerCards): estati kòmand lan kote founisè a
     function validSupplier(s) {
       return s is map && s.keys().hasOnly(['provider', 'order_id', 'status', 'error', 'offer_name', 'at'])
-        && s.provider == 'fazercards'
+        && s.provider in ['fazercards', 'giftaccess']
         && optString(s.get('order_id', null), 60)
         && s.status is string && s.status.size() <= 20
         && optString(s.get('error', null), 300)

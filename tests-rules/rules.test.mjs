@@ -176,3 +176,11 @@ test("depo minimòm lan se 25 HTG", async () => {
   await assertFails(deposit("d1", 24, "1111111111"));
   await assertSucceeds(deposit("d2", 25, "2222222222"));
 });
+
+test("pake Gift Access: admin konplè sèlman, ak bon fòm", async () => {
+  const gift = { provider: "giftaccess", product_id: "1024", variation_ref: null, amount: null, offer_name: "Free Fire 100", auto: true };
+  await assertFails(setDoc(doc(as(ALICE), "supplierMap", "ff100"), gift));
+  await assertSucceeds(setDoc(doc(as(OWNER), "supplierMap", "ff100"), gift));
+  await assertFails(setDoc(doc(as(OWNER), "supplierMap", "ff100"), { ...gift, product_id: "" }));
+  await assertFails(setDoc(doc(as(OWNER), "supplierMap", "ff100"), { ...gift, provider: "other" }));
+});
