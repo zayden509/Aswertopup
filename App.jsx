@@ -11,6 +11,7 @@ import { BrandLogo } from "./Brand.jsx";
 import { FaqHost } from "./Faq.jsx";
 import { FlashBanner } from "./Flash.jsx";
 import { seoPageForPath } from "./seoPages.js";
+import { HomeHero, CategoryShortcuts, SectionTitle, HowItWorks } from "./HomeParts.jsx";
 import SideMenu from "./SideMenu.jsx";
 import Footer from "./Footer.jsx";
 import { LiveToast } from "./Notifications.jsx";
@@ -109,7 +110,7 @@ function Carousel({ onAction }) {
   return (
     <section aria-label={t("Anons", "Annonces")}>
       <div
-        className="relative overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800"
+        className="relative overflow-hidden rounded-[28px] bg-white shadow-lg shadow-violet-500/10 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-violet-500/20"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         // Bloke navigatè a pou l pa woule kad la poukont li (focus, rechèch nan paj la)
@@ -149,7 +150,7 @@ function Carousel({ onAction }) {
           ))}
         </div>
         <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-sm font-semibold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900/90 dark:text-slate-300 dark:ring-slate-700">
-          <span className="text-sky-500">{index + 1}</span> / {total}
+          <span className="text-violet-500">{index + 1}</span> / {total}
         </span>
       </div>
       <div className="mt-4 flex justify-center gap-2">
@@ -159,7 +160,7 @@ function Carousel({ onAction }) {
             type="button"
             aria-label={`${t("Anons", "Annonce")} ${i + 1}`}
             onClick={() => setIndex(i)}
-            className={`h-2 rounded-full transition-all ${i === index ? "w-10 bg-sky-500" : "w-2 bg-slate-300 dark:bg-slate-700"}`}
+            className={`h-2 rounded-full transition-all ${i === index ? "w-10 bg-gradient-to-r from-violet-500 to-fuchsia-500" : "w-2 bg-slate-300 dark:bg-slate-700"}`}
           />
         ))}
       </div>
@@ -222,20 +223,7 @@ function ProductRail({ section, index, catalog, prices, onOpen, onSeeAll }) {
   if (products.length === 0) return null;
   return (
     <section className="mt-9 [contain-intrinsic-size:auto_330px] [content-visibility:auto]" aria-label={section.title}>
-      <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-        <span />
-        <div className="text-center">
-          <h2 className="text-[22px] font-extrabold tracking-tight text-sky-500 [text-wrap:balance]">{section.title}</h2>
-          <span className="mx-auto mt-2 block h-1 w-12 rounded-full bg-sky-500/60" />
-        </div>
-        <button
-          type="button"
-          onClick={() => onSeeAll(section.category)}
-          className="flex items-center gap-1 justify-self-end whitespace-nowrap text-sm font-semibold text-sky-500 hover:text-sky-600"
-        >
-          Voir tout <ArrowRight className="h-4 w-4" />
-        </button>
-      </div>
+      <SectionTitle category={section.category} title={section.title} onSeeAll={() => onSeeAll(section.category)} />
       <div ref={rowRef} className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2">
         {products.map((p) => <ProductTile key={p.id} product={p} prices={prices} tagline={section.tagline} onOpen={onOpen} />)}
       </div>
@@ -245,8 +233,8 @@ function ProductRail({ section, index, catalog, prices, onOpen, onSeeAll }) {
 
 function SearchBar({ value, onChange, placeholder }) {
   return (
-    <label className="flex items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white px-4 py-3.5 transition focus-within:border-sky-400 dark:border-slate-800 dark:bg-slate-900">
-      <Search className="h-5 w-5 shrink-0 text-slate-400" />
+    <label className="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-5 py-3.5 shadow-sm transition focus-within:border-violet-400 focus-within:ring-4 focus-within:ring-violet-400/15 dark:border-slate-800 dark:bg-slate-900">
+      <Search className="h-5 w-5 shrink-0 text-violet-400" />
       <input
         type="search"
         value={value}
@@ -588,11 +576,14 @@ export default function App() {
               </>
             ) : (
               <>
+                <HomeHero catalog={catalog} onShop={() => goToTab("shop")} onDeposit={() => (signedIn ? startDeposit() : needLogin("signup"))} onOpen={openProduct} />
                 <FlashBanner onToast={setToast} onOpenProduct={(id) => { const p = catalog.find((x) => x.id === id); if (p) openProduct(p); }} />
-                <div className="mt-5"><Carousel onAction={handleSlideAction} /></div>
+                <CategoryShortcuts onPick={seeAll} />
+                <div className="mt-6"><Carousel onAction={handleSlideAction} /></div>
                 {HOME_SECTIONS.map((s, i) => (
                   <ProductRail key={s.category} section={s} index={i} catalog={catalog} prices={account.prices} onOpen={openProduct} onSeeAll={seeAll} />
                 ))}
+                <HowItWorks onTutorial={openTutorial} />
                 <ReviewsSection />
                 <Footer email={account.profile?.email} onGo={goToTab} onTutorial={openTutorial} onRank={showRank} />
               </>

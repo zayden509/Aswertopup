@@ -212,20 +212,21 @@ export function ProductTile({ product: p, prices, tagline, onOpen }) {
     <button
       type="button"
       onClick={() => onOpen(p)}
-      className="group w-[44%] shrink-0 snap-start overflow-hidden rounded-3xl bg-white text-left shadow-sm ring-1 ring-slate-200 transition active:scale-[.98] dark:bg-slate-900 dark:ring-slate-800 sm:w-[30%]"
+      className="group w-[44%] shrink-0 snap-start overflow-hidden rounded-3xl bg-white p-2 text-left shadow-sm ring-1 ring-slate-200 transition hover:ring-violet-300 active:scale-[.98] dark:bg-slate-900 dark:ring-slate-800 dark:hover:ring-violet-500/50 sm:w-[30%]"
     >
-      <span className="relative block aspect-square">
-        <ProductArt product={p} className="absolute inset-0" />
+      <span className="relative block aspect-square overflow-hidden rounded-[20px] shadow-md">
+        <ProductArt product={p} className="absolute inset-0 transition duration-300 group-hover:scale-105" />
         {p.isNew && (
           <span className="absolute left-2.5 top-2.5 rounded-full bg-emerald-300 px-2.5 py-0.5 text-[10px] font-extrabold tracking-[.12em] text-emerald-950 shadow">
             NOUVEAU
           </span>
         )}
       </span>
-      <span className="block px-3.5 pb-3.5 pt-3">
-        <span className="block truncate font-semibold text-slate-900 dark:text-white">{p.name}</span>
-        <span className="mt-0.5 block truncate text-sm font-medium text-sky-500">
-          {from != null ? `Dès ${formatPrice(from)}` : p.tagline || tagline}
+      <span className="block px-1.5 pb-1.5 pt-2.5">
+        <span className="block truncate font-bold text-slate-900 dark:text-white">{p.name}</span>
+        <span className="mt-1 flex items-center justify-between gap-2">
+          <span className="truncate text-sm font-bold text-amber-500">{from != null ? `${t("Apati", "Dès")} ${formatPrice(from)}` : p.tagline || tagline}</span>
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-600 transition group-hover:bg-violet-600 group-hover:text-white dark:bg-violet-500/15 dark:text-violet-300">→</span>
         </span>
       </span>
     </button>
