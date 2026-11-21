@@ -645,7 +645,9 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   const testUids = useMemo(() => new Set(Object.values(profiles)
     .filter((p) => TEST_ACCOUNTS.includes(String(p.email || "").toLowerCase()))
     .map((p) => p.id)), [profiles]);
-  const notTest = (o) => showTest || !testUids.has(o.user_id);
+  // Se pwopriyetè a sèlman ki ka wè kòmand tès yo (lòt admin yo pa janm wè yo, ni bouton an)
+  const isOwnerView = isOwner(account.profile);
+  const notTest = (o) => (showTest && isOwnerView) || !testUids.has(o.user_id);
 
   // Kòmand an dirèk yo genyen sou ansyen yo si se menm kòmand lan
   const everyOrder = useMemo(() => {
@@ -671,9 +673,11 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   const me = account.profile;
   const owner = isOwner(me);
   const openCount = liveOrders.filter(isOpen).length;
-  const pendingDeposits = deposits.filter((d) => d.status === "pending").length;
+  const pendingDeposits = deposits.filter((d) => d.status === "pending" && (owner || !testUids.has(d.user_id))).length;
   const badges = { orders: openCount, deposits: pendingDeposits };
-  const sortedDeposits = [...deposits].sort((a, b) => (a.status === "pending") === (b.status === "pending") ? 0 : a.status === "pending" ? -1 : 1);
+  // Depo kont tès yo: pwopriyetè a sèlman wè yo
+  const shownDeposits = owner ? deposits : deposits.filter((d) => !testUids.has(d.user_id));
+  const sortedDeposits = [...shownDeposits].sort((a, b) => (a.status === "pending") === (b.status === "pending") ? 0 : a.status === "pending" ? -1 : 1);
   const current = tabs.find((t) => t.id === tab);
   const subtitles = {
     dashboard: "Lavant, vizitè ak sa ki pou trete",
@@ -819,11 +823,11 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
 
         {tab === "dashboard" && (
           <>
-            <AdminDashboard orders={liveOrders} deposits={deposits} profiles={profiles} visits={visits} onGo={go} />
+            <AdminDashboard orders={liveOrders} deposits={shownDeposits} profiles={profiles} visits={visits} onGo={go} />
             <ReportsCard profiles={profiles} onToast={onToast} />
           </>
         )}
-        {tab === "orders" && hiddenTest > 0 && (
+        {tab === "orders" && hiddenTest > 0 && owner && (
           <button type="button" onClick={() => setShowTest((v) => !v)} className="w-full rounded-2xl bg-slate-100 px-4 py-2.5 text-left text-sm font-semibold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800">
             {showTest ? `🧪 ${hiddenTest} kòmand tès parèt · Kache yo` : `🧪 ${hiddenTest} kòmand tès kache (${TEST_ACCOUNTS.join(", ")}) · Montre yo`}
           </button>
@@ -845,7 +849,14 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
             <AdminSms owner={owner} onToast={onToast} onTrusted={recheckDeposits} />
           </>
         )}
-        {tab === "customers" && <AdminCustomers profiles={profiles} orders={everyOrder} deposits={deposits} onToast={onToast} />}
+        {tab === "customers" && (
+          <AdminCustomers
+            profiles={owner ? profiles : Object.fromEntries(Object.entries(profiles).filter(([id]) => !testUids.has(id)))}
+            orders={owner ? everyOrder : allOrders}
+            deposits={owner ? deposits : deposits.filter((d) => !testUids.has(d.user_id))}
+            onToast={onToast}
+          />
+        )}
         {tab === "catalog" && (
           <>
             <AdminCatalog account={account} onToast={onToast} />
