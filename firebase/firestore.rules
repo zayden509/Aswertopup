@@ -334,6 +334,12 @@ service cloud.firestore {
       allow read, write: if isFullAdmin();
     }
 
+    // Tikè sèvè a bay lè l jwenn SMS peman yon depo (kòd + montan). Yon depo san tikè refize:
+    // konsa pèsonn pa ka voye yon fo depo dirèkteman nan baz done a san l pa peye.
+    match /depositTickets/{id} {
+      allow read, write: if isFullAdmin();
+    }
+
     // Abònman notifikasyon push chak kliyan (endpoint navigatè a ak 2 kle piblik li yo).
     // Kliyan an jere pa l; sèvè a (bot admin) li yo pou voye notifikasyon, epi l retire sa ki mouri.
     match /pushSubs/{uid} {
@@ -687,7 +693,13 @@ service cloud.firestore {
         && optString(d.sender_phone, 20)
         && d.created_at == request.time && d.updated_at == request.time
         && refUnused(d.reference)
-        && getAfter(ref).data.deposit_id == id;
+        && getAfter(ref).data.deposit_id == id
+        && depositTicketOk(d);
+    }
+
+    function depositTicketOk(d) {
+      let path = /databases/$(database)/documents/depositTickets/$(me() + '_' + d.method + '_' + d.reference);
+      return exists(path) && get(path).data.user_id == me() && get(path).data.amount == d.amount;
     }
 
     // Yon kòd tranzaksyon sèvi yon sèl fwa, kèlkeswa mòd peman an (NatCash oswa MonCash)

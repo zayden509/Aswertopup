@@ -36,6 +36,10 @@ beforeEach(async () => {
 
 const as = (uid) => env.authenticatedContext(uid, { email: "x@test.com" }).firestore();
 
+// Tikè sèvè a bay lè l jwenn SMS peman an
+const ticket = (uid, method, reference, amount) => env.withSecurityRulesDisabled((ctx) =>
+  setDoc(doc(ctx.firestore(), "depositTickets", `${uid}_${method}_${reference}`), { user_id: uid, method, reference, amount, created_at: new Date() }));
+
 function order(db, id, price, extra = {}) {
   const batch = writeBatch(db);
   batch.set(doc(db, "orders", id), {
@@ -135,6 +139,7 @@ test("menm kòd tranzaksyon an pa ka sèvi pou de depo", async () => {
     batch.set(doc(db, "depositRefs", "moncash_3598068116"), { deposit_id: id, user_id: ALICE });
     return batch.commit();
   };
+  await ticket(ALICE, "moncash", "3598068116", 500);
   await assertSucceeds(deposit("d1"));
   await assertFails(deposit("d2"));
 });
@@ -173,6 +178,8 @@ test("depo minimòm lan se 25 HTG", async () => {
     batch.set(doc(db, "depositRefs", `moncash_${ref}`), { deposit_id: id, user_id: ALICE });
     return batch.commit();
   };
+  await ticket(ALICE, "moncash", "1111111111", 24);
+  await ticket(ALICE, "moncash", "2222222222", 25);
   await assertFails(deposit("d1", 24, "1111111111"));
   await assertSucceeds(deposit("d2", 25, "2222222222"));
 });
@@ -195,4 +202,24 @@ test("non pwodwi ak non pake: admin konplè sèlman, ak bon fòm", async () => {
   await assertFails(updateDoc(doc(as(ALICE), "packages", "ff100"), { label: "100 Diamants" }));
   await assertFails(updateDoc(doc(as(OWNER), "packages", "ff100"), { label: "" }));
   await assertSucceeds(updateDoc(doc(as(OWNER), "packages", "ff100"), { label: "100 Diamants", product_name: "Free Fire Max" }));
+});
+
+test("yon depo san SMS peman (san tikè sèvè a) refize", async () => {
+  const db = as(ALICE);
+  const deposit = (id, amount, ref) => {
+    const batch = writeBatch(db);
+    batch.set(doc(db, "deposits", id), {
+      user_id: ALICE, amount, method: "moncash", reference: ref, sender_phone: "50900000000", status: "pending",
+      admin_note: null, created_at: serverTimestamp(), updated_at: serverTimestamp(),
+    });
+    batch.set(doc(db, "depositRefs", `moncash_${ref}`), { deposit_id: id, user_id: ALICE });
+    return batch.commit();
+  };
+  await assertFails(deposit("fake", 25, "ZZMONCASH01"));
+  await ticket(ALICE, "moncash", "3333333333", 500);
+  await assertFails(deposit("more", 5000, "3333333333")); // montan an pa menm ak SMS la
+  await ticket(BOB, "moncash", "4444444444", 500);
+  await assertFails(deposit("other", 500, "4444444444")); // tikè yon lòt kliyan
+  await assertSucceeds(deposit("ok", 500, "3333333333"));
+  await assertFails(setDoc(doc(as(ALICE), "depositTickets", `${ALICE}_moncash_5555555555`), { user_id: ALICE, method: "moncash", reference: "5555555555", amount: 9999, created_at: new Date() }));
 });

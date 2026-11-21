@@ -129,6 +129,11 @@ export async function lookupCode(backend, uid, method, reference) {
   // Bon kòd (menm si montan an pa ka antre otomatikman): li pa konte kòm yon erè
   if (result.status === "ok" || result.status === "amount") {
     await backend.adminClearCodeFails(uid).catch(() => {});
+    // Tikè pou kliyan an ka kreye depo a: san li, règ Firestore yo refize yon depo ki pa gen SMS peman
+    if (result.status === "ok") {
+      await backend.adminGrantDepositTicket(uid, result.method, normalizeReference(reference), result.amount)
+        .catch((error) => console.error("deposit ticket", error));
+    }
     return result;
   }
   // Kòd la pa jwenn: petèt telefòn httpSMS la pa voye SMS yo ankò (pwopriyetè a resevwa yon alèt)

@@ -1013,6 +1013,13 @@ export function createBackend(config, options = {}) {
     },
 
     // Yon lòt kòd ki pa bon: apre `max` nan `waitMs`, kliyan an tann `waitMs`. Retounen chans ki rete.
+    // Sèvè a jwenn SMS peman an: kliyan an gen dwa kreye depo sa a (règ Firestore yo mande tikè sa a)
+    async adminGrantDepositTicket(uid, method, reference, amount) {
+      await setDoc(doc(db, "depositTickets", `${uid}_${method}_${reference}`), {
+        user_id: uid, method, reference, amount: Number(amount), created_at: serverTimestamp(),
+      });
+    },
+
     async adminAddCodeFail(uid, max, waitMs) {
       const ref = doc(db, "codeChecks", uid);
       return runTransaction(db, async (tx) => {
