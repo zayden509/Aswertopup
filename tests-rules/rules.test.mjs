@@ -184,3 +184,15 @@ test("pake Gift Access: admin konplè sèlman, ak bon fòm", async () => {
   await assertFails(setDoc(doc(as(OWNER), "supplierMap", "ff100"), { ...gift, product_id: "" }));
   await assertFails(setDoc(doc(as(OWNER), "supplierMap", "ff100"), { ...gift, provider: "other" }));
 });
+
+test("non pwodwi ak non pake: admin konplè sèlman, ak bon fòm", async () => {
+  await assertFails(setDoc(doc(as(ALICE), "productNames", "free-fire"), { name: "Free Fire Max" }));
+  await assertFails(setDoc(doc(as(STAFF), "productNames", "free-fire"), { name: "Free Fire Max" }));
+  await assertFails(setDoc(doc(as(OWNER), "productNames", "free-fire"), { name: "F" }));
+  await assertFails(setDoc(doc(as(OWNER), "productNames", "free-fire"), { name: "Free Fire Max", extra: 1 }));
+  await assertSucceeds(setDoc(doc(as(OWNER), "productNames", "free-fire"), { name: "Free Fire Max" }));
+  await assertSucceeds(getDoc(doc(env.unauthenticatedContext().firestore(), "productNames", "free-fire")));
+  await assertFails(updateDoc(doc(as(ALICE), "packages", "ff100"), { label: "100 Diamants" }));
+  await assertFails(updateDoc(doc(as(OWNER), "packages", "ff100"), { label: "" }));
+  await assertSucceeds(updateDoc(doc(as(OWNER), "packages", "ff100"), { label: "100 Diamants", product_name: "Free Fire Max" }));
+});

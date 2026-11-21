@@ -27,18 +27,19 @@ const BUILT_IN_PACKAGES = PRODUCTS.flatMap((product) =>
   }));
 
 function PriceRow({ pkg, onToast, onDelete }) {
+  const [label, setLabel] = useState(pkg.label);
   const [price, setPrice] = useState(String(Number(pkg.price)));
   const [available, setAvailable] = useState(pkg.available);
   const [needsId, setNeedsId] = useState(Boolean(pkg.needs_id));
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const dirty = Number(price) !== Number(pkg.price) || available !== pkg.available || needsId !== Boolean(pkg.needs_id);
+  const dirty = label.trim() !== pkg.label || Number(price) !== Number(pkg.price) || available !== pkg.available || needsId !== Boolean(pkg.needs_id);
 
   const save = async () => {
     setBusy(true);
     try {
-      await backend.adminSetPackage(pkg.id, price, available, needsId);
-      onToast(`${pkg.label}: ${formatPrice(Number(price))}${available ? "" : " (kache)"}.`);
+      await backend.adminSetPackage(pkg.id, price, available, needsId, label);
+      onToast(`${label.trim()}: ${formatPrice(Number(price))}${available ? "" : " (kache)"}.`);
     } catch (error) {
       onToast(errorText(error));
     } finally {
@@ -60,10 +61,16 @@ function PriceRow({ pkg, onToast, onDelete }) {
   return (
     <li className="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
       <div className="flex items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-white">{pkg.label}</p>
-
-        </div>
+        <label className="flex min-w-0 flex-1 items-center gap-1.5 rounded-xl border-2 border-slate-200 bg-white px-2 focus-within:border-sky-400 dark:border-slate-700 dark:bg-slate-950">
+          <Pencil className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+          <input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            maxLength={60}
+            aria-label={`Non pake ${pkg.label}`}
+            className="min-w-0 flex-1 bg-transparent py-2 font-semibold text-slate-900 focus:outline-none dark:text-white"
+          />
+        </label>
         <label className="flex items-center gap-1 rounded-xl border-2 border-slate-200 bg-white px-2 focus-within:border-sky-400 dark:border-slate-700 dark:bg-slate-950">
           <input
             type="number"
@@ -146,6 +153,44 @@ function AddPackageForm({ product, groups, nextSort, onToast }) {
         {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />} Ajoute pake a
       </button>
     </form>
+  );
+}
+
+// Chanje non yon pwodwi sit la (Free Fire, Netflix…). Pake li yo pran nouvo non an tou.
+function NameEditor({ product, packageIds, onToast }) {
+  const original = product.defaultName || product.name;
+  const [name, setName] = useState(product.name);
+  const [busy, setBusy] = useState(false);
+  const dirty = name.trim() !== product.name;
+
+  const save = async (value) => {
+    setBusy(true);
+    try {
+      const saved = await backend.adminSetProductName(product.id, value, original, packageIds);
+      setName(saved);
+      onToast(`Non an chanje: ${saved}.`);
+    } catch (error) {
+      onToast(errorText(error));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
+      <p className="mb-2 text-sm font-bold text-slate-700 dark:text-slate-200">Non pwodwi a</p>
+      <div className="flex items-center gap-2">
+        <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} aria-label="Non pwodwi a" className={`${inputClass} min-w-0 flex-1`} />
+        <button type="button" disabled={!dirty || busy || name.trim().length < 2} onClick={() => save(name)} className="rounded-xl bg-sky-500 px-4 py-3 text-sm font-bold text-white disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-700">
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sove"}
+        </button>
+      </div>
+      {product.name !== original && (
+        <button type="button" disabled={busy} onClick={() => save("")} className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-sky-600 dark:text-slate-400">
+          <RotateCcw className="h-3.5 w-3.5" /> Remete non orijinal la ({original})
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -435,6 +480,7 @@ function ProductSheet({ product, prices, exchange, hidden, images, nextSort, onE
             <Toggle on={!product.hidden} onChange={setVisible} label={product.hidden ? "Kache sou sit la" : "Vizib sou sit la"} />
           </div>
         </div>
+        {!product.custom && <NameEditor key={product.name} product={product} packageIds={[...builtInIds, ...added].filter((id) => prices[id])} onToast={onToast} />}
         {!product.custom && <PhotoControls product={product} changed={Boolean(images?.[product.id])} onToast={onToast} />}
         {product.custom && (
           <button type="button" onClick={onEdit} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-2.5 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">

@@ -640,7 +640,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   };
 
   // Lè non yon pwodwi chanje sou sit la, pake li yo nan baz done a swiv li (kòmand ki deja fèt yo pa chanje)
-  const nameFixes = useMemo(() => packageNameFixes(account.prices, account.catalog.products), [account.prices, account.catalog.products]);
+  const nameFixes = useMemo(() => packageNameFixes(account.prices, account.catalog.products, account.catalog.names), [account.prices, account.catalog.products, account.catalog.names]);
   useEffect(() => {
     if (nameFixes.length && !limited) backend.adminRenamePackages(nameFixes).catch((error) => console.error("rename packages", error));
   }, [nameFixes, limited]);

@@ -58,7 +58,9 @@ function withImage(product, images) {
 // Tout pwodwi yo, ak `hidden: true` sou sa ki kache yo (pou Panneau admin lan)
 export function allProducts(packages, custom) {
   const hidden = new Set(custom.hidden);
-  const builtIn = PRODUCTS.map((p) => {
+  const names = custom.names || {};
+  const builtIn = PRODUCTS.map((base) => {
+    const p = names[base.id] ? { ...base, name: names[base.id], defaultName: base.name } : base;
     // Pwodwi Finans: kat la montre to du jou a lè admin nan aktive l
     const ex = p.exchange && custom.exchange?.[p.id];
     if (p.exchange) return ex?.available ? { ...p, tagline: `1 ${ex.currency} = ${rate.format(ex.rate)} HTG` } : p;
@@ -95,12 +97,13 @@ export function productForPackage(packageId, catalog) {
 // Pake ki gen yon ansyen non pwodwi (pa egzanp apre "Free Fire Pin USA/LATAM" vin
 // "Free Fire USA/LATAM"): Panneau admin lan mete non yo ajou nan baz done a.
 // Yon pake ki nan de pwodwi (abònman Free Fire yo) pran non premye a.
-export function packageNameFixes(packages, customProducts = []) {
+export function packageNameFixes(packages, customProducts = [], names = {}) {
   const owner = new Map();
   PRODUCTS.forEach((p) => (p.groups || []).forEach((g) => g.items.forEach((i) => {
-    if (!owner.has(i.id)) owner.set(i.id, p.name);
+    if (!owner.has(i.id)) owner.set(i.id, names[p.id] || p.name);
   })));
-  const nameOf = (id) => PRODUCTS.find((p) => p.id === id)?.name || customProducts.find((p) => p.id === id)?.name;
+  const builtInName = (id) => { const p = PRODUCTS.find((x) => x.id === id); return p && (names[id] || p.name); };
+  const nameOf = (id) => builtInName(id) || customProducts.find((p) => p.id === id)?.name;
   return Object.values(packages)
     .map((pkg) => ({ id: pkg.id, from: pkg.product_name, product_name: pkg.product_id ? nameOf(pkg.product_id) : owner.get(pkg.id) }))
     .filter((fix) => fix.product_name && fix.product_name !== fix.from)

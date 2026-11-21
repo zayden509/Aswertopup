@@ -178,13 +178,30 @@ function SummaryRow({ icon: Icon, label, children }) {
   );
 }
 
-// Pri ak disponiblite ki nan baz done a ranplase sa ki nan data.js
+// Non admin nan bay yon pake (si l chanje l nan Panneau admin lan)
+function liveLabel(it, pkg, style) {
+  const label = pkg?.label?.trim();
+  if (!label || label === (it.bonus ? `${it.label} + BONUS ${it.bonus}` : it.label)) return {};
+  const gem = style === "gem" && /^(\d+)\s*\+\s*bonus\s*(\d+)$/i.exec(label);
+  return gem ? { label: gem[1], bonus: Number(gem[2]) } : { label, bonus: undefined };
+}
+
+// Pri, non, Player ID ak disponiblite ki nan baz done a ranplase sa ki nan data.js
 function withLivePrices(groups, prices) {
   return groups
     .map((g) => ({
       ...g,
       items: g.items
-        .map((it) => ({ ...it, price: prices[it.id]?.price ?? it.price, available: prices[it.id]?.available ?? true }))
+        .map((it) => {
+          const pkg = prices[it.id];
+          return {
+            ...it,
+            ...liveLabel(it, pkg, g.style),
+            price: pkg?.price ?? it.price,
+            available: pkg?.available ?? true,
+            needsId: typeof pkg?.needs_id === "boolean" ? pkg.needs_id : it.needsId,
+          };
+        })
         .filter((it) => it.available),
     }))
     .filter((g) => g.items.length > 0);

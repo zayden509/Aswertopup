@@ -227,13 +227,14 @@ export function createBackend(config, options = {}) {
       let exchange = {};
       let payments = null;
       let images = {};
+      let names = {};
       // Nou voye katalòg la sèlman lè tout pati yo rive (pou yon pwodwi kache pa parèt yon ti moman),
       // epi `ready` di to yo fin chaje (pou paj Finans yo pa di "pa disponib" pandan chajman an)
-      const PARTS = 5;
+      const PARTS = 6;
       const arrived = new Set();
       const emit = (part) => {
         arrived.add(part);
-        if (arrived.size === PARTS) callback({ products, hidden, exchange, payments, images, ready: true });
+        if (arrived.size === PARTS) callback({ products, hidden, exchange, payments, images, names, ready: true });
       };
       const failed = (part) => (error) => {
         console.error(part, error);
@@ -262,6 +263,11 @@ export function createBackend(config, options = {}) {
           images = Object.fromEntries(snap.docs.map((d) => [d.id, d.data().image]));
           emit("images");
         }, failed("images")),
+        // Non admin nan bay pwodwi sit la (ranplase non ki nan data.js)
+        onSnapshot(collection(db, "productNames"), (snap) => {
+          names = Object.fromEntries(snap.docs.map((d) => [d.id, d.data().name]));
+          emit("names");
+        }, failed("names")),
       ];
       return () => stops.forEach((stop) => stop());
     },
@@ -941,7 +947,7 @@ export function createBackend(config, options = {}) {
     // Pwopriyetè a: tout done sit la pou yon backup (fichye JSON)
     async adminExportAll() {
       const names = ["users", "orders", "deposits", "transfers", "packages", "products", "exchange", "supplierMap",
-        "settings", "productImages", "announcements", "visits", "smsPayments"];
+        "settings", "productImages", "productNames", "announcements", "visits", "smsPayments"];
       const out = { exported_at: new Date().toISOString(), project: config.projectId };
       for (const name of names) out[name] = (await getDocs(collection(db, name))).docs.map(toPlain);
       return out;
@@ -1247,10 +1253,12 @@ export function createBackend(config, options = {}) {
       await batch.commit();
     },
 
-    async adminSetPackage(id, price, available, needsId) {
+    async adminSetPackage(id, price, available, needsId, label) {
       const value = Number(price);
       if (!Number.isInteger(value) || value <= 0) throw new UserError("Pri a dwe yon chif san vigil, pi gran pase 0.");
-      await updateDoc(doc(db, "packages", id), { price: value, available, ...(typeof needsId === "boolean" && { needs_id: needsId }) });
+      const name = typeof label === "string" ? label.trim().slice(0, 60) : null;
+      if (label !== undefined && !name) throw new UserError("Mete non pake a.");
+      await updateDoc(doc(db, "packages", id), { price: value, available, ...(typeof needsId === "boolean" && { needs_id: needsId }), ...(name && { label: name }) });
     },
 
     // Limen oswa etenn "Mande Player ID" pou tout pake yon pwodwi an yon sèl kou
@@ -1360,6 +1368,20 @@ export function createBackend(config, options = {}) {
       if (!image) return deleteDoc(doc(db, "productImages", productId));
       if (image.length > 120000) throw new UserError(t("Foto a twò lou. Chwazi yon lòt.", "Photo trop lourde. Choisissez-en une autre."));
       await setDoc(doc(db, "productImages", productId), { image });
+    },
+
+    // Non yon pwodwi sit la (Free Fire, Netflix…). Vid oswa menm ak non orijinal la = retounen sou li.
+    // Pake li yo pran nouvo non an tou, pou kòmand yo ak resi yo montre l.
+    async adminSetProductName(productId, name, defaultName, packageIds = []) {
+      const clean = String(name || "").trim().slice(0, 60);
+      if (clean && clean.length < 2) throw new UserError("Non an twò kout.");
+      const finalName = clean || defaultName;
+      const batch = writeBatch(db);
+      if (!clean || clean === defaultName) batch.delete(doc(db, "productNames", productId));
+      else batch.set(doc(db, "productNames", productId), { name: clean });
+      packageIds.slice(0, 400).forEach((id) => batch.update(doc(db, "packages", id), { product_name: finalName }));
+      await batch.commit();
+      return finalName;
     },
 
     /* ---------- Mesaj ---------- */
