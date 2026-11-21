@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Wallet, Eye, EyeOff, Copy, Plus, Send, ShoppingCart, ArrowDownLeft, ArrowUpRight, LogIn } from "lucide-react";
+import { Wallet, Eye, EyeOff, Copy, Plus, Send, ShoppingCart, ArrowDownLeft, ArrowUpRight, LogIn, Clock3, Sparkles } from "lucide-react";
 import { Sheet, formatPrice, formatDate, formatDateTime, copyText, isPaidOrder, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
 import { ReceiptButton } from "./Receipt.jsx";
 import { MethodList } from "./WalletSheets.jsx";
@@ -174,68 +174,89 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
   const rows = buildTransactions(account);
   const visible = filter === "all" ? rows : rows.filter((r) => r.kind === filter);
   const stats = [
-    { label: "Achats", value: account.orders.filter(isPaidOrder).length, cls: "text-sky-500" },
-    { label: "Dépôts", value: account.deposits.filter((d) => d.status === "completed").length, cls: "text-emerald-500" },
-    { label: "Transferts", value: account.transfers.length, cls: "text-violet-500" },
+    { label: t("Acha", "Achats"), value: account.orders.filter(isPaidOrder).length, Icon: ShoppingCart, tone: "from-sky-400 to-indigo-500" },
+    { label: t("Depo", "Dépôts"), value: account.deposits.filter((d) => d.status === "completed").length, Icon: ArrowDownLeft, tone: "from-emerald-400 to-teal-500" },
+    { label: t("Transfè", "Transferts"), value: account.transfers.length, Icon: Send, tone: "from-violet-500 to-fuchsia-500" },
     {
-      label: "En attente",
+      label: t("An atant", "En attente"),
       value: account.orders.filter((o) => o.status === "pending" || o.status === "processing").length + account.deposits.filter((d) => d.status === "pending").length,
-      cls: "text-amber-500",
+      Icon: Clock3,
+      tone: "from-amber-400 to-orange-500",
     },
   ];
 
   return (
     <div className="space-y-5">
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50 via-white to-violet-50 p-5 shadow-lg shadow-sky-500/10 ring-1 ring-sky-100 dark:from-sky-500/10 dark:via-slate-900 dark:to-violet-500/10 dark:ring-slate-800">
-        <div className="flex items-start justify-between gap-3">
-          <h1 className="text-xl font-bold text-sky-500">Mon portefeuille AWENS</h1>
+      {/* Kat Wallet la: tankou yon kat bank "gaming" */}
+      <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#2a0f5c] via-[#160b38] to-[#06122b] p-5 text-white shadow-xl shadow-violet-900/30 ring-1 ring-white/10">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-fuchsia-500/35 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-sky-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 opacity-[.07] [background-image:linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] [background-size:28px_28px]" />
+
+        <div className="relative flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-lg shadow-fuchsia-500/40">
+              <Wallet className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-[11px] font-extrabold uppercase tracking-[.18em] text-violet-200/80">{t("Wallet mwen", "Mon portefeuille")}</p>
+              <h1 className="text-lg font-black leading-tight">AWENS Wallet</h1>
+            </div>
+          </div>
           <button
             type="button"
             onClick={toggleHidden}
             aria-label={hidden ? t("Montre solde a", "Afficher le solde") : t("Kache solde a", "Masquer le solde")}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/80 text-slate-700 ring-1 ring-slate-200 hover:bg-white dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/20 transition hover:bg-white/15 active:scale-95"
           >
             {hidden ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </button>
         </div>
+
+        <p className="relative mt-6 text-sm font-semibold text-slate-300">{t("Solde total", "Solde total")}</p>
+        <p className="relative mt-0.5 text-[40px] font-black leading-none tracking-tight tabular-nums">
+          {profile ? (hidden ? "•••••• HTG" : formatPrice(Number(profile.balance))) : "…"}
+        </p>
+
         {profile && (
           <button
             type="button"
             onClick={() => copyText(profile.wallet_code, onToast)}
-            className="mt-3 inline-flex items-center gap-3 rounded-full bg-white/80 px-4 py-2 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700"
+            className="relative mt-4 inline-flex items-center gap-2.5 rounded-2xl bg-white/10 px-3.5 py-2 ring-1 ring-white/15 transition hover:bg-white/15 active:scale-95"
           >
-            <span className="text-xs font-bold tracking-widest text-slate-500 dark:text-slate-400">AWENS-ID</span>
-            <span className="font-mono text-base font-bold tracking-wider text-slate-900 dark:text-white">{profile.wallet_code}</span>
-            <Copy className="h-4 w-4 text-slate-500" />
+            <Sparkles className="h-4 w-4 text-fuchsia-300" />
+            <span className="text-[11px] font-extrabold tracking-[.16em] text-violet-200/80">AWENS-ID</span>
+            <span className="font-mono text-base font-bold tracking-wider">{profile.wallet_code}</span>
+            <Copy className="h-4 w-4 text-violet-200" />
           </button>
         )}
-        <p className="mt-5 bg-gradient-to-r from-sky-500 to-violet-500 bg-clip-text text-4xl font-extrabold tabular-nums text-transparent">
-          {profile ? (hidden ? "•••••• HTG" : formatPrice(Number(profile.balance))) : "…"}
-        </p>
-        <p className="mt-1 text-slate-500 dark:text-slate-400">Solde total</p>
-        <div className="mt-5 space-y-3">
+
+        <div className="relative mt-5 grid grid-cols-2 gap-2.5">
           <button
             type="button"
             onClick={onDeposit}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 to-violet-500 py-3.5 text-lg font-bold text-white shadow-lg shadow-violet-500/20 transition hover:brightness-105"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 py-3.5 font-extrabold shadow-lg shadow-fuchsia-500/35 transition hover:brightness-110 active:scale-[.98]"
           >
-            <Plus className="h-5 w-5" /> Ajouter de l'argent
+            <Plus className="h-5 w-5" /> {t("Ajoute kòb", "Ajouter")}
           </button>
           <button
             type="button"
             onClick={onTransfer}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white/80 py-3.5 text-lg font-bold text-slate-800 ring-2 ring-sky-100 transition hover:bg-white dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-white/10 py-3.5 font-extrabold ring-1 ring-white/20 transition hover:bg-white/15 active:scale-[.98]"
           >
-            <Send className="h-5 w-5" /> Envoyer de l'argent
+            <Send className="h-5 w-5" /> {t("Voye kòb", "Envoyer")}
           </button>
         </div>
       </section>
 
       <div className="grid grid-cols-4 gap-2">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-2xl bg-white px-1 py-3 text-center shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-            <p className={`text-2xl font-extrabold tabular-nums ${s.cls}`}>{s.value}</p>
-            <p className="text-[12px] text-slate-500 dark:text-slate-400">{s.label}</p>
+          <div key={s.label} className="flex flex-col items-center rounded-2xl bg-white px-1 py-3 text-center shadow-sm ring-1 ring-slate-200 dark:bg-transparent dark:bg-gradient-to-b dark:from-white/[.07] dark:to-white/[.02] dark:ring-white/10">
+            <span className={`grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br ${s.tone} text-white shadow-md`}>
+              <s.Icon className="h-4 w-4" />
+            </span>
+            <p className="mt-1.5 text-xl font-black tabular-nums text-slate-900 dark:text-white">{s.value}</p>
+            <p className="w-full truncate text-[11px] font-semibold text-slate-500 dark:text-slate-400">{s.label}</p>
           </div>
         ))}
       </div>
@@ -249,7 +270,7 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
               type="button"
               onClick={() => setFilter(f.id)}
               className={`shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                f.id === filter ? "bg-sky-500 text-white" : "bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                f.id === filter ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-md shadow-fuchsia-500/25" : "bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
               }`}
             >
               {f.label}
