@@ -260,34 +260,51 @@ function ComingSoon({ tab, onHome }) {
 }
 
 const TABS = [
-  { id: "home", label: "Accueil", Icon: Home },
-  { id: "shop", label: "Boutique", Icon: ShoppingCart },
-  { id: "promos", label: "Promos", Icon: Tag },
-  { id: "history", label: "Historique", Icon: History },
-  { id: "wallet", label: "Wallet", Icon: Wallet },
+  { id: "home", kr: "Lakay", fr: "Accueil", Icon: Home },
+  { id: "shop", kr: "Boutik", fr: "Boutique", Icon: ShoppingCart },
+  { id: "promos", kr: "Pwomo", fr: "Promos", Icon: Tag },
+  { id: "history", kr: "Istorik", fr: "Historique", Icon: History },
+  { id: "wallet", kr: "Wallet", fr: "Wallet", Icon: Wallet },
 ];
 
+// Meni anba a: vè tankou glas, onglet aktif la gen yon bil koulè k ap klere
 function BottomNav({ tab, onChange }) {
   return (
     <nav
-      className="fixed inset-x-3 z-40 mx-auto max-w-xl rounded-[28px] bg-white/[.97] p-2 shadow-xl shadow-slate-900/10 ring-1 ring-slate-200 dark:bg-slate-900/[.97] dark:ring-slate-800"
+      aria-label={t("Meni prensipal", "Menu principal")}
+      className="fixed inset-x-3 z-40 mx-auto max-w-xl overflow-hidden rounded-[26px] bg-white/95 p-1.5 shadow-[0_12px_40px_-8px_rgba(76,29,149,.35)] ring-1 ring-violet-200/70 backdrop-blur-xl dark:bg-[#0c0a24]/95 dark:shadow-[0_12px_40px_-6px_rgba(0,0,0,.7)] dark:ring-white/10"
       style={{ bottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
     >
-      <ul className="grid grid-cols-5 gap-1">
-        {TABS.map((t) => {
-          const active = t.id === tab;
+      <span className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-fuchsia-400/70 to-transparent" />
+      <ul className="relative grid grid-cols-5">
+        {TABS.map((item) => {
+          const active = item.id === tab;
           return (
-            <li key={t.id}>
+            <li key={item.id}>
               <button
                 type="button"
-                onClick={() => onChange(t.id)}
+                onClick={() => onChange(item.id)}
                 aria-current={active ? "page" : undefined}
-                className={`flex w-full flex-col items-center gap-1 rounded-2xl py-2 text-[12px] font-medium transition ${
-                  active ? "bg-sky-50 text-sky-500 ring-1 ring-sky-200 dark:bg-sky-500/10 dark:ring-sky-500/30" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                }`}
+                className="group flex w-full flex-col items-center gap-1 rounded-2xl pb-1.5 pt-1 transition active:scale-95"
               >
-                <t.Icon className="h-6 w-6" strokeWidth={1.75} />
-                {t.label}
+                <span
+                  className={`grid h-10 w-12 place-items-center rounded-2xl transition-all duration-300 ${
+                    active
+                      ? "-translate-y-0.5 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 text-white shadow-lg shadow-fuchsia-500/40"
+                      : "text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:bg-white/5 dark:group-hover:text-slate-200"
+                  }`}
+                >
+                  <item.Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2.2 : 1.8} />
+                </span>
+                <span
+                  className={`text-[11px] leading-none tracking-tight transition ${
+                    active
+                      ? "bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text font-extrabold text-transparent dark:from-violet-300 dark:to-fuchsia-300"
+                      : "font-semibold text-slate-400 dark:text-slate-500"
+                  }`}
+                >
+                  {t(item.kr, item.fr)}
+                </span>
               </button>
             </li>
           );
