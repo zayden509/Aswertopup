@@ -29,14 +29,15 @@ const BUILT_IN_PACKAGES = PRODUCTS.flatMap((product) =>
 function PriceRow({ pkg, onToast, onDelete }) {
   const [price, setPrice] = useState(String(Number(pkg.price)));
   const [available, setAvailable] = useState(pkg.available);
+  const [needsId, setNeedsId] = useState(Boolean(pkg.needs_id));
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const dirty = Number(price) !== Number(pkg.price) || available !== pkg.available;
+  const dirty = Number(price) !== Number(pkg.price) || available !== pkg.available || needsId !== Boolean(pkg.needs_id);
 
   const save = async () => {
     setBusy(true);
     try {
-      await backend.adminSetPackage(pkg.id, price, available);
+      await backend.adminSetPackage(pkg.id, price, available, needsId);
       onToast(`${pkg.label}: ${formatPrice(Number(price))}${available ? "" : " (kache)"}.`);
     } catch (error) {
       onToast(errorText(error));
@@ -61,7 +62,7 @@ function PriceRow({ pkg, onToast, onDelete }) {
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-white">{pkg.label}</p>
-          {pkg.needs_id && <p className="text-xs text-slate-500 dark:text-slate-400">Mande Player ID</p>}
+
         </div>
         <label className="flex items-center gap-1 rounded-xl border-2 border-slate-200 bg-white px-2 focus-within:border-sky-400 dark:border-slate-700 dark:bg-slate-950">
           <input
@@ -79,6 +80,7 @@ function PriceRow({ pkg, onToast, onDelete }) {
       </div>
       <div className="mt-3 flex items-center gap-2">
         <Toggle on={available} onChange={setAvailable} label={available ? "Vizib" : "Kache"} />
+        <Toggle on={needsId} onChange={setNeedsId} label="Player ID" />
         {onDelete && (
           confirmDelete ? (
             <button type="button" disabled={busy} onClick={remove} className="ml-auto rounded-xl bg-red-500 px-3 py-2 text-sm font-bold text-white disabled:opacity-60">Konfime</button>
@@ -100,7 +102,8 @@ function AddPackageForm({ product, groups, nextSort, onToast }) {
   const [group, setGroup] = useState(groups[0] || "Offres");
   const [label, setLabel] = useState("");
   const [price, setPrice] = useState("");
-  const [needsId, setNeedsId] = useState(Boolean(product.playerId));
+  // Kat kado, abònman ak finans pa bezwen Player ID pa defo
+  const [needsId, setNeedsId] = useState(Boolean(product.playerId) && product.category === "Jwèt");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -453,6 +456,28 @@ function ProductSheet({ product, prices, exchange, hidden, images, nextSort, onE
                   {notInDb.length} pake poko nan baz done a. Peze <b>Ajoute yo ak pri ki nan sit la</b> nan lis pwodwi yo.
                 </p>
               )}
+              {(() => {
+                const ids = [...builtInIds, ...added].filter((id) => prices[id]);
+                const withId = ids.filter((id) => prices[id].needs_id);
+                if (!ids.length) return null;
+                const setAll = async (on) => {
+                  try {
+                    await backend.adminSetNeedsId(ids, on, product.custom ? product.id : null);
+                    onToast(on ? `${product.name}: tout pake yo mande Player ID.` : `${product.name}: pa mande Player ID ankò.`);
+                  } catch (error) {
+                    onToast(errorText(error));
+                  }
+                };
+                return (
+                  <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-200 dark:bg-white/[.04] dark:ring-white/10">
+                    <span className="min-w-0 text-sm">
+                      <span className="block font-bold text-slate-900 dark:text-white">Mande Player ID kliyan an</span>
+                      <span className="block text-xs text-slate-500 dark:text-slate-400">{withId.length ? `${withId.length} sou ${ids.length} pake mande l` : "Okenn pake pa mande l"}</span>
+                    </span>
+                    <Toggle on={withId.length > 0} onChange={setAll} label={withId.length > 0 ? "Wi" : "Non"} />
+                  </div>
+                );
+              })()}
               {builtInIds.length + added.length === 0 ? (
                 <p className="text-sm text-slate-500 dark:text-slate-400">Pwodwi sa a poko gen pake. Kliyan yo wè yon bouton pou mande pri sou WhatsApp.</p>
               ) : (
@@ -461,7 +486,7 @@ function ProductSheet({ product, prices, exchange, hidden, images, nextSort, onE
                     const pkg = prices[id];
                     return (
                       <PriceRow
-                        key={`${id}-${pkg.price}-${pkg.available}`}
+                        key={`${id}-${pkg.price}-${pkg.available}-${pkg.needs_id}`}
                         pkg={pkg}
                         onToast={onToast}
                         onDelete={added.includes(id) ? () => backend.adminDeletePackage(id) : undefined}

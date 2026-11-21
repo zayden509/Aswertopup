@@ -1247,10 +1247,19 @@ export function createBackend(config, options = {}) {
       await batch.commit();
     },
 
-    async adminSetPackage(id, price, available) {
+    async adminSetPackage(id, price, available, needsId) {
       const value = Number(price);
       if (!Number.isInteger(value) || value <= 0) throw new UserError("Pri a dwe yon chif san vigil, pi gran pase 0.");
-      await updateDoc(doc(db, "packages", id), { price: value, available });
+      await updateDoc(doc(db, "packages", id), { price: value, available, ...(typeof needsId === "boolean" && { needs_id: needsId }) });
+    },
+
+    // Limen oswa etenn "Mande Player ID" pou tout pake yon pwodwi an yon sèl kou
+    // (customProductId: pwodwi admin nan kreye a, pou chan Player ID a pa parèt ditou)
+    async adminSetNeedsId(packageIds, needsId, customProductId = null) {
+      const batch = writeBatch(db);
+      if (customProductId) batch.update(doc(db, "products", customProductId), { player_id: Boolean(needsId) });
+      packageIds.slice(0, 400).forEach((id) => batch.update(doc(db, "packages", id), { needs_id: Boolean(needsId) }));
+      await batch.commit();
     },
 
     // Mete non pwodwi a ajou sou pake yo (lè non pwodwi a chanje)
@@ -1318,7 +1327,8 @@ export function createBackend(config, options = {}) {
       }
       const batch = writeBatch(db);
       batch.update(doc(db, "products", product.id), data);
-      packageIds.forEach((id) => batch.update(doc(db, "packages", id), { product_name: name }));
+      // Pwodwi a pa mande Player ID ankò: pake li yo pa mande l nonplis
+      packageIds.forEach((id) => batch.update(doc(db, "packages", id), { product_name: name, ...(!data.player_id && { needs_id: false }) }));
       await batch.commit();
       return product.id;
     },
