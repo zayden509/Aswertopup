@@ -592,6 +592,28 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
     });
   }, [orders, supplierMap]);
 
+  // Kòmand ki deja kote founisè a (Gift Access, FazerCards) men ki poko fini: Panneau admin lan
+  // mande estati a chak minit pandan l louvri. Lè founisè a fin livre, kòmand lan pase "Livré"
+  // poukont li, san peze Verifye (webhook la fè menm bagay la menm lè Panneau a fèmen).
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 60000);
+    return () => clearInterval(id);
+  }, []);
+  const synced = useRef(new Map());
+  useEffect(() => {
+    if (!orders.length) return;
+    const now = Date.now();
+    orders
+      .filter((o) => ["pending", "processing"].includes(o.status) && o.supplier?.order_id && !["completed", "failed", "refund"].includes(o.supplier.status))
+      .filter((o) => now - (synced.current.get(o.id) || 0) > 55000)
+      .slice(0, 5)
+      .forEach((o) => {
+        synced.current.set(o.id, now);
+        backend.adminFazer("sync", { orderId: o.id }).catch(() => {});
+      });
+  }, [orders, tick]);
+
   // Depo ki an atant (mwens pase 24 è): sèvè a tcheke ankò si SMS yo a rive, oswa si nimewo ki
   // voye l la fèk vin ofisyèl. Si tout bagay koresponn, depo a konfime poukont li, san bouton.
   const rechecked = useRef(new Set());
