@@ -167,28 +167,39 @@ export function ProductArt({ product: p, className = "" }) {
   );
 }
 
-export function ProductCard({ product: p, prices, onOpen }) {
+// Kalite chak pwodwi (ti etikèt anba non an nan boutik la)
+const GENRES = {
+  "free-fire": "Battle royale", "free-fire-abonnement": "Abonnement", pubg: "Battle royale", "blood-strike": "FPS",
+  codm: "FPS", mlbb: "MOBA", roblox: "Aventure", efootball: "Sport", "fc-mobile": "Sport", dls: "Sport", "flex-city": "Action",
+};
+const CATEGORY_GENRE = { "Jwèt": "Jeu", "Abònman": "Abonnement", "Gift Card": "Carte cadeau", "Finans": "Transfert" };
+export const genreOf = (p) => GENRES[p.id] || CATEGORY_GENRE[p.category] || p.category;
+
+// Kat yon pwodwi nan boutik la: nimewo, ikòn, non, kalite, pri ak bouton "Nos offres"
+export function ProductCard({ product: p, prices, onOpen, index }) {
   const from = minPrice(p, prices);
   return (
     <button
       type="button"
       onClick={() => onOpen(p)}
-      className="group relative aspect-[3/4] overflow-hidden rounded-2xl text-left shadow-sm ring-1 ring-black/5 transition active:scale-[.98] dark:ring-white/10"
+      className="group relative flex flex-col items-center rounded-3xl bg-white p-3 pb-3.5 text-center shadow-sm ring-1 ring-slate-200 transition hover:ring-violet-300 active:scale-[.98] dark:bg-slate-900 dark:ring-slate-800 dark:hover:ring-violet-500/50"
     >
-      <ProductArt product={p} className="absolute inset-0" />
-      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
+      {index != null && <span className="absolute left-3 top-2.5 text-[11px] font-extrabold tracking-wider text-slate-400 dark:text-slate-500">#{String(index + 1).padStart(2, "0")}</span>}
       {p.isNew && (
-        <span className="absolute left-3 top-3 rounded-full bg-emerald-300 px-3 py-1 text-[11px] font-extrabold tracking-[.15em] text-emerald-950 shadow">
-          NOUVEAU
-        </span>
+        <span className="absolute right-2.5 top-2.5 z-10 rounded-full bg-emerald-300 px-2 py-0.5 text-[10px] font-extrabold tracking-[.12em] text-emerald-950 shadow">NOUVEAU</span>
       )}
-      <span className="absolute inset-x-3 bottom-3">
-        <span className="block text-[15px] font-bold leading-tight text-white drop-shadow">{p.name}</span>
-        {from != null ? (
-          <span className="mt-0.5 block text-[13px] font-semibold text-sky-300">Dès {formatPrice(from)}</span>
-        ) : p.exchange && p.tagline ? (
-          <span className="mt-0.5 block text-[13px] font-semibold text-sky-300">{p.tagline}</span>
-        ) : null}
+      <span className="relative mt-5 block aspect-square w-[78%] overflow-hidden rounded-[22%] shadow-lg ring-1 ring-black/5 transition group-hover:-translate-y-0.5 dark:ring-white/10">
+        <ProductArt product={p} className="absolute inset-0" />
+      </span>
+      <span className="mt-3 block w-full truncate text-[15px] font-bold text-slate-900 dark:text-white">{p.name}</span>
+      <span className="mt-1.5 inline-block rounded-full bg-slate-100 px-3 py-0.5 text-xs font-semibold text-slate-500 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700">{genreOf(p)}</span>
+      {from != null ? (
+        <span className="mt-1.5 block text-[12px] font-semibold text-amber-500">{t("Apati", "Dès")} {formatPrice(from)}</span>
+      ) : p.exchange && p.tagline ? (
+        <span className="mt-1.5 block text-[12px] font-semibold text-amber-500">{p.tagline}</span>
+      ) : null}
+      <span className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-2xl bg-violet-100 py-2.5 text-[14px] font-bold text-violet-700 ring-1 ring-violet-200 transition group-hover:bg-violet-600 group-hover:text-white dark:bg-violet-500/15 dark:text-violet-200 dark:ring-violet-500/30">
+        <span aria-hidden="true">▶</span> {t("Wè òf yo", "Nos offres")} →
       </span>
     </button>
   );

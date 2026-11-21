@@ -173,7 +173,7 @@ function ProductGrid({ products, prices, onOpen }) {
   }
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-      {products.map((p) => <ProductCard key={p.id} product={p} prices={prices} onOpen={onOpen} />)}
+      {products.map((p, i) => <ProductCard key={p.id} product={p} prices={prices} onOpen={onOpen} index={i} />)}
     </div>
   );
 }
@@ -603,9 +603,9 @@ export default function App() {
         {!product && tab === "shop" && (
           <>
             <SearchBar value={query} onChange={setQuery} placeholder="Rechercher un produit..." />
-            <h1 className="mt-6 text-2xl font-extrabold tracking-tight">Tous les produits</h1>
-            <p className="mt-1 text-slate-500 dark:text-slate-400">
-              {t("Top-up ak rechaj an Ayiti: Free Fire, PUBG, Roblox, Mobile Legends. Peye ak MonCash ak NatCash.", "Top-up et recharges en Haïti : Free Fire, PUBG, Roblox, Mobile Legends. Payez avec MonCash et NatCash.")}
+            <h1 className="mt-6 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-sky-500 bg-clip-text text-center text-[32px] font-black leading-tight tracking-tight text-transparent">{t("Chwazi jwèt ou", "Choisissez votre jeu")}</h1>
+            <p className="mx-auto mt-2 max-w-md text-center text-slate-500 dark:text-slate-400">
+              {t("Jwè toupatou an Ayiti fè nou konfyans pou rechaj yo. Peye ak MonCash ak NatCash.", "Des joueurs de toute Haïti nous font confiance pour leurs recharges. Payez avec MonCash et NatCash.")}
             </p>
             <div className="no-scrollbar -mx-4 mb-4 mt-4 flex gap-2 overflow-x-auto px-4">
               {CATEGORIES.map((c) => (

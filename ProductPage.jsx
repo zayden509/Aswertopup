@@ -25,36 +25,89 @@ function GroupTitle({ group }) {
       </div>
     );
   }
+  // Tit seksyon an nan mitan: ikòn, non, kantite pake
   return (
-    <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-      {group.style === "offer" ? <Package className="h-4 w-4 text-sky-500" /> : <GemIcon className="h-4 w-4" />} {group.title}
-    </h3>
+    <div className="mb-4 flex items-center gap-3">
+      <span className="h-px flex-1 bg-gradient-to-r from-transparent to-sky-300/60 dark:to-sky-500/40" />
+      <h3 className="flex items-center gap-2 rounded-full bg-sky-50 px-5 py-2 ring-1 ring-sky-200 dark:bg-sky-500/10 dark:ring-sky-500/30">
+        {group.style === "offer" ? <Package className="h-5 w-5 text-sky-500" /> : <GemIcon className="h-6 w-6" />}
+        <span className="text-lg font-extrabold text-sky-600 dark:text-sky-300">{group.title}</span>
+        <span className="text-sm font-semibold text-slate-400">({group.items.length})</span>
+      </h3>
+      <span className="h-px flex-1 bg-gradient-to-l from-transparent to-sky-300/60 dark:to-sky-500/40" />
+    </div>
   );
 }
 
-function GemOption({ item, active, onSelect }) {
+// Yon kòf louvri ak dyaman ble ladan l (plis dyaman pou pi gwo pake yo)
+function ChestArt({ level = 1, className = "" }) {
+  const gems = [
+    [22, 30, 9], [34, 26, 11], [46, 30, 9], [28, 22, 7], [40, 20, 8],
+    [16, 34, 6], [52, 34, 6], [34, 15, 7], [22, 16, 6], [46, 16, 6],
+  ].slice(0, 4 + Math.min(6, level * 1));
   return (
-    <button
-      type="button"
+    <svg viewBox="0 0 68 56" className={className} aria-hidden="true">
+      <defs>
+        <linearGradient id="chestBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#334155" /><stop offset="1" stopColor="#0f172a" /></linearGradient>
+        <linearGradient id="chestGem" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#bae6fd" /><stop offset=".5" stopColor="#38bdf8" /><stop offset="1" stopColor="#2563eb" /></linearGradient>
+        <radialGradient id="chestGlow" cx=".5" cy=".55" r=".5"><stop offset="0" stopColor="#38bdf8" stopOpacity=".55" /><stop offset="1" stopColor="#38bdf8" stopOpacity="0" /></radialGradient>
+      </defs>
+      <ellipse cx="34" cy="30" rx="32" ry="24" fill="url(#chestGlow)" />
+      {/* couvèti louvri a */}
+      <path d="M12 22 L16 8 Q34 2 52 8 L56 22 Z" fill="url(#chestBody)" stroke="#facc15" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M14 16 Q34 10 54 16" stroke="#facc15" strokeWidth="1.2" fill="none" opacity=".8" />
+      {/* dyaman yo */}
+      {gems.map(([x, y, r], i) => (
+        <g key={i} transform={`translate(${x} ${y}) rotate(${(i * 37) % 50 - 25})`}>
+          <path d={`M${-r} ${-r * 0.3} L${-r * 0.5} ${-r * 0.9} L${r * 0.5} ${-r * 0.9} L${r} ${-r * 0.3} L0 ${r} Z`} fill="url(#chestGem)" stroke="#e0f2fe" strokeWidth=".6" />
+          <path d={`M${-r} ${-r * 0.3} L${r} ${-r * 0.3} M${-r * 0.5} ${-r * 0.9} L0 ${r} L${r * 0.5} ${-r * 0.9}`} stroke="#fff" strokeOpacity=".55" strokeWidth=".5" fill="none" />
+        </g>
+      ))}
+      {/* kò kòf la */}
+      <path d="M10 30 H58 L55 52 Q34 55 13 52 Z" fill="url(#chestBody)" stroke="#facc15" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M11 38 H57" stroke="#facc15" strokeWidth="2.2" />
+      <rect x="30" y="35" width="8" height="9" rx="2" fill="#facc15" />
+      <circle cx="34" cy="39.5" r="1.4" fill="#0f172a" />
+      <circle cx="9" cy="46" r="2.4" fill="url(#chestGem)" /><circle cx="60" cy="47" r="2" fill="url(#chestGem)" /><circle cx="56" cy="53" r="1.6" fill="url(#chestGem)" />
+    </svg>
+  );
+}
+
+// Kat yon pake dyaman: kòf la, kantite a, pri a, ak bouton "Acheter"
+function GemOption({ item, active, onSelect, onBuy, index = 0, total = 1 }) {
+  const badge = total >= 4 && index === 0 ? ["★ POPULAIRE", "from-amber-500 to-orange-500"] : total >= 4 && index === total - 1 ? ["💎 PREMIUM", "from-violet-500 to-fuchsia-500"] : null;
+  return (
+    <div
       role="radio"
       aria-checked={active}
+      tabIndex={0}
       onClick={onSelect}
-      className={`relative flex flex-col gap-3 rounded-2xl border-2 p-4 text-left transition active:scale-[.98] ${
-        active ? "border-sky-500 bg-sky-50 dark:bg-sky-500/10" : "border-slate-200 bg-white hover:border-sky-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-sky-500/40"
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onSelect()}
+      className={`relative flex cursor-pointer flex-col items-center rounded-3xl p-3 pt-4 text-center transition active:scale-[.98] ${
+        active
+          ? "bg-sky-50 ring-2 ring-sky-500 dark:bg-sky-500/10"
+          : "bg-white ring-1 ring-slate-200 hover:ring-sky-300 dark:bg-slate-900 dark:ring-slate-700/80 dark:hover:ring-sky-500/50"
       }`}
     >
-      <span className="flex items-center gap-2.5">
-        <GemIcon className="h-8 w-8 shrink-0" />
-        <span>
-          <span className="block text-xl font-bold tabular-nums leading-none text-slate-900 dark:text-white">{item.label}</span>
-          {item.bonus ? <span className="mt-1 block text-xs font-semibold text-emerald-600 dark:text-emerald-400">+{item.bonus} bonus</span> : null}
-        </span>
-      </span>
-      <span className="rounded-lg bg-sky-50 py-1.5 text-center text-sm font-bold tracking-wide text-sky-600 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/20">
-        {formatPrice(item.price)}
-      </span>
-      {active && <CheckCircle2 className="absolute right-2.5 top-2.5 h-5 w-5 text-sky-500" />}
-    </button>
+      {badge && <span className={`absolute right-2.5 top-2.5 rounded-full bg-gradient-to-r ${badge[1]} px-2.5 py-0.5 text-[10px] font-extrabold tracking-wider text-white shadow`}>{badge[0]}</span>}
+      <ChestArt level={index + 1} className="h-16 w-20" />
+      <p className="mt-2 text-[15px] font-bold leading-snug text-slate-900 dark:text-white">
+        {item.label} {t("Dyaman", "Diamants")}
+        {item.bonus ? <> + {item.bonus}<GemIcon className="mx-0.5 inline h-4 w-4 align-[-2px]" /><br />Bonus</> : null}
+      </p>
+      <p className="mt-2 flex items-baseline gap-1.5">
+        <span className="text-[30px] font-extrabold leading-none tabular-nums text-amber-500">{new Intl.NumberFormat("fr-FR").format(item.price)}</span>
+        <span className="text-xs font-bold text-slate-400">HTG</span>
+      </p>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onBuy ? onBuy() : onSelect(); }}
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 py-2.5 text-[15px] font-bold text-white shadow-md shadow-violet-500/30 transition hover:brightness-110 active:scale-95"
+      >
+        <ShoppingCart className="h-4 w-4" /> {t("Achte", "Acheter")}
+      </button>
+      {active && <CheckCircle2 className="absolute left-2.5 top-2.5 h-5 w-5 text-sky-500" />}
+    </div>
   );
 }
 
@@ -153,6 +206,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
   const [playerId, setPlayerId] = useState(() => (product.playerId ? loadPlayerId() : ""));
   const [showIdHelp, setShowIdHelp] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
+  const [pendingBuy, setPendingBuy] = useState(null);
   const [paymentId, setPaymentId] = useState(() => (PAYMENT_METHODS.find((m) => m.recommended) || PAYMENT_METHODS[0]).id);
   const [confirming, setConfirming] = useState(false);
   const [orderId, setOrderId] = useState(null); // nimewo kòmand mòd WhatsApp la
@@ -238,6 +292,16 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
   else if (idError || idUnknown) action = { text: t("Korije Player ID a", "Corrigez le Player ID"), run: null };
   else if (walletMode && !loggedIn) action = { text: t("Konekte pou achte", "Connectez-vous pour acheter"), icon: LogIn, run: () => onLogin("login") };
   else if (walletMode && payWith === "wallet" && missing > 0) action = { text: "Recharger mon Wallet", icon: Plus, run: topUp };
+
+  // Bouton "Acheter" sou yon kat: pake a chwazi, epi menm aksyon ak gwo bouton anba a
+  // (achte, konekte, rechaje Wallet). Si Player ID a manke, nou mennen kliyan an sou li.
+  useEffect(() => {
+    if (!pendingBuy || item?.id !== pendingBuy) return;
+    setPendingBuy(null);
+    if (action.run) action.run();
+    else document.getElementById("player-id")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (!action.run) setTimeout(() => document.getElementById("player-id")?.focus(), 400);
+  }, [pendingBuy, item]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Mòd WhatsApp (pa gen baz done)
   const waOrder = !walletMode && item && orderId && {
@@ -439,9 +503,16 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                 <div key={`${g.style}-${g.title}`}>
                   <GroupTitle group={g} />
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {g.items.map((it) => {
+                    {g.items.map((it, i) => {
                       const Option = OPTIONS[g.style] || GemOption;
-                      return <Option key={it.id} item={it} active={it.id === selectedId} onSelect={() => setSelectedId(it.id)} />;
+                      return (
+                        <Option
+                          key={it.id} item={it} index={i} total={g.items.length}
+                          active={it.id === selectedId}
+                          onSelect={() => setSelectedId(it.id)}
+                          onBuy={() => { setSelectedId(it.id); setPendingBuy(it.id); }}
+                        />
+                      );
                     })}
                   </div>
                 </div>
