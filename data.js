@@ -161,12 +161,12 @@ export const PRODUCTS = [
   { id: "xbox", name: "Xbox Gift Card", category: "Gift Card", image: xboxImg, bg: "#107b10" },
   {
     id: "meru", name: "Meru", category: "Finans", tagline: "Transfert", image: meruImg, bg: "#ffffff", isNew: true,
-    exchange: exchangeConfig("MERU", { label: t("Imèl oswa telefòn kont Meru ou", "E-mail ou téléphone de votre compte Meru"), placeholder: "ou@gmail.com" }),
+    exchange: exchangeConfig("MERU", { label: t("Imèl kont Meru ou", "E-mail de votre compte Meru"), placeholder: "ou@gmail.com", email: true }),
   },
   {
     id: "paypal", name: "PayPal", category: "Finans", tagline: "Transfert", isNew: true,
     image: paypalImg,
-    exchange: exchangeConfig("USD", { label: t("Imèl kont PayPal ou", "E-mail de votre compte PayPal"), placeholder: "ou@gmail.com" }),
+    exchange: exchangeConfig("USD", { label: t("Imèl kont PayPal ou", "E-mail de votre compte PayPal"), placeholder: "ou@gmail.com", email: true }),
   },
   {
     id: "cash-app", name: "Cash App", category: "Finans", tagline: "Recharge", image: cashAppImg, bg: "#ffffff",
@@ -178,7 +178,7 @@ export const PRODUCTS = [
   },
   {
     id: "wise", name: "Wise", category: "Finans", tagline: "Transfert", image: wiseImg, bg: "#9ee86f",
-    exchange: exchangeConfig("USD", { label: t("Imèl kont Wise ou", "E-mail de votre compte Wise"), placeholder: "ou@gmail.com" }),
+    exchange: exchangeConfig("USD", { label: t("Imèl kont Wise ou", "E-mail de votre compte Wise"), placeholder: "ou@gmail.com", email: true }),
   },
 ];
 

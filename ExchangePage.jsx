@@ -29,15 +29,16 @@ function useDraft(productId) {
   return [draft, (field, value) => setDraft((d) => ({ ...d, [field]: value }))];
 }
 
-function TextField({ id, label, icon: Icon, value, onChange, placeholder, autoComplete, valid }) {
+function TextField({ id, label, icon: Icon, value, onChange, placeholder, autoComplete, valid, type = "text", error }) {
   return (
     <label htmlFor={id} className="block">
       <span className="mb-1.5 block font-semibold text-slate-800 dark:text-slate-200">{label}</span>
       <span className={`flex items-center gap-3 rounded-2xl border-2 bg-white px-4 transition focus-within:border-sky-400 dark:bg-slate-950 ${valid ? "border-emerald-400" : "border-slate-200 dark:border-slate-700"}`}>
         <Icon className="h-5 w-5 shrink-0 text-slate-400" />
-        <input id={id} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} autoComplete={autoComplete} maxLength={120} className="w-full bg-transparent py-3.5 text-base text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-white" />
+        <input id={id} type={type} inputMode={type === "email" ? "email" : undefined} autoCapitalize={type === "email" ? "none" : undefined} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} autoComplete={autoComplete} maxLength={120} className="w-full bg-transparent py-3.5 text-base text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-white" />
         {valid && <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-400" />}
       </span>
+      {error && <span className="mt-1.5 block text-sm font-medium text-red-500">{error}</span>}
     </label>
   );
 }
@@ -125,7 +126,10 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
   const receiveValue = edited === "receive" ? receive : amount ? String(amount) : "";
   const payValue = edited === "pay" ? pay : q ? String(q.price) : "";
 
-  const accountOk = draft.account.trim().length >= 3;
+  const emailOnly = Boolean(config.account.email);
+  const accountText = draft.account.trim();
+  const accountOk = emailOnly ? /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(accountText) : accountText.length >= 3;
+  const accountError = emailOnly && accountText.length >= 6 && !accountOk ? t("Mete yon imèl valab (egz: ou@gmail.com).", "Entrez un e-mail valide (ex : ou@gmail.com).") : "";
   const nameOk = draft.name.trim().length >= 2;
   const loggedIn = Boolean(account.user);
   const balance = Number(account.profile?.balance ?? 0);
@@ -240,7 +244,7 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
 
       <StepCard step={1} title={t("Enfòmasyon kont ou", "Informations du compte")}>
         <div className="space-y-4">
-          <TextField id="ex-account" label={config.account.label} icon={AtSign} value={draft.account} onChange={(v) => setField("account", v)} placeholder={config.account.placeholder} autoComplete="off" valid={accountOk} />
+          <TextField id="ex-account" label={config.account.label} icon={AtSign} value={draft.account} onChange={(v) => setField("account", v)} placeholder={config.account.placeholder} autoComplete={emailOnly ? "email" : "off"} type={emailOnly ? "email" : "text"} error={accountError} valid={accountOk} />
           <TextField id="ex-name" label={t("Non ki sou kont lan", "Nom du titulaire")} icon={User} value={draft.name} onChange={(v) => setField("name", v)} placeholder="Jean Baptiste" autoComplete="name" valid={nameOk} />
           <p className="text-sm text-slate-500 dark:text-slate-400">{t("Verifye enfòmasyon yo byen: se sou kont sa a n ap voye kòb la. Bouyon ou rete sove menm si ou kite paj la.", "Vérifiez bien ces informations : l'argent sera envoyé sur ce compte. Votre brouillon reste enregistré même si vous quittez la page.")}</p>
         </div>
