@@ -34,8 +34,8 @@ function GiftStatus({ onToast }) {
 
   return (
     <Card
-      title={<span className="flex items-center gap-2"><Crown className="h-5 w-5 text-sky-500" /> Gift Access (kòd PIN)</span>}
-      subtitle="Konekte yon pake ak yon ID pwodwi Gift Access: lè yon kliyan achte l, sit la achte PIN nan kote Gift Access epi l mete l nan Istorik ak imèl kliyan an."
+      title={<span className="flex items-center gap-2"><Crown className="h-5 w-5 text-sky-500" /> Gift Access</span>}
+      subtitle="Konekte yon pake ak yon ID pwodwi Gift Access. Lè yon kliyan achte l, Gift Access voye dyaman yo sou ID jwè a (Free Fire…) oswa yon kòd PIN (kat kado), epi kòmand lan pase Livré poukont li."
       action={<AdminButton icon={RefreshCw} busy={busy} disabled={busy} onClick={load}>Rechaje</AdminButton>}
     >
       {info && !info.ready ? (
