@@ -34,14 +34,14 @@ import moncashImg from "./img/moncash.jpg";
 import natcashImg from "./img/natcash.jpg";
 import moncashGuide from "./img/guide-moncash.jpg";
 import natcashGuide from "./img/guide-natcash.jpg";
-import bannerTutorielKr from "./img/banners/tutoriel.jpg";
-import bannerFreeFireKr from "./img/banners/free-fire.jpg";
-import bannerPemanKr from "./img/banners/peman.jpg";
-import bannerSipoKr from "./img/banners/sipo.jpg";
-import bannerTutorielFr from "./img/banners/tutoriel-fr.jpg";
-import bannerFreeFireFr from "./img/banners/free-fire-fr.jpg";
-import bannerPemanFr from "./img/banners/peman-fr.jpg";
-import bannerSipoFr from "./img/banners/sipo-fr.jpg";
+import bannerTutorielKr from "./img/banners/tutoriel.webp";
+import bannerFreeFireKr from "./img/banners/free-fire.webp";
+import bannerPemanKr from "./img/banners/peman.webp";
+import bannerSipoKr from "./img/banners/sipo.webp";
+import bannerTutorielFr from "./img/banners/tutoriel-fr.webp";
+import bannerFreeFireFr from "./img/banners/free-fire-fr.webp";
+import bannerPemanFr from "./img/banners/peman-fr.webp";
+import bannerSipoFr from "./img/banners/sipo-fr.webp";
 import { t } from "./i18n.js";
 
 /* ============ KONFIGIRASYON ============ */

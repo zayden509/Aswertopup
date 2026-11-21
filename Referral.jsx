@@ -5,40 +5,13 @@ import { SITE_URL } from "./data.js";
 import { ErrorNote, copyText, formatPrice } from "./ui.jsx";
 import { Card, Field, AdminButton, inputClass } from "./adminUi.jsx";
 import { t } from "./i18n.js";
+export { rememberReferral, claimStoredReferral } from "./referralLink.js";
 
 // Parennaj: yon kliyan pataje lyen li (?ref=AWENS-ID). Lè zanmi an fè premye depo li (omwen
 // min_deposit), yo chak jwenn bonis pwopriyetè a chwazi a (sèvè a oswa admin nan bay li).
 
-const STORE = "awens.ref";
 
 // Lyen ?ref= nan adrès la: nou sonje l jiskaske vizitè a kreye kont li
-export function rememberReferral() {
-  try {
-    const code = new URLSearchParams(window.location.search).get("ref")?.toUpperCase();
-    if (code && /^[A-HJ-NP-Z2-9]{8}$/.test(code)) localStorage.setItem(STORE, code);
-  } catch {
-    // navigatè a pa kenbe anyen: pa gen parennaj, sa pa bloke anyen
-  }
-}
-
-// Apre koneksyon: si kont lan fèk kreye e gen yon lyen parennaj, nou anrejistre l yon sèl fwa
-export async function claimStoredReferral(profile) {
-  let code = null;
-  try {
-    code = localStorage.getItem(STORE);
-  } catch {
-    return;
-  }
-  if (!code || !profile) return;
-  const fresh = profile.created_at && Date.now() - new Date(profile.created_at).getTime() < 20 * 3600000;
-  if (fresh && code !== profile.wallet_code) await backend.claimReferral(code).catch(() => {});
-  try {
-    localStorage.removeItem(STORE);
-  } catch {
-    // anyen
-  }
-}
-
 export function InviteCard({ profile, onToast }) {
   const [settings, setSettings] = useState(null);
   const [friends, setFriends] = useState([]);

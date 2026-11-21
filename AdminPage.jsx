@@ -25,7 +25,7 @@ import { AlertsCard, BackupCard, PromosCard, ReportsCard } from "./AdminTools.js
 import { AdminReviews } from "./Reviews.jsx";
 import { ReferralSettingsCard } from "./Referral.jsx";
 import { LoyaltySettingsCard } from "./Loyalty.jsx";
-import { FlashPromoCard } from "./Flash.jsx";
+import { FlashPromoCard } from "./FlashAdmin.jsx";
 
 const TABS = [
   { id: "dashboard", label: "Tablo", Icon: LayoutDashboard, title: "Tablo" },

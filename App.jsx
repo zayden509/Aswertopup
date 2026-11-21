@@ -18,7 +18,7 @@ import { LiveToast } from "./Notifications.jsx";
 import { newVersionAvailable } from "./updateCheck.js";
 import { TutorialSheet, openTutorial, useTutorialRequests } from "./Tutorial.jsx";
 import { ReviewsSection } from "./Reviews.jsx";
-import { rememberReferral, claimStoredReferral } from "./Referral.jsx";
+import { rememberReferral, claimStoredReferral } from "./referralLink.js";
 import { t } from "./i18n.js";
 
 // Lyen parennaj (?ref=AWENS-ID): nou sonje l pandan vizitè a ap kreye kont li
