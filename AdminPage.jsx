@@ -66,7 +66,7 @@ const SUPPLIER_STATUS = {
   failed: ["FazerCards echwe: kliyan an ranbouse", "text-red-600 dark:text-red-400"],
   refund: ["FazerCards ranbouse: kliyan an ranbouse", "text-red-600 dark:text-red-400"],
   error: ["Pa t ka voye l bay FazerCards", "text-red-600 dark:text-red-400"],
-  awaiting: ["FazerCards ap prepare kòd PIN yo…", "text-violet-600 dark:text-violet-300"],
+  awaiting: ["FazerCards ap fini livrezon an…", "text-violet-600 dark:text-violet-300"],
 };
 
 // Rezon refi ki deja ekri (kliyan an wè yo, an franse, lang prensipal sit la): yon sèl klik

@@ -131,19 +131,23 @@ export async function applyStatus(backend, order, fz) {
 export async function applyGiftStatus(backend, order, ga, offerName = null) {
   const state = giftStatus(ga);
   const cards = giftCards(ga);
+  // Top-up dirèk sou ID jwè a (Free Fire LATAM…): pa gen kòd PIN, "completed" vle di dyaman yo rive.
+  // San Player ID (kat kado / PIN): nou tann kòd yo anvan nou make l livre.
+  const topUp = Boolean(order.player_id);
+  const delivered = state === "completed" && (cards.length > 0 || topUp);
   const reason = ga?.error?.message || ga?.failure_reason || ga?.message || null;
   const supplier = {
     provider: GIFT,
     order_id: giftOrderId(ga) || order.supplier?.order_id || null,
     // Gift Access di "livre" men kòd yo poko la: nou tann (nou mande ankò pita oswa webhook la)
-    status: state === "completed" && !cards.length ? "awaiting" : state,
+    status: state === "completed" && !delivered ? "awaiting" : state,
     offer_name: (offerName || order.supplier?.offer_name || null)?.slice(0, 120) ?? null,
     error: reason && state === "failed" ? String(reason).slice(0, 300) : null,
   };
   if (order.supplier?.order_id === supplier.order_id && order.supplier?.status === supplier.status) return;
 
-  if (state === "completed" && cards.length && order.status !== "delivered" && order.status !== "refused") {
-    await backend.adminUpdateOrder(order, "delivered", cardsText(cards), null, supplier);
+  if (delivered && order.status !== "delivered" && order.status !== "refused") {
+    await backend.adminUpdateOrder(order, "delivered", cards.length ? cardsText(cards) : "", null, supplier);
     await notifyStatus(backend, order.id);
   } else if (state === "failed" && order.status !== "delivered" && order.status !== "refused") {
     const note = `Livrezon otomatik la pa mache${reason ? ` (${reason})` : ""}. Kòb ou retounen nan Wallet ou.`;
