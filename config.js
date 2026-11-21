@@ -36,3 +36,7 @@ export const SOCIAL_LINKS = {
   instagram: "",
   facebook: "",
 };
+
+// Kont tès yo: kòmand yo fè kache nan Panneau admin lan (Tablo, Kòmand) ak nan rapò chak jou a,
+// pou yo pa fose chif lavant yo. Ou ka toujou wè yo ak bouton "Montre kòmand tès yo".
+export const TEST_ACCOUNTS = ["mebellecharles@gmail.com"];

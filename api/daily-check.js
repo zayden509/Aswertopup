@@ -4,6 +4,7 @@
 import { SetupError, bot, fail, fazer, json, resetBotOnDenied } from "./_lib/autotopup.js";
 import { alert, checkFazerBalance, checkSmsSilence, HOUR } from "./_lib/alert.js";
 import { mailReady, sendDailyReport } from "./_lib/mail.js";
+import { TEST_ACCOUNTS } from "../config.js";
 
 const htg = (n) => `${new Intl.NumberFormat("fr-FR").format(n)} HTG`;
 
@@ -14,7 +15,14 @@ export async function GET(request) {
     const backend = await bot();
     const to = new Date();
     const from = new Date(to.getTime() - 24 * HOUR);
-    const { orders, deposits, newCustomers } = await backend.adminPeriodData(from, to);
+    const period = await backend.adminPeriodData(from, to);
+    const { deposits, newCustomers } = period;
+    // Kòmand kont tès yo (config.js) pa konte nan rapò a
+    const testUids = new Set((await Promise.all([...new Set(period.orders.map((o) => o.user_id))].map(async (uid) => {
+      const u = await backend.adminGetUser(uid).catch(() => null);
+      return u && TEST_ACCOUNTS.includes(String(u.email || "").toLowerCase()) ? uid : null;
+    }))).filter(Boolean));
+    const orders = period.orders.filter((o) => !testUids.has(o.user_id));
     const sold = orders.filter((o) => o.status !== "refused" && o.status !== "unpaid");
     const open = orders.filter((o) => o.status === "pending" || o.status === "processing");
     const confirmed = deposits.filter((d) => d.status === "completed");

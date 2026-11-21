@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { BrandLogo } from "./Brand.jsx";
 import { PAYMENT_METHODS } from "./data.js";
+import { TEST_ACCOUNTS } from "./config.js";
 import { backend, errorText } from "./backend.js";
 import { StatusChip, ErrorNote, ProductArt, formatPrice, formatDateTime, orderStatus, ORDER_STATUS, DEPOSIT_STATUS } from "./ui.jsx";
 import { Avatar, Chips, CopyText, Empty, AdminButton, panel, inputClass, normalize } from "./adminUi.jsx";
@@ -639,12 +640,22 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [tab]);
 
+  // Kont tès yo (config.js): kòmand yo kache nan Tablo ak Kòmand, sof si admin nan mande wè yo
+  const [showTest, setShowTest] = useState(false);
+  const testUids = useMemo(() => new Set(Object.values(profiles)
+    .filter((p) => TEST_ACCOUNTS.includes(String(p.email || "").toLowerCase()))
+    .map((p) => p.id)), [profiles]);
+  const notTest = (o) => showTest || !testUids.has(o.user_id);
+
   // Kòmand an dirèk yo genyen sou ansyen yo si se menm kòmand lan
-  const allOrders = useMemo(() => {
+  const everyOrder = useMemo(() => {
     if (!older.list.length) return orders;
     const live = new Set(orders.map((o) => o.id));
     return [...orders, ...older.list.filter((o) => !live.has(o.id))];
   }, [orders, older.list]);
+  const allOrders = useMemo(() => everyOrder.filter(notTest), [everyOrder, testUids, showTest]); // eslint-disable-line react-hooks/exhaustive-deps
+  const liveOrders = useMemo(() => orders.filter(notTest), [orders, testUids, showTest]); // eslint-disable-line react-hooks/exhaustive-deps
+  const hiddenTest = everyOrder.length - everyOrder.filter((o) => !testUids.has(o.user_id)).length;
 
   const loadOlder = async () => {
     const before = older.list.at(-1)?.created_at ?? historyFrom;
@@ -659,7 +670,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
 
   const me = account.profile;
   const owner = isOwner(me);
-  const openCount = orders.filter(isOpen).length;
+  const openCount = liveOrders.filter(isOpen).length;
   const pendingDeposits = deposits.filter((d) => d.status === "pending").length;
   const badges = { orders: openCount, deposits: pendingDeposits };
   const sortedDeposits = [...deposits].sort((a, b) => (a.status === "pending") === (b.status === "pending") ? 0 : a.status === "pending" ? -1 : 1);
@@ -808,9 +819,14 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
 
         {tab === "dashboard" && (
           <>
-            <AdminDashboard orders={orders} deposits={deposits} profiles={profiles} visits={visits} onGo={go} />
+            <AdminDashboard orders={liveOrders} deposits={deposits} profiles={profiles} visits={visits} onGo={go} />
             <ReportsCard profiles={profiles} onToast={onToast} />
           </>
+        )}
+        {tab === "orders" && hiddenTest > 0 && (
+          <button type="button" onClick={() => setShowTest((v) => !v)} className="w-full rounded-2xl bg-slate-100 px-4 py-2.5 text-left text-sm font-semibold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800">
+            {showTest ? `🧪 ${hiddenTest} kòmand tès parèt · Kache yo` : `🧪 ${hiddenTest} kòmand tès kache (${TEST_ACCOUNTS.join(", ")}) · Montre yo`}
+          </button>
         )}
         {tab === "orders" && (
           <OrdersTab
@@ -829,7 +845,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
             <AdminSms owner={owner} onToast={onToast} onTrusted={recheckDeposits} />
           </>
         )}
-        {tab === "customers" && <AdminCustomers profiles={profiles} orders={allOrders} deposits={deposits} onToast={onToast} />}
+        {tab === "customers" && <AdminCustomers profiles={profiles} orders={everyOrder} deposits={deposits} onToast={onToast} />}
         {tab === "catalog" && (
           <>
             <AdminCatalog account={account} onToast={onToast} />
