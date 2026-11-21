@@ -108,7 +108,8 @@ function Delta({ now, before, previous }) {
 
 function Stat({ icon: Icon, label, value, sub, tone }) {
   return (
-    <div className="rounded-3xl bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.06),0_8px_24px_-12px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 dark:bg-slate-900 dark:shadow-none dark:ring-slate-800">
+    <div className="relative overflow-hidden rounded-3xl bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.06),0_8px_24px_-12px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 dark:bg-transparent dark:bg-gradient-to-b dark:from-white/[.07] dark:to-white/[.02] dark:shadow-none dark:ring-white/[.08]">
+      <div className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-40 blur-2xl ${tone}`} />
       <div className="flex items-center gap-2">
         <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${tone}`}><Icon className="h-[18px] w-[18px]" /></span>
         <span className="min-w-0 truncate text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</span>
@@ -213,11 +214,13 @@ export default function AdminDashboard({ orders, deposits, profiles, visits, onG
       <Chips options={PERIODS} value={periodId} onChange={setPeriodId} label="Peryòd" />
 
       {/* Chif prensipal la */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-[#0b2547] to-sky-700 p-5 text-white shadow-lg">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-sky-400/25 blur-3xl" />
-        <p className="relative text-xs font-bold uppercase tracking-[.16em] text-sky-200/80">Lavant · {period.label}</p>
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-700 via-fuchsia-700 to-rose-600 p-5 text-white shadow-[0_20px_50px_-20px_rgba(192,38,211,.6)]">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 left-10 h-40 w-40 rounded-full bg-sky-400/30 blur-3xl" />
+        <svg className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full opacity-30" viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 50 C40 40 60 52 90 38 S150 20 180 30 S240 8 300 14 L300 60 L0 60Z" fill="white" /></svg>
+        <p className="relative text-xs font-bold uppercase tracking-[.16em] text-white/80">Lavant · {period.label}</p>
         <p className="relative mt-2 text-[44px] font-extrabold leading-none">
-          {number.format(stats.revenue)} <span className="text-lg font-semibold text-sky-200">HTG</span>
+          {number.format(stats.revenue)} <span className="text-lg font-semibold text-white/80">HTG</span>
         </p>
         <div className="relative"><Delta now={stats.revenue} before={stats.revenueBefore} previous={period.previous} /></div>
       </section>

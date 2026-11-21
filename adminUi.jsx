@@ -6,13 +6,13 @@ import { UserAvatar } from "./Avatar.jsx";
 // Ti moso ki sèvi nan tout onglet Panneau admin lan
 
 export const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-[15px] text-slate-900 transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-400/15 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:bg-slate-950";
+  "w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-[15px] text-slate-900 transition placeholder:text-slate-400 focus:border-violet-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-violet-400/15 dark:border-white/10 dark:bg-black/30 dark:text-white dark:focus:bg-black/40";
 
 export const compact = new Intl.NumberFormat("fr-FR", { notation: "compact", maximumFractionDigits: 1 });
 export const number = new Intl.NumberFormat("fr-FR");
 
 // Fon kat Panneau admin lan (menm stil toupatou)
-export const panel = "rounded-3xl bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06),0_8px_24px_-12px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/70 dark:bg-slate-900 dark:shadow-none dark:ring-slate-800";
+export const panel = "rounded-3xl bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06),0_8px_24px_-12px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/70 dark:bg-transparent dark:bg-gradient-to-b dark:from-white/[.06] dark:to-white/[.02] dark:shadow-[0_20px_40px_-24px_rgba(0,0,0,.8)] dark:ring-white/[.08] dark:backdrop-blur-xl";
 
 export function Card({ title, subtitle, action, children, className = "" }) {
   return (
@@ -36,7 +36,7 @@ export function SectionHead({ title, sub, children }) {
   return (
     <div className="flex items-end justify-between gap-3">
       <div className="flex min-w-0 items-stretch gap-3">
-        <span className="w-1.5 shrink-0 rounded-full bg-gradient-to-b from-sky-400 to-indigo-500" aria-hidden="true" />
+        <span className="w-1.5 shrink-0 rounded-full bg-gradient-to-b from-violet-400 to-fuchsia-500 shadow-[0_0_12px_rgba(168,85,247,.6)]" aria-hidden="true" />
         <div className="min-w-0">
           <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{title}</h2>
           {sub && <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{sub}</p>}
@@ -58,10 +58,10 @@ export function CopyText({ value, onToast, className = "" }) {
 
 // Bouton Panneau admin lan: `tone` = primary | success | danger | ghost
 const BUTTON_TONES = {
-  primary: "bg-gradient-to-r from-sky-500 to-indigo-500 text-white shadow-sm shadow-sky-500/25 hover:brightness-110",
+  primary: "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-violet-600/30 hover:brightness-110",
   success: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm shadow-emerald-500/25 hover:brightness-110",
   danger: "bg-white text-red-600 ring-1 ring-red-200 hover:bg-red-50 dark:bg-transparent dark:text-red-300 dark:ring-red-500/30 dark:hover:bg-red-500/10",
-  ghost: "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700 dark:hover:bg-slate-800",
+  ghost: "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-white/[.05] dark:text-slate-200 dark:ring-white/10 dark:hover:bg-white/10",
 };
 export function AdminButton({ tone = "ghost", icon: Icon, busy, children, className = "", ...props }) {
   return (
@@ -105,7 +105,7 @@ export function Chips({ options, value, onChange, label }) {
           aria-checked={o.id === value}
           onClick={() => onChange(o.id)}
           className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition active:scale-95 ${
-            o.id === value ? "bg-gradient-to-r from-sky-500 to-indigo-500 text-white shadow-md shadow-sky-500/25" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-800"
+            o.id === value ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-violet-600/30" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-white/[.04] dark:text-slate-300 dark:ring-white/10 dark:hover:bg-white/[.08]"
           }`}
         >
           {o.label}
@@ -140,7 +140,7 @@ export function CopyChip({ label, value, onToast }) {
 
 export function Empty({ children }) {
   return (
-    <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/50 px-6 py-10 text-center dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/50 px-6 py-10 text-center dark:border-white/10 dark:bg-white/[.02]">
       <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-2xl dark:bg-slate-800" aria-hidden="true">📭</span>
       <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{children}</p>
     </div>

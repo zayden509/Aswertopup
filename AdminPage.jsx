@@ -528,6 +528,13 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   const tabs = limited ? TABS.filter((t) => ORDERS_ONLY_TABS.includes(t.id)) : TABS;
   const [selectedTab, setTab] = useState(limited ? "orders" : "dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
+  // Panneau admin lan toujou fonse (tèm "pro"): nou remete tèm sit la lè admin nan soti
+  useEffect(() => {
+    const html = document.documentElement;
+    const was = html.classList.contains("dark");
+    html.classList.add("dark");
+    return () => { if (!was) html.classList.remove("dark"); };
+  }, []);
   const tab = tabs.some((t) => t.id === selectedTab) ? selectedTab : tabs[0].id;
   const [orders, setOrders] = useState([]);
   const [deposits, setDeposits] = useState([]);
@@ -717,14 +724,14 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
                       aria-current={active ? "page" : undefined}
                       className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold transition ${
                         active
-                          ? "bg-sky-500 text-white shadow-md shadow-sky-500/25"
+                          ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-600/30"
                           : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white"
                       }`}
                     >
                       <t.Icon className={`h-5 w-5 shrink-0 ${active ? "" : "text-slate-400"}`} />
                       <span className="min-w-0 flex-1 truncate">{t.label}</span>
                       {badges[t.id] > 0 && (
-                        <span className={`min-w-[22px] rounded-full px-1.5 text-center text-xs font-bold leading-[22px] ${active ? "bg-white text-sky-600" : "bg-red-500 text-white"}`}>{badges[t.id]}</span>
+                        <span className={`min-w-[22px] rounded-full px-1.5 text-center text-xs font-bold leading-[22px] ${active ? "bg-white text-violet-600" : "bg-red-500 text-white"}`}>{badges[t.id]}</span>
                       )}
                     </button>
                   </li>
@@ -754,9 +761,16 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   );
 
   return (
-    <div className="-mx-4 lg:flex lg:min-h-screen">
+    <div className="relative -mx-4 min-h-screen bg-[#060814] text-slate-100 lg:flex">
+      {/* Fon "pro" a: limyè vyolèt ak ble, ak yon ti kadriyaj */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute -left-32 -top-40 h-[28rem] w-[28rem] rounded-full bg-violet-600/20 blur-3xl" />
+        <div className="absolute -right-40 top-1/3 h-[26rem] w-[26rem] rounded-full bg-sky-500/10 blur-3xl" />
+        <div className="absolute bottom-[-10rem] left-1/3 h-[24rem] w-[24rem] rounded-full bg-fuchsia-600/10 blur-3xl" />
+        <div className="absolute inset-0 opacity-[.035] [background-image:linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] [background-size:32px_32px]" />
+      </div>
       {/* Gwo ekran: meni an rete agoch */}
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col gap-5 overflow-y-auto border-r border-slate-200/80 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950 lg:flex">
+      <aside className="sticky top-0 z-10 hidden h-screen w-64 shrink-0 flex-col gap-5 overflow-y-auto border-r border-white/[.06] bg-[#0a0d1d]/80 p-4 backdrop-blur-xl lg:flex">
         <BrandLogo className="mx-2 mt-1 h-9 w-auto self-start" />
         {identity}
         <div className="flex-1">{nav}</div>
@@ -781,16 +795,16 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
         </div>
       )}
 
-      <div className="min-w-0 flex-1">
+      <div className="relative z-10 min-w-0 flex-1">
         {/* Ba anlè a: meni (telefòn), seksyon an, rechaje */}
-        <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-slate-100/[.97] dark:border-slate-800 dark:bg-slate-950/[.97]" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+        <header className="sticky top-0 z-30 border-b border-white/[.06] bg-[#060814]/80 backdrop-blur-xl" style={{ paddingTop: "env(safe-area-inset-top)" }}>
           <div className="mx-auto flex max-w-4xl items-center gap-2 px-3 py-2.5 lg:px-6">
             <button type="button" onClick={() => setMenuOpen(true)} aria-label="Louvri meni admin lan" className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800 lg:hidden">
               <Menu className="h-5 w-5" />
               {(badges.orders || 0) + (badges.deposits || 0) > 0 && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-red-500 ring-2 ring-slate-100 dark:ring-slate-950" />}
             </button>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-bold uppercase tracking-[.16em] text-sky-600 dark:text-sky-400">Panneau admin</p>
+              <p className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-[11px] font-extrabold uppercase tracking-[.2em] text-transparent">Panneau admin</p>
               <p className="flex items-center gap-1.5 truncate text-lg font-extrabold leading-tight text-slate-900 dark:text-white">
                 {current && <current.Icon className="h-5 w-5 shrink-0 text-slate-400" />} {current?.title}
               </p>
@@ -808,7 +822,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
                   key={t.id}
                   type="button"
                   onClick={() => pick(t.id)}
-                  className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition ${active ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900" : "bg-white text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800"}`}
+                  className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition ${active ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-violet-600/30" : "bg-white/[.04] text-slate-300 ring-1 ring-white/10 hover:bg-white/[.08]"}`}
                 >
                   <t.Icon className="h-4 w-4" /> {t.label}
                   {badges[t.id] > 0 && <span className="min-w-[18px] rounded-full bg-red-500 px-1 text-center text-[11px] font-bold leading-[18px] text-white">{badges[t.id]}</span>}
