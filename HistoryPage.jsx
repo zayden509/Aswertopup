@@ -23,12 +23,12 @@ const FILTERS = [
 function EmptyState({ title, text, onShop }) {
   return (
     <div className="rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-      <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-sky-50 text-sky-500 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:ring-sky-500/20">
+      <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-sky-50 text-sky-700 dark:text-sky-400 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:ring-sky-500/20">
         <History className="h-8 w-8" strokeWidth={1.5} />
       </span>
       <h2 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
       <p className="mx-auto mt-1 max-w-xs text-slate-500 dark:text-slate-400">{text}</p>
-      <button type="button" onClick={onShop} className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-sky-500 px-6 py-3 font-bold text-white hover:bg-sky-600">
+      <button type="button" onClick={onShop} className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-sky-500 px-6 py-3 font-bold text-neutral-950 hover:bg-sky-600">
         <ShoppingCart className="h-5 w-5" /> {t("Achte kounye a", "Acheter maintenant")}
       </button>
     </div>
@@ -108,14 +108,14 @@ export function OrderSheet({ order, catalog = PRODUCTS, profile, onClose, onToas
           return (
             <li key={s} className="flex flex-1 items-center last:flex-none">
               <span className="flex flex-col items-center gap-1">
-                <span className={`relative grid h-8 w-8 place-items-center rounded-full text-white ${done ? (bad ? "bg-red-500" : "bg-emerald-500") : "bg-slate-200 dark:bg-slate-700"}`}>
+                <span className={`relative grid h-8 w-8 place-items-center rounded-full ${done ? (bad ? "bg-red-500 text-white" : "bg-emerald-500 text-neutral-950") : "bg-slate-200 dark:bg-slate-700"}`}>
                   {/* Etap ki an kou a klere pandan kòmand lan poko livre */}
                   {i === reached && !bad && s !== "delivered" && <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/60" />}
                   {done ? <Check className="relative h-4 w-4" /> : <span className="h-2 w-2 rounded-full bg-white/80" />}
                 </span>
                 <span className={`text-xs font-semibold ${done ? "text-slate-800 dark:text-slate-100" : "text-slate-400"}`}>{stepLabel[s]}</span>
               </span>
-              {i < steps.length - 1 && <span className={`mx-1 mb-5 h-0.5 flex-1 rounded ${i < reached ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"}`} />}
+              {i < steps.length - 1 && <span className={`mx-1 mb-5 h-0.5 flex-1 rounded ${i < reached ? "bg-emerald-500 text-neutral-950" : "bg-slate-200 dark:bg-slate-700"}`} />}
             </li>
           );
         })}
@@ -166,11 +166,11 @@ function MiniProgress({ status }) {
   return (
     <span className="mt-2 block">
       <span className="block h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-        <span className="relative block h-full overflow-hidden rounded-full bg-gradient-to-r from-sky-400 to-indigo-500 transition-[width] duration-700" style={{ width: `${pct}%` }}>
+        <span className="relative block h-full overflow-hidden rounded-full bg-gradient-to-r from-sky-400 to-indigo-500 transition-[width] duration-700" style={{ width:`${pct}%` }}>
           <span className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/60 to-transparent" />
         </span>
       </span>
-      <span className="mt-1 block text-[11px] font-semibold text-sky-600 dark:text-sky-400">
+      <span className="mt-1 block text-[11px] font-semibold text-sky-700 dark:text-sky-400">
         {status === "processing" ? t("N ap livre l kounye a…", "Livraison en cours…") : t("Kòmand lan ap trete…", "Commande en traitement…")}
       </span>
     </span>
@@ -230,7 +230,7 @@ function AccountHistory({ account, onShop, onOpenOrder }) {
                 onClick={() => onOpenOrder(o)}
                 className="flex w-full items-center gap-3 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-200 transition hover:ring-sky-200 dark:bg-slate-900 dark:ring-slate-800"
               >
-                <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${o.delivery_code ? "bg-sky-50 text-sky-500 dark:bg-sky-500/10" : "bg-violet-50 text-violet-500 dark:bg-violet-500/10"}`}>
+                <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${o.delivery_code ? "bg-sky-50 text-sky-700 dark:text-sky-400 dark:bg-sky-500/10" : "bg-violet-50 text-violet-700 dark:text-violet-400 dark:bg-violet-500/10"}`}>
                   {o.delivery_code ? <KeyRound className="h-6 w-6" /> : <ShoppingCart className="h-6 w-6" />}
                 </span>
                 <span className="min-w-0 flex-1">
@@ -241,7 +241,7 @@ function AccountHistory({ account, onShop, onOpenOrder }) {
                 <span className="flex shrink-0 flex-col items-end gap-1">
                   <span className="font-bold tabular-nums text-slate-900 dark:text-white">{formatPrice(Number(o.price))}</span>
                   {o.delivery_code ? (
-                    <span className="rounded-lg bg-sky-50 px-2 py-0.5 text-[11px] font-bold tracking-wider text-sky-600 dark:bg-sky-500/10 dark:text-sky-300">PIN</span>
+                    <span className="rounded-lg bg-sky-50 px-2 py-0.5 text-[11px] font-bold tracking-wider text-sky-700 dark:bg-sky-500/10 dark:text-sky-300">PIN</span>
                   ) : (
                     <StatusChip status={orderStatus(o)} />
                   )}
@@ -252,7 +252,7 @@ function AccountHistory({ account, onShop, onOpenOrder }) {
         </ul>
       )}
       {codes > 0 && filter !== "codes" && (
-        <button type="button" onClick={() => setFilter("codes")} className="w-full text-center text-sm font-semibold text-sky-600 dark:text-sky-400">
+        <button type="button" onClick={() => setFilter("codes")} className="w-full text-center text-sm font-semibold text-sky-700 dark:text-sky-400">
           {codes} kòd disponib: wè yo
         </button>
       )}
@@ -288,7 +288,7 @@ function LocalHistory({ orders, onShop }) {
                 <p className="tabular-nums">{o.id} · {o.payment}</p>
                 <p>{dateFormat.format(o.date)}</p>
               </div>
-              <p className="text-lg font-extrabold tabular-nums text-sky-500">{o.priceText}</p>
+              <p className="text-lg font-extrabold tabular-nums text-sky-700 dark:text-sky-400">{o.priceText}</p>
             </div>
             <a
               href={waLink(orderMessage(o))}
@@ -315,7 +315,7 @@ export default function HistoryPage({ account, localOrders, onShop, onLogin, onO
           {!account.enabled
             ? t("Kòmand ou fè sou telefòn sa a.", "Vos commandes passées sur ce téléphone.")
             : codes > 0
-              ? <span className="font-medium text-sky-600 dark:text-sky-400">{t(`${codes} kòd disponib`, `${codes} code(s) disponible(s)`)}</span>
+              ? <span className="font-medium text-sky-700 dark:text-sky-400">{t(`${codes} kòd disponib`, `${codes} code(s) disponible(s)`)}</span>
               : t("Kòmand ou yo ak kòd PIN ou resevwa yo.", "Vos commandes et les codes PIN reçus.")}
         </p>
       </div>

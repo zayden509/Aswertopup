@@ -36,7 +36,7 @@ export function FlashBanner({ onOpenProduct, onToast }) {
   const parts = [Math.floor((left % 86400) / 3600), Math.floor((left % 3600) / 60), left % 60];
 
   return (
-    <section className="relative mt-5 overflow-hidden rounded-[24px] bg-gradient-to-r from-orange-500 via-rose-500 to-fuchsia-600 p-4 text-white shadow-lg shadow-rose-500/25">
+    <section className="relative mt-5 overflow-hidden rounded-[24px] bg-gradient-to-r from-orange-500 via-rose-500 to-fuchsia-600 p-4 text-neutral-950 shadow-lg shadow-rose-500/25">
       <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/20 blur-2xl" />
       <div className="relative flex items-start gap-3">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/20"><Flame className="h-6 w-6" /></span>
@@ -57,7 +57,7 @@ export function FlashBanner({ onOpenProduct, onToast }) {
           </button>
         )}
         {flash.product_id && (
-          <button type="button" onClick={() => onOpenProduct(flash.product_id)} className="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-extrabold text-rose-600 shadow transition active:scale-95">
+          <button type="button" onClick={() => onOpenProduct(flash.product_id)} className="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-extrabold text-rose-700 dark:text-rose-400 shadow transition active:scale-95">
             {t("Achte kounye a", "J'en profite")} <ArrowRight className="h-4 w-4" />
           </button>
         )}

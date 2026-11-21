@@ -36,7 +36,7 @@ function TextField({ id, label, icon: Icon, value, onChange, placeholder, autoCo
       <span className={`flex items-center gap-3 rounded-2xl border-2 bg-white px-4 transition focus-within:border-sky-400 dark:bg-slate-950 ${valid ? "border-emerald-400" : "border-slate-200 dark:border-slate-700"}`}>
         <Icon className="h-5 w-5 shrink-0 text-slate-400" />
         <input id={id} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} autoComplete={autoComplete} maxLength={120} className="w-full bg-transparent py-3.5 text-base text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-white" />
-        {valid && <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />}
+        {valid && <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-400" />}
       </span>
     </label>
   );
@@ -69,7 +69,7 @@ function FeeSheet({ config, onClose }) {
       <p className="text-sm text-slate-500 dark:text-slate-400">{t("Frè a ajoute sou montan ou resevwa a. Li deja kalkile nan total ou peye a.", "Les frais s'ajoutent au montant reçu. Ils sont déjà inclus dans le total à payer.")}</p>
       <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700">
         <div className="flex items-center justify-between bg-slate-50 px-4 py-3 dark:bg-slate-800/60">
-          <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200"><Layers className="h-4 w-4 text-violet-500" /> {t("Frè", "Frais")} {config.currency}</span>
+          <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200"><Layers className="h-4 w-4 text-violet-700 dark:text-violet-400" /> {t("Frè", "Frais")} {config.currency}</span>
           <span className="text-xs text-slate-500 dark:text-slate-400">{config.tiers.length} {t("palye", "paliers")}</span>
         </div>
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -201,7 +201,7 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
       onChange={(v) => { setEdited("pay"); setPay(v); }}
       chip={
         <span className="flex shrink-0 items-center gap-2 rounded-full bg-white py-1.5 pl-1.5 pr-3.5 font-bold text-slate-900 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:text-white dark:ring-slate-700">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-sky-500 text-[10px] font-black text-white">HTG</span> HTG
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-sky-500 text-[10px] font-black text-neutral-950">HTG</span> HTG
         </span>
       }
     />
@@ -252,7 +252,7 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
             To du jou <Info className="h-4 w-4" aria-hidden="true" />
           </p>
           <p className="mt-0.5 text-center text-lg font-extrabold text-slate-900 dark:text-white">
-            1 {config.currency} = <span className="text-sky-500">{number.format(config.rate)}</span> HTG
+            1 {config.currency} = <span className="text-sky-700 dark:text-sky-400">{number.format(config.rate)}</span> HTG
           </p>
 
           <div className="relative mt-4 space-y-2">
@@ -261,7 +261,7 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
               type="button"
               onClick={swap}
               aria-label={t("Chanje lòd bwat yo", "Inverser les champs")}
-              className="absolute left-1/2 top-1/2 z-10 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 text-white shadow-lg shadow-sky-500/30 ring-4 ring-white transition active:scale-90 dark:ring-slate-900"
+              className="absolute left-1/2 top-1/2 z-10 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 text-neutral-950 shadow-lg shadow-sky-500/30 ring-4 ring-white transition active:scale-90 dark:ring-slate-900"
             >
               <ArrowUpDown className="h-5 w-5" />
             </button>
@@ -274,7 +274,7 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
             <dl className="mt-4 space-y-1.5 rounded-2xl bg-white p-3.5 text-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
               <div className="flex justify-between gap-3"><dt className="text-slate-500 dark:text-slate-400">{t("Montan", "Montant")}</dt><dd className="font-semibold tabular-nums">{number.format(q.amount)} {config.currency}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-slate-500 dark:text-slate-400">{t("Frè", "Frais")}</dt><dd className="font-semibold tabular-nums">+ {number.format(q.fee)} {config.currency}</dd></div>
-              <div className="flex justify-between gap-3 border-t border-slate-100 pt-1.5 dark:border-slate-800"><dt className="font-semibold text-slate-700 dark:text-slate-200">{t("Total pou peye", "Total à payer")}</dt><dd className="font-extrabold tabular-nums text-sky-600 dark:text-sky-400">{formatPrice(q.price)}</dd></div>
+              <div className="flex justify-between gap-3 border-t border-slate-100 pt-1.5 dark:border-slate-800"><dt className="font-semibold text-slate-700 dark:text-slate-200">{t("Total pou peye", "Total à payer")}</dt><dd className="font-extrabold tabular-nums text-sky-700 dark:text-sky-400">{formatPrice(q.price)}</dd></div>
             </dl>
           )}
 
@@ -289,12 +289,12 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
           loggedIn ? (
             <div className="space-y-3">
               <div className="flex items-center gap-3 rounded-2xl border-2 border-sky-500 bg-sky-50 p-3 dark:bg-sky-500/10">
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-500 to-violet-500 text-white"><Wallet className="h-6 w-6" /></span>
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-500 to-violet-500 text-neutral-950"><Wallet className="h-6 w-6" /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-bold text-slate-900 dark:text-white">Solde du compte</span>
                   <span className="block text-sm tabular-nums text-slate-500 dark:text-slate-400">{formatPrice(balance)} {t("disponib", "disponible")}</span>
                 </span>
-                <button type="button" onClick={onDeposit} className="flex shrink-0 items-center gap-1 rounded-xl bg-white px-3 py-2 text-sm font-bold text-sky-600 ring-1 ring-sky-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-sky-500/30">
+                <button type="button" onClick={onDeposit} className="flex shrink-0 items-center gap-1 rounded-xl bg-white px-3 py-2 text-sm font-bold text-sky-700 ring-1 ring-sky-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-sky-500/30">
                   <Plus className="h-4 w-4" /> Ajouter
                 </button>
               </div>
@@ -308,17 +308,17 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
             <div className="rounded-2xl bg-slate-50 p-4 text-center ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
               <p className="text-slate-600 dark:text-slate-300">{t("Konekte pou w peye ak Solde Wallet ou.", "Connectez-vous pour payer avec le solde de votre Wallet.")}</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => onLogin("login")} className="rounded-xl bg-sky-500 py-2.5 font-bold text-white">{t("Konekte", "Connexion")}</button>
+                <button type="button" onClick={() => onLogin("login")} className="rounded-xl bg-sky-500 py-2.5 font-bold text-neutral-950">{t("Konekte", "Connexion")}</button>
                 <button type="button" onClick={() => onLogin("signup")} className="rounded-xl bg-white py-2.5 font-bold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700">{t("Kreye kont", "Créer un compte")}</button>
               </div>
             </div>
           )
         ) : (
           <p className="flex gap-3 rounded-2xl bg-sky-50 p-3.5 text-sm text-sky-900 dark:bg-sky-500/10 dark:text-sky-100">
-            <MessageCircle className="h-5 w-5 shrink-0 text-sky-500" /> Kòmand lan ale sou WhatsApp: ekip la ap ba w enstriksyon pou peye ak MonCash oswa NatCash.
+            <MessageCircle className="h-5 w-5 shrink-0 text-sky-700 dark:text-sky-400" /> Kòmand lan ale sou WhatsApp: ekip la ap ba w enstriksyon pou peye ak MonCash oswa NatCash.
           </p>
         )}
-        <p className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400"><ShieldCheck className="h-4 w-4 text-emerald-500" /> {t("Si nou pa ka voye kòb la, li retounen nan Wallet ou.", "Si l'envoi est impossible, l'argent revient dans votre Wallet.")}</p>
+        <p className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400"><ShieldCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> {t("Si nou pa ka voye kòb la, li retounen nan Wallet ou.", "Si l'envoi est impossible, l'argent revient dans votre Wallet.")}</p>
       </StepCard>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/[.97] dark:border-slate-800 dark:bg-slate-900/[.97]" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}>
@@ -331,7 +331,7 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
             type="button"
             disabled={!action.run}
             onClick={action.run || undefined}
-            className="flex shrink-0 items-center gap-2 rounded-2xl bg-sky-500 px-5 py-3.5 font-bold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-800 dark:disabled:text-slate-400"
+            className="flex shrink-0 items-center gap-2 rounded-2xl bg-sky-500 px-5 py-3.5 font-bold text-neutral-950 shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-800 dark:disabled:text-slate-400"
           >
             {React.createElement(action.icon || ShoppingCart, { className: "h-5 w-5" })} {action.text}
           </button>
@@ -346,12 +346,12 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
         title={placed ? t("Kòmand pase", "Commande passée") : "Confirmer l'achat"}
         footer={
           placed ? null : walletMode ? (
-            <button type="button" onClick={placeOrder} disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 hover:bg-sky-600 disabled:opacity-60">
+            <button type="button" onClick={placeOrder} disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-neutral-950 shadow-lg shadow-sky-500/25 hover:bg-sky-600 disabled:opacity-60">
               {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />} Confirmer l'achat
             </button>
           ) : (
             waOrder && (
-              <a href={waLink(orderMessage(waOrder))} target="_blank" rel="noopener noreferrer" onClick={() => { onOrder(waOrder); setConfirming(false); }} className="flex items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white">
+              <a href={waLink(orderMessage(waOrder))} target="_blank" rel="noopener noreferrer" onClick={() => { onOrder(waOrder); setConfirming(false); }} className="flex items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-neutral-950">
                 <WhatsAppIcon className="h-5 w-5" /> Konfime sou WhatsApp
               </a>
             )
@@ -360,14 +360,14 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
       >
         {q && placed ? (
           <div className="py-4 text-center">
-            <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15"><CheckCircle2 className="h-9 w-9 text-emerald-500" /></span>
+            <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15"><CheckCircle2 className="h-9 w-9 text-emerald-700 dark:text-emerald-400" /></span>
             <h4 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">{t(`Kòmand ${placed.code} pase!`, `Commande ${placed.code} passée !`)}</h4>
             <p className="mx-auto mt-2 max-w-sm text-slate-500 dark:text-slate-400">
               {t(`${formatPrice(placed.price)} soti nan Wallet ou. N ap voye ${placed.package_label} sou ${placed.recipient.account} epi w ap resevwa yon notifikasyon.`, `${formatPrice(placed.price)} débités de votre Wallet. Nous envoyons ${placed.package_label} sur ${placed.recipient.account} et vous recevrez une notification.`)}
             </p>
             <div className="mt-6 grid grid-cols-2 gap-3">
               <button type="button" onClick={closeConfirm} className="rounded-2xl bg-slate-100 py-3.5 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">{t("Fèmen", "Fermer")}</button>
-              <button type="button" onClick={onViewOrders} className="rounded-2xl bg-sky-500 py-3.5 font-bold text-white hover:bg-sky-600">{t("Wè kòmand mwen", "Voir mes commandes")}</button>
+              <button type="button" onClick={onViewOrders} className="rounded-2xl bg-sky-500 py-3.5 font-bold text-neutral-950 hover:bg-sky-600">{t("Wè kòmand mwen", "Voir mes commandes")}</button>
             </div>
           </div>
         ) : q ? (
@@ -376,7 +376,7 @@ export default function ExchangePage({ product, account, onBack, onOrder, onLogi
               <ProductArt product={product} className="relative h-14 w-14 shrink-0 rounded-2xl" />
               <div className="min-w-0">
                 <p className="font-semibold text-slate-900 dark:text-white">{t("Ou resevwa", "Vous recevez")} {number.format(q.amount)} {config.currency}</p>
-                <p className="text-2xl font-extrabold tabular-nums text-sky-500">{formatPrice(q.price)}</p>
+                <p className="text-2xl font-extrabold tabular-nums text-sky-700 dark:text-sky-400">{formatPrice(q.price)}</p>
               </div>
             </div>
             <dl className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">

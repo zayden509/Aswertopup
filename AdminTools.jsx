@@ -66,7 +66,7 @@ export function BackupCard({ owner, onToast }) {
 
   return (
     <Card
-      title={<span className="flex items-center gap-2"><DatabaseBackup className="h-5 w-5 text-sky-500" /> Backup done yo</span>}
+      title={<span className="flex items-center gap-2"><DatabaseBackup className="h-5 w-5 text-sky-700" /> Backup done yo</span>}
       subtitle="Yon kopi tout kont, kòmand, depo ak pwodwi yo nan yon fichye. Fè l yon fwa pa semèn, epi kenbe fichye a yon kote ki an sekirite (Google Drive, imèl)."
     >
       {owner ? (
@@ -150,7 +150,7 @@ export function ReportsCard({ profiles, onToast }) {
 
   return (
     <Card
-      title={<span className="flex items-center gap-2"><FileSpreadsheet className="h-5 w-5 text-emerald-500" /> Rapò Excel</span>}
+      title={<span className="flex items-center gap-2"><FileSpreadsheet className="h-5 w-5 text-emerald-700 dark:text-emerald-400" /> Rapò Excel</span>}
       subtitle="Chwazi yon mwa, epi telechaje lavant ak depo yo pou kontablite (fichye CSV ki louvri nan Excel oswa Google Sheets)."
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -193,7 +193,7 @@ export function AlertsCard({ owner, onToast }) {
   const connected = Boolean(settings?.chat_id);
   return (
     <Card
-      title={<span className="flex items-center gap-2"><BellRing className="h-5 w-5 text-amber-500" /> Alèt sou Telegram</span>}
+      title={<span className="flex items-center gap-2"><BellRing className="h-5 w-5 text-amber-700" /> Alèt sou Telegram</span>}
       subtitle="Sit la voye yon mesaj ba ou lè: yon kòmand FazerCards echwe, balans FazerCards ap fini, telefòn httpSMS la pa voye SMS ankò, oswa yon gwo depo ap tann ou. Chak maten, yon rezime jounen an."
     >
       {connected ? (
@@ -258,7 +258,7 @@ export function PromosCard({ onToast }) {
 
   return (
     <Card
-      title={<span className="flex items-center gap-2"><TicketPercent className="h-5 w-5 text-fuchsia-500" /> Kòd pwomo</span>}
+      title={<span className="flex items-center gap-2"><TicketPercent className="h-5 w-5 text-fuchsia-700 dark:text-fuchsia-400" /> Kòd pwomo</span>}
       subtitle="Kliyan an mete kòd la lè l ap achte, epi li jwenn rabè a. Chak kliyan ka sèvi ak yon kòd yon sèl fwa."
     >
       <form onSubmit={create} className="grid gap-2 sm:grid-cols-[1fr_6rem_10rem_7rem_auto]" data-testid="promo-form">
@@ -275,7 +275,7 @@ export function PromosCard({ onToast }) {
           {list.map((p) => (
             <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
               <div className="min-w-0">
-                <p className="font-mono font-bold text-slate-900 dark:text-white">{p.id} <span className="font-sans text-sm font-semibold text-fuchsia-600 dark:text-fuchsia-400">−{p.percent}%</span></p>
+                <p className="font-mono font-bold text-slate-900 dark:text-white">{p.id} <span className="font-sans text-sm font-semibold text-fuchsia-700 dark:text-fuchsia-400">−{p.percent}%</span></p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {p.uses}{p.max_uses ? `/${p.max_uses}` : ""} fwa · {p.expires_at ? `ekspire ${stamp(p.expires_at).slice(0, 10)}` : "pa ekspire"}
                   {!p.active ? " · etenn" : expired(p) ? " · ekspire" : ""}

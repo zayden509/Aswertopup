@@ -144,7 +144,7 @@ function AddAdminForm({ profiles, onToast }) {
         <ErrorNote>{error}</ErrorNote>
         <div className="grid grid-cols-2 gap-2">
           <button type="button" onClick={() => setFound(null)} className="rounded-xl bg-slate-100 py-2.5 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">Anile</button>
-          <button type="button" disabled={busy} onClick={confirm} className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 font-bold text-white disabled:opacity-60">
+          <button type="button" disabled={busy} onClick={confirm} className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 font-bold text-neutral-950 disabled:opacity-60">
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />} Fè l admin
           </button>
         </div>
@@ -158,7 +158,7 @@ function AddAdminForm({ profiles, onToast }) {
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="non@gmail.com" autoComplete="off" className={inputClass} />
       </Field>
       <ErrorNote>{error}</ErrorNote>
-      <button type="submit" disabled={!email.trim()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3 font-bold text-white disabled:opacity-50">
+      <button type="submit" disabled={!email.trim()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3 font-bold text-neutral-950 disabled:opacity-50">
         <UserPlus className="h-5 w-5" /> Chèche kont lan
       </button>
     </form>
@@ -174,7 +174,7 @@ export default function AdminTeam({ me, profiles, onToast }) {
   return (
     <div className="space-y-4">
       {canManage ? (
-        <Card title={<span className="flex items-center gap-2"><UserPlus className="h-5 w-5 text-sky-500" /> Ajoute yon admin</span>}>
+        <Card title={<span className="flex items-center gap-2"><UserPlus className="h-5 w-5 text-sky-700 dark:text-sky-400" /> Ajoute yon admin</span>}>
           <AddAdminForm profiles={profiles} onToast={onToast} />
         </Card>
       ) : (
@@ -196,7 +196,7 @@ export default function AdminTeam({ me, profiles, onToast }) {
           {ROLES.map((r) => (
             <li key={r.id}><b className="text-slate-900 dark:text-white">{r.label}:</b> {r.text}</li>
           ))}
-          <li className="font-semibold text-slate-900 dark:text-white"><Crown className="mr-1 inline h-4 w-4 text-amber-500" />Sèlman pwopriyetè a ka ajoute, retire admin oswa chanje wòl yo.</li>
+          <li className="font-semibold text-slate-900 dark:text-white"><Crown className="mr-1 inline h-4 w-4 text-amber-700 dark:text-amber-400" />Sèlman pwopriyetè a ka ajoute, retire admin oswa chanje wòl yo.</li>
           <li>Kont bot sèvè a (depo otomatik, FazerCards) dwe <b>Admin konplè</b>.</li>
         </ul>
       </Card>

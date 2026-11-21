@@ -238,7 +238,7 @@ function SmsAutomation({ owner, onToast, onTrusted }) {
 
   return (
     <Card
-      title={<span className="flex items-center gap-2"><MessageSquareText className="h-5 w-5 text-sky-500" /> Depo otomatik ak SMS</span>}
+      title={<span className="flex items-center gap-2"><MessageSquareText className="h-5 w-5 text-sky-700 dark:text-sky-400" /> Depo otomatik ak SMS</span>}
       subtitle="Kliyan an mete TransCode a sèlman. Ak httpSMS sou telefòn Android ki gen SIM NatCash/MonCash yo, sit la jwenn montan an nan SMS la epi li konfime depo a poukont li. 5 kòd ki pa bon: kliyan an tann 30 minit."
     >
       <div className="space-y-4">
@@ -262,7 +262,7 @@ function SmsAutomation({ owner, onToast, onTrusted }) {
         </ul>
         <div className="rounded-xl bg-slate-50 p-3 text-sm ring-1 ring-slate-200 dark:bg-slate-950/40 dark:ring-slate-800">
           <p className="font-medium text-slate-700 dark:text-slate-200">Adrès webhook la (pou httpSMS)</p>
-          <button type="button" onClick={() => copyText(webhook, onToast)} className="mt-1 flex max-w-full items-center gap-2 font-mono text-sky-600 dark:text-sky-400">
+          <button type="button" onClick={() => copyText(webhook, onToast)} className="mt-1 flex max-w-full items-center gap-2 font-mono text-sky-700 dark:text-sky-400">
             <span className="truncate">{webhook}</span> <Copy className="h-4 w-4 shrink-0" />
           </button>
           <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Sou httpsms.com, webhook la dwe gen <b>2 nimewo yo</b> (NatCash ak MonCash) nan "Phone numbers".</p>

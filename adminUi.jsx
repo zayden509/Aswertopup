@@ -12,7 +12,7 @@ export const compact = new Intl.NumberFormat("fr-FR", { notation: "compact", max
 export const number = new Intl.NumberFormat("fr-FR");
 
 // Fon kat Panneau admin lan (menm stil toupatou)
-export const panel = "rounded-3xl bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06),0_8px_24px_-12px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/70 dark:bg-transparent dark:bg-gradient-to-b dark:from-white/[.06] dark:to-white/[.02] dark:shadow-[0_20px_40px_-24px_rgba(0,0,0,.8)] dark:ring-white/[.08] dark:backdrop-blur-xl";
+export const panel = "rounded-3xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_8px_24px_-12px_rgba(0,0,0,0.12)] ring-1 ring-slate-200/70 dark:bg-transparent dark:bg-gradient-to-b dark:from-white/[.06] dark:to-white/[.02] dark:shadow-[0_20px_40px_-24px_rgba(0,0,0,.8)] dark:ring-white/[.08] dark:backdrop-blur-xl";
 
 export function Card({ title, subtitle, action, children, className = "" }) {
   return (
@@ -36,7 +36,7 @@ export function SectionHead({ title, sub, children }) {
   return (
     <div className="flex items-end justify-between gap-3">
       <div className="flex min-w-0 items-stretch gap-3">
-        <span className="w-1.5 shrink-0 rounded-full bg-gradient-to-b from-violet-400 to-fuchsia-500 shadow-[0_0_12px_rgba(168,85,247,.6)]" aria-hidden="true" />
+        <span className="w-1.5 shrink-0 rounded-full bg-gradient-to-b from-violet-400 to-fuchsia-500 shadow-[0_0_12px_rgba(234,179,8,.6)]" aria-hidden="true" />
         <div className="min-w-0">
           <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{title}</h2>
           {sub && <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{sub}</p>}
@@ -58,8 +58,8 @@ export function CopyText({ value, onToast, className = "" }) {
 
 // Bouton Panneau admin lan: `tone` = primary | success | danger | ghost
 const BUTTON_TONES = {
-  primary: "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-violet-600/30 hover:brightness-110",
-  success: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm shadow-emerald-500/25 hover:brightness-110",
+  primary: "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-neutral-950 shadow-md shadow-violet-600/30 hover:brightness-110",
+  success: "bg-gradient-to-r from-emerald-500 to-teal-500 text-neutral-950 shadow-sm shadow-emerald-500/25 hover:brightness-110",
   danger: "bg-white text-red-600 ring-1 ring-red-200 hover:bg-red-50 dark:bg-transparent dark:text-red-300 dark:ring-red-500/30 dark:hover:bg-red-500/10",
   ghost: "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-white/[.05] dark:text-slate-200 dark:ring-white/10 dark:hover:bg-white/10",
 };
@@ -85,7 +85,7 @@ export function Field({ label, hint, children }) {
 export function Toggle({ on, onChange, label }) {
   return (
     <button type="button" role="switch" aria-checked={on} onClick={() => onChange(!on)} className="flex items-center gap-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
-      <span className={`relative h-7 w-12 shrink-0 rounded-full transition ${on ? "bg-gradient-to-r from-emerald-400 to-teal-500 shadow-inner" : "bg-slate-300 dark:bg-slate-700"}`}>
+      <span className={`relative h-7 w-12 shrink-0 rounded-full transition ${on ? "bg-gradient-to-r from-emerald-400 to-teal-500 shadow-inner text-neutral-950" : "bg-slate-300 dark:bg-slate-700"}`}>
         <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? "left-6" : "left-1"}`} />
       </span>
       {label}
@@ -105,7 +105,7 @@ export function Chips({ options, value, onChange, label }) {
           aria-checked={o.id === value}
           onClick={() => onChange(o.id)}
           className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition active:scale-95 ${
-            o.id === value ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-violet-600/30" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-white/[.04] dark:text-slate-300 dark:ring-white/10 dark:hover:bg-white/[.08]"
+            o.id === value ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-neutral-950 shadow-md shadow-violet-600/30" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-white/[.04] dark:text-slate-300 dark:ring-white/10 dark:hover:bg-white/[.08]"
           }`}
         >
           {o.label}

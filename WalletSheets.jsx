@@ -26,11 +26,11 @@ function Success({ title, text, onClose }) {
   return (
     <div className="py-6 text-center">
       <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15">
-        <CheckCircle2 className="h-9 w-9 text-emerald-500" />
+        <CheckCircle2 className="h-9 w-9 text-emerald-700 dark:text-emerald-400" />
       </span>
       <h4 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">{title}</h4>
       <p className="mx-auto mt-2 max-w-sm text-slate-500 dark:text-slate-400">{text}</p>
-      <button type="button" onClick={onClose} className="mt-6 rounded-2xl bg-sky-500 px-8 py-3 font-bold text-white hover:bg-sky-600">{t("Fini", "Terminé")}</button>
+      <button type="button" onClick={onClose} className="mt-6 rounded-2xl bg-sky-500 px-8 py-3 font-bold text-neutral-950 hover:bg-sky-600">{t("Fini", "Terminé")}</button>
     </div>
   );
 }
@@ -102,11 +102,11 @@ export function AccountCard({ method, onToast }) {
       )}
       <p className="text-[11px] font-bold uppercase tracking-[.14em] text-slate-500 dark:text-slate-400">Numéro du compte</p>
       <div className="mt-1 flex items-center justify-between gap-3">
-        <span className="select-all text-2xl font-extrabold tabular-nums tracking-wide text-sky-600 dark:text-sky-400">{formatAccountNumber(method.number)}</span>
+        <span className="select-all text-2xl font-extrabold tabular-nums tracking-wide text-sky-700 dark:text-sky-400">{formatAccountNumber(method.number)}</span>
         <button
           type="button"
           onClick={() => copyText(method.number, onToast)}
-          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-600 ring-1 ring-sky-200 hover:bg-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30"
+          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 ring-1 ring-sky-200 hover:bg-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30"
         >
           <Copy className="h-4 w-4" /> Copier
         </button>
@@ -146,16 +146,16 @@ export function MethodList({ onPick }) {
             {m.recommended && <span className="mt-1 inline-block rounded-full bg-emerald-400 px-2.5 py-0.5 text-[11px] font-extrabold tracking-wider text-emerald-950">RECOMMANDÉ</span>}
             <span className="mt-0.5 block text-sm text-slate-500 dark:text-slate-400">{m.note}</span>
           </span>
-          <ChevronRight className={`h-6 w-6 shrink-0 ${m.recommended ? "text-emerald-500" : "text-slate-400"}`} />
+          <ChevronRight className={`h-6 w-6 shrink-0 ${m.recommended ? "text-emerald-700 dark:text-emerald-400" : "text-slate-400"}`} />
         </button>
       ))}
       <button type="button" onClick={openGuide} className="flex w-full items-center gap-4 rounded-2xl border-2 border-sky-100 bg-sky-50/70 p-4 text-left dark:border-sky-500/20 dark:bg-sky-500/10">
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-sky-100 text-sky-500 dark:bg-sky-500/20"><BookOpen className="h-6 w-6" /></span>
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-sky-100 text-sky-700 dark:text-sky-400 dark:bg-sky-500/20"><BookOpen className="h-6 w-6" /></span>
         <span className="min-w-0 flex-1">
-          <span className="block font-bold text-sky-600 dark:text-sky-300">Tutoriel de dépôt</span>
+          <span className="block font-bold text-sky-700 dark:text-sky-300">Tutoriel de dépôt</span>
           <span className="block text-sm text-slate-500 dark:text-slate-400">{t("Kijan pou fè yon depo MonCash oswa NatCash", "Comment faire un dépôt MonCash ou NatCash")}</span>
         </span>
-        <ChevronRight className="h-6 w-6 shrink-0 text-sky-500" />
+        <ChevronRight className="h-6 w-6 shrink-0 text-sky-700 dark:text-sky-400" />
       </button>
       <a
         href={waLink(t("Bonjou Awens Topup, mwen gen yon pwoblèm ak depo mwen.", "Bonjour Awens Topup, j'ai un problème avec mon dépôt."))}
@@ -271,7 +271,7 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
 
           <section className="space-y-4 rounded-2xl bg-white p-4 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
             <div className="flex items-start gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-50 text-sky-600 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/20">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-50 text-sky-700 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/20">
                 <ShieldCheck className="h-5 w-5" />
               </span>
               <div className="min-w-0">
@@ -301,12 +301,12 @@ export function DepositSheet({ initialAmount = "", profile, onClose, onToast }) 
               autoComplete="off"
             />
             {method.guide && (
-              <button type="button" onClick={showGuide} className="-mt-2 text-sm font-semibold text-sky-600 hover:underline dark:text-sky-400">
+              <button type="button" onClick={showGuide} className="-mt-2 text-sm font-semibold text-sky-700 hover:underline dark:text-sky-400">
                 {t("Kote m jwenn kòd la? Gade egzanp lan", "Où trouver le code ? Voir l'exemple")}
               </button>
             )}
             <ErrorNote>{error}</ErrorNote>
-            <button type="submit" disabled={busy || !method.number} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 hover:bg-sky-600 disabled:opacity-60">
+            <button type="submit" disabled={busy || !method.number} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-neutral-950 shadow-lg shadow-sky-500/25 hover:bg-sky-600 disabled:opacity-60">
               {busy && <Loader2 className="h-5 w-5 animate-spin" />} Valider mon dépôt
             </button>
           </section>
@@ -397,7 +397,7 @@ export function TransferSheet({ profile, initialCode = "", onClose }) {
           <ErrorNote>{error}</ErrorNote>
           <div className="grid grid-cols-2 gap-3 pt-2">
             <button type="button" onClick={() => setConfirming(false)} className="rounded-2xl bg-slate-100 py-3.5 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">{t("Anile", "Annuler")}</button>
-            <button type="button" onClick={send} disabled={busy} className="flex items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3.5 font-bold text-white hover:bg-sky-600 disabled:opacity-60">
+            <button type="button" onClick={send} disabled={busy} className="flex items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3.5 font-bold text-neutral-950 hover:bg-sky-600 disabled:opacity-60">
               {busy && <Loader2 className="h-5 w-5 animate-spin" />} {t("Konfime", "Confirmer")}
             </button>
           </div>
@@ -422,7 +422,7 @@ export function TransferSheet({ profile, initialCode = "", onClose }) {
           {code === profile?.wallet_code ? (
             <p className="text-sm font-medium text-red-500">{t("Sa se pwòp AWENS-ID ou.", "C'est votre propre AWENS-ID.")}</p>
           ) : recipient?.name ? (
-            <p className="flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-4 w-4" /> {recipient.name}</p>
+            <p className="flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400"><CheckCircle2 className="h-4 w-4" /> {recipient.name}</p>
           ) : recipient?.missing ? (
             <p className="text-sm font-medium text-red-500">{t("Nou pa jwenn AWENS-ID sa a.", "AWENS-ID introuvable.")}</p>
           ) : recipient?.checking ? (
@@ -450,7 +450,7 @@ export function TransferSheet({ profile, initialCode = "", onClose }) {
             hint={value > balance ? t("Montan sa a pi gwo pase solde ou.", "Ce montant dépasse votre solde.") : t("Minimòm 10 HTG.", "Minimum 10 HTG.")}
           />
           <ErrorNote>{error}</ErrorNote>
-          <button type="submit" disabled={!canSend} className="w-full rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 hover:bg-sky-600 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-800 dark:disabled:text-slate-400">
+          <button type="submit" disabled={!canSend} className="w-full rounded-2xl bg-sky-500 py-4 text-lg font-bold text-neutral-950 shadow-lg shadow-sky-500/25 hover:bg-sky-600 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-800 dark:disabled:text-slate-400">
             {t("Kontinye", "Continuer")}
           </button>
         </form>

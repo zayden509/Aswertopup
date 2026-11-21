@@ -48,7 +48,7 @@ export default function ProfileWallet({ account, onDeposit, onTransfer, onOpenOr
 
   return (
     <div className="space-y-4">
-      <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-slate-900 via-[#0b2547] to-sky-700 p-5 text-white shadow-xl shadow-sky-900/20">
+      <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-slate-900 via-[#141414] to-sky-700 p-5 text-white shadow-xl shadow-sky-900/20">
         {/* Dekorasyon kat la: limyè ak logo an filigran */}
         <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-sky-400/25 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-indigo-500/25 blur-3xl" />
@@ -111,16 +111,16 @@ export default function ProfileWallet({ account, onDeposit, onTransfer, onOpenOr
       </section>
 
       <div className="grid grid-cols-2 gap-3">
-        <Stat icon={ArrowDownLeft} tone="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400" label="Total reçu" value={amount(received)} unit="HTG" />
-        <Stat icon={ArrowUpRight} tone="bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400" label="Total envoyé" value={amount(sent)} unit="HTG" />
-        <Stat icon={ShoppingBag} tone="bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400" label="Total dépensé" value={amount(Number(profile.total_spent))} unit="HTG" />
-        <Stat icon={ReceiptText} tone="bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400" label="Transactions" value={rows.length} />
+        <Stat icon={ArrowDownLeft} tone="bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400" label="Total reçu" value={amount(received)} unit="HTG" />
+        <Stat icon={ArrowUpRight} tone="bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400" label="Total envoyé" value={amount(sent)} unit="HTG" />
+        <Stat icon={ShoppingBag} tone="bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400" label="Total dépensé" value={amount(Number(profile.total_spent))} unit="HTG" />
+        <Stat icon={ReceiptText} tone="bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400" label="Transactions" value={rows.length} />
       </div>
 
       <section className="rounded-3xl bg-slate-50 p-4 ring-1 ring-slate-200 dark:bg-slate-900/60 dark:ring-slate-800">
         <div className="mb-3 flex items-center justify-between gap-3 px-1">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">Dernières transactions</h2>
-          <button type="button" onClick={onSeeAll} className="flex items-center gap-1 text-sm font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400">
+          <button type="button" onClick={onSeeAll} className="flex items-center gap-1 text-sm font-semibold text-sky-700 hover:text-sky-700 dark:text-sky-400">
             Voir tout <ArrowRight className="h-4 w-4" />
           </button>
         </div>

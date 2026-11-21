@@ -44,7 +44,7 @@ function BroadcastForm({ onToast }) {
         <textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={1000} rows={4} placeholder="Ekri mesaj la isit la…" className={`${inputClass} resize-none`} />
       </Field>
       <ErrorNote>{error}</ErrorNote>
-      <button type="submit" disabled={busy || !title.trim()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3 font-bold text-white disabled:opacity-50">
+      <button type="submit" disabled={busy || !title.trim()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3 font-bold text-neutral-950 disabled:opacity-50">
         {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Megaphone className="h-5 w-5" />} Voye bay tout moun
       </button>
     </form>
@@ -138,12 +138,12 @@ export default function AdminMessages({ profiles, announcements, onToast }) {
   const [target, setTarget] = useState("all");
   return (
     <div className="space-y-4">
-      <Card title={<span className="flex items-center gap-2"><Send className="h-5 w-5 text-sky-500" /> Nouvo mesaj</span>}>
+      <Card title={<span className="flex items-center gap-2"><Send className="h-5 w-5 text-sky-700 dark:text-sky-400" /> Nouvo mesaj</span>}>
         <div className="mb-4"><Chips options={TARGETS} value={target} onChange={setTarget} label="Voye bay" /></div>
         {target === "all" ? <BroadcastForm onToast={onToast} /> : <OneCustomer profiles={profiles} onToast={onToast} />}
       </Card>
 
-      <Card title={<span className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-amber-500" /> Mesaj pou tout moun</span>}>
+      <Card title={<span className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-amber-700 dark:text-amber-400" /> Mesaj pou tout moun</span>}>
         {announcements.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">Ou poko voye mesaj bay tout moun.</p>
         ) : (

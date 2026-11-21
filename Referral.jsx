@@ -34,7 +34,7 @@ export function InviteCard({ profile, onToast }) {
   const rewarded = friends.filter((f) => f.rewarded).length;
 
   return (
-    <section className="rounded-3xl bg-gradient-to-br from-fuchsia-500 to-sky-500 p-5 text-white shadow-lg" data-testid="invite">
+    <section className="rounded-3xl bg-gradient-to-br from-fuchsia-500 to-sky-500 p-5 text-neutral-950 shadow-lg" data-testid="invite">
       <p className="flex items-center gap-2 text-lg font-extrabold"><Gift className="h-6 w-6" /> {t("Envite zanmi w yo", "Invitez vos amis")}</p>
       <p className="mt-1 text-sm text-white/90">
         {t(`Lè yon zanmi kreye kont li ak lyen ou a epi l fè premye depo li (omwen ${formatPrice(settings.min_deposit)}), nou ba nou chak`, `Quand un ami crée son compte avec votre lien et fait son premier dépôt (au moins ${formatPrice(settings.min_deposit)}), vous recevez chacun`)}{" "}
@@ -43,7 +43,7 @@ export function InviteCard({ profile, onToast }) {
       <div className="mt-3 flex items-center gap-2 rounded-2xl bg-white/15 p-2 pl-3">
         <span className="min-w-0 flex-1 truncate font-mono text-sm">{link}</span>
         <button type="button" onClick={() => copyText(link, onToast)} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/20" aria-label={t("Kopye lyen an", "Copier le lien")}><Copy className="h-4 w-4" /></button>
-        <button type="button" onClick={share} className="flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-white px-3 text-sm font-bold text-fuchsia-600"><Share2 className="h-4 w-4" /> {t("Pataje", "Partager")}</button>
+        <button type="button" onClick={share} className="flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-white px-3 text-sm font-bold text-fuchsia-700 dark:text-fuchsia-400"><Share2 className="h-4 w-4" /> {t("Pataje", "Partager")}</button>
       </div>
       {friends.length > 0 && (
         <p className="mt-3 flex items-center gap-2 text-sm font-semibold">
@@ -77,7 +77,7 @@ export function ReferralSettingsCard({ owner, onToast }) {
 
   return (
     <Card
-      title={<span className="flex items-center gap-2"><Gift className="h-5 w-5 text-fuchsia-500" /> Parennaj (envite zanmi)</span>}
+      title={<span className="flex items-center gap-2"><Gift className="h-5 w-5 text-fuchsia-700 dark:text-fuchsia-400" /> Parennaj (envite zanmi)</span>}
       subtitle="Chak kliyan gen yon lyen pou envite zanmi. Lè yon zanmi fè premye depo li, yo chak jwenn bonis la. Mete 0 pou etenn li."
     >
       <fieldset disabled={!owner} className="grid gap-3 sm:grid-cols-2">

@@ -34,12 +34,12 @@ function Section({ title, children }) {
 }
 
 const TONES = {
-  sky: "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400",
-  violet: "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400",
-  emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
-  amber: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
-  rose: "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400",
-  indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400",
+  sky: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400",
+  violet: "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400",
+  emerald: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
+  amber: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+  rose: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400",
+  indigo: "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400",
   slate: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
   red: "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400",
 };
@@ -121,7 +121,7 @@ function EditProfileSheet({ account, onClose, onToast }) {
       onClose={onClose}
       title="Modifier le profil"
       footer={
-        <button type="submit" form="profile-form" disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3.5 text-lg font-bold text-white disabled:opacity-60">
+        <button type="submit" form="profile-form" disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3.5 text-lg font-bold text-neutral-950 disabled:opacity-60">
           {busy && <Loader2 className="h-5 w-5 animate-spin" />} {t("Sove", "Enregistrer")}
         </button>
       }
@@ -164,10 +164,10 @@ function RankCard({ spent }) {
       <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-violet-400/15 blur-2xl" />
       <div className="relative flex items-center gap-4">
         <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-100 to-sky-100 text-3xl shadow-inner dark:from-violet-500/20 dark:to-sky-500/20">
-          {rank.current ? rank.current.emoji : <Award className="h-8 w-8 text-violet-400" strokeWidth={1.5} />}
+          {rank.current ? rank.current.emoji : <Award className="h-8 w-8 text-violet-700 dark:text-violet-400" strokeWidth={1.5} />}
         </span>
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-violet-500">{t("Pwogram fidelite", "Programme de fidélité")}</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-violet-700 dark:text-violet-400">{t("Pwogram fidelite", "Programme de fidélité")}</p>
           <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{rank.current ? rank.current.name : t("Poko gen rang", "Pas encore de rang")}</p>
           <p className="text-sm text-slate-500 dark:text-slate-400">{formatPrice(spent)} {t("depanse", "dépensés")}</p>
           {myDiscount > 0 && (
@@ -186,7 +186,7 @@ function RankCard({ spent }) {
             <div key={r.name} className={`rounded-2xl px-1 py-2.5 text-center ring-1 transition ${reached ? "bg-violet-50 ring-violet-200 dark:bg-violet-500/10 dark:ring-violet-500/30" : "bg-slate-50 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700"}`}>
               <span className={`block text-xl ${reached ? "" : "opacity-40 grayscale"}`}>{r.emoji}</span>
               <span className={`mt-0.5 block truncate text-[11px] font-bold ${reached ? "text-violet-700 dark:text-violet-300" : "text-slate-400"}`}>{r.name}</span>
-              {pct > 0 && <span className={`mt-0.5 block text-[11px] font-extrabold ${reached ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>−{pct}%</span>}
+              {pct > 0 && <span className={`mt-0.5 block text-[11px] font-extrabold ${reached ? "text-emerald-700 dark:text-emerald-400" : "text-slate-400"}`}>−{pct}%</span>}
             </div>
           );
         })}
@@ -194,15 +194,15 @@ function RankCard({ spent }) {
       {rank.next ? (
         <>
           <div className="relative mt-4 flex items-baseline justify-between gap-3 text-sm">
-            <span className="text-slate-500 dark:text-slate-400">{t("Pwochen", "Prochain")} : <span className="font-bold text-violet-500">{rank.next.emoji} {rank.next.name}</span></span>
+            <span className="text-slate-500 dark:text-slate-400">{t("Pwochen", "Prochain")} : <span className="font-bold text-violet-700 dark:text-violet-400">{rank.next.emoji} {rank.next.name}</span></span>
             <span className="tabular-nums font-semibold text-slate-600 dark:text-slate-300">{t(`${formatPrice(rank.remaining)} ki rete`, `${formatPrice(rank.remaining)} restants`)}</span>
           </div>
           <div className="relative mt-2 h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" role="progressbar" aria-valuenow={rank.pct} aria-valuemin={0} aria-valuemax={100}>
-            <div className="h-full rounded-full bg-gradient-to-r from-sky-400 via-indigo-500 to-violet-500 transition-[width] duration-700" style={{ width: `${Math.max(rank.pct, 3)}%` }} />
+            <div className="h-full rounded-full bg-gradient-to-r from-sky-400 via-indigo-500 to-violet-500 transition-[width] duration-700" style={{ width:`${Math.max(rank.pct, 3)}%` }} />
           </div>
         </>
       ) : (
-        <p className="relative mt-4 text-sm font-semibold text-violet-500">{t("Ou rive nan pi gwo rang lan. Mèsi!", "Vous avez atteint le rang le plus élevé. Merci !")}</p>
+        <p className="relative mt-4 text-sm font-semibold text-violet-700 dark:text-violet-400">{t("Ou rive nan pi gwo rang lan. Mèsi!", "Vous avez atteint le rang le plus élevé. Merci !")}</p>
       )}
     </section>
   );
@@ -310,7 +310,7 @@ export default function SettingsPage({
               type="button"
               onClick={photo.pick}
               aria-label={t("Chanje foto pwofil la", "Changer la photo de profil")}
-              className="absolute bottom-0 right-0 grid h-9 w-9 place-items-center rounded-full bg-sky-500 text-white shadow-lg ring-4 ring-white transition active:scale-90 dark:ring-slate-900"
+              className="absolute bottom-0 right-0 grid h-9 w-9 place-items-center rounded-full bg-sky-500 text-neutral-950 shadow-lg ring-4 ring-white transition active:scale-90 dark:ring-slate-900"
             >
               {photo.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
             </button>
@@ -319,7 +319,7 @@ export default function SettingsPage({
           <p className="mt-3 max-w-full truncate text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{profile.full_name || t("San non", "Sans nom")}</p>
           <p className="max-w-full truncate text-sm text-slate-500 dark:text-slate-400">{profile.email}</p>
           <div className="mt-2.5 flex flex-wrap justify-center gap-1.5">
-            <span className="rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-3 py-1 text-xs font-bold text-white shadow-sm">
+            <span className="rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-3 py-1 text-xs font-bold text-neutral-950 shadow-sm">
               {rank ? `${rank.emoji} ${rank.name}` : t("✨ Nouvo manm", "✨ Nouveau membre")}
             </span>
             {profile.is_admin && (
@@ -340,7 +340,7 @@ export default function SettingsPage({
             </div>
             <button type="button" onClick={() => copyText(profile.wallet_code, onToast)} className="rounded-2xl bg-slate-50 px-3 py-3 text-left transition active:scale-[.98] dark:bg-slate-800/60">
               <p className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">AWENS-ID <Copy className="h-3 w-3" /></p>
-              <p className="mt-0.5 truncate font-mono text-lg font-extrabold tracking-wider text-sky-600 dark:text-sky-400">{profile.wallet_code}</p>
+              <p className="mt-0.5 truncate font-mono text-lg font-extrabold tracking-wider text-sky-700 dark:text-sky-400">{profile.wallet_code}</p>
             </button>
           </div>
         </div>
@@ -411,7 +411,7 @@ export default function SettingsPage({
           {profile.is_admin && (
             <button type="button" onClick={onAdmin} className="relative flex w-full items-center gap-3 overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 p-5 text-left text-white shadow-lg transition active:scale-[.99] dark:from-slate-800 dark:to-slate-900">
               <span className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-emerald-400/20 blur-2xl" />
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-400/15"><ShieldCheck className="h-7 w-7 text-emerald-400" /></span>
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-400/15"><ShieldCheck className="h-7 w-7 text-emerald-700 dark:text-emerald-400" /></span>
               <span className="min-w-0 flex-1">
                 <span className="block text-lg font-bold">Panneau admin</span>
                 <span className="block text-sm text-slate-300">{t("Estatistik, kòmand, kliyan, pwodwi", "Statistiques, commandes, clients, produits")}</span>

@@ -69,14 +69,14 @@ const AuthSheet = lazyPage(load.auth);
 const ExchangePage = lazyPage(load.exchange);
 const SettingsPage = lazyPage(load.settings);
 const PaymentPage = lazyPage(load.payment);
-const pageSpinner = <Loader2 className="mx-auto mt-16 h-8 w-8 animate-spin text-sky-500" />;
+const pageSpinner = <Loader2 className="mx-auto mt-16 h-8 w-8 animate-spin text-sky-700 dark:text-sky-400" />;
 
 /* ============ UTIL ============ */
 function useTheme() {
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#020617" : "#f1f5f9");
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#0a0a0a" : "#f5f5f5");
   }, [dark]);
   const toggle = () => {
     setDark((d) => {
@@ -132,7 +132,7 @@ function Carousel({ onAction }) {
             </button>
           ) : (
             <div key={i} className="relative min-h-[190px] w-full shrink-0 overflow-hidden p-5 sm:p-6" aria-hidden={i !== index}>
-              <s.Art className="pointer-events-none absolute -bottom-8 -right-6 h-48 w-48 text-sky-500/10 dark:text-sky-400/10" strokeWidth={1.25} />
+              <s.Art className="pointer-events-none absolute -bottom-8 -right-6 h-48 w-48 text-sky-700/10 dark:text-sky-400/10" strokeWidth={1.25} />
               <div className="flex items-center gap-3 pr-16">
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-50 text-xl ring-1 ring-sky-100 dark:bg-sky-500/10 dark:ring-sky-500/20">{s.emoji}</span>
                 <h2 className="text-lg font-extrabold leading-tight text-slate-900 dark:text-white sm:text-xl">{s.title}</h2>
@@ -142,7 +142,7 @@ function Carousel({ onAction }) {
                 type="button"
                 tabIndex={i === index ? 0 : -1}
                 onClick={() => onAction(s.action)}
-                className="relative mt-4 rounded-xl bg-sky-500 px-6 py-3 text-[15px] font-semibold text-white shadow-md shadow-sky-500/25 transition hover:bg-sky-600 active:scale-[.98]"
+                className="relative mt-4 rounded-xl bg-sky-500 px-6 py-3 text-[15px] font-semibold text-neutral-950 shadow-md shadow-sky-500/25 transition hover:bg-sky-600 active:scale-[.98]"
               >
                 {s.button}
               </button>
@@ -150,7 +150,7 @@ function Carousel({ onAction }) {
           ))}
         </div>
         <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-sm font-semibold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900/90 dark:text-slate-300 dark:ring-slate-700">
-          <span className="text-violet-500">{index + 1}</span> / {total}
+          <span className="text-violet-700 dark:text-violet-400">{index + 1}</span> / {total}
         </span>
       </div>
       <div className="mt-4 flex justify-center gap-2">
@@ -160,7 +160,7 @@ function Carousel({ onAction }) {
             type="button"
             aria-label={`${t("Anons", "Annonce")} ${i + 1}`}
             onClick={() => setIndex(i)}
-            className={`h-2 rounded-full transition-all ${i === index ? "w-10 bg-gradient-to-r from-violet-500 to-fuchsia-500" : "w-2 bg-slate-300 dark:bg-slate-700"}`}
+            className={`h-2 rounded-full transition-all ${i === index ? "w-10 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-neutral-950" : "w-2 bg-slate-300 dark:bg-slate-700"}`}
           />
         ))}
       </div>
@@ -234,7 +234,7 @@ function ProductRail({ section, index, catalog, prices, onOpen, onSeeAll }) {
 function SearchBar({ value, onChange, placeholder }) {
   return (
     <label className="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-5 py-3.5 shadow-sm transition focus-within:border-violet-400 focus-within:ring-4 focus-within:ring-violet-400/15 dark:border-slate-800 dark:bg-slate-900">
-      <Search className="h-5 w-5 shrink-0 text-violet-400" />
+      <Search className="h-5 w-5 shrink-0 text-violet-700 dark:text-violet-400" />
       <input
         type="search"
         value={value}
@@ -249,10 +249,10 @@ function SearchBar({ value, onChange, placeholder }) {
 function ComingSoon({ tab, onHome }) {
   return (
     <div className="mt-6 rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-      <tab.Icon className="mx-auto h-12 w-12 text-sky-500" strokeWidth={1.5} />
+      <tab.Icon className="mx-auto h-12 w-12 text-sky-700 dark:text-sky-400" strokeWidth={1.5} />
       <h2 className="mt-4 text-xl font-extrabold text-slate-900 dark:text-white">{tab.label}</h2>
       <p className="mt-2 text-slate-500 dark:text-slate-400">{t("Paj sa a ap vini byento.", "Cette page arrive bientôt.")}</p>
-      <button type="button" onClick={onHome} className="mt-5 rounded-xl bg-sky-500 px-6 py-3 font-semibold text-white hover:bg-sky-600">
+      <button type="button" onClick={onHome} className="mt-5 rounded-xl bg-sky-500 px-6 py-3 font-semibold text-neutral-950 hover:bg-sky-600">
         {t("Retounen lakay", "Retour à l'accueil")}
       </button>
     </div>
@@ -272,7 +272,7 @@ function BottomNav({ tab, onChange }) {
   return (
     <nav
       aria-label={t("Meni prensipal", "Menu principal")}
-      className="fixed inset-x-3 z-40 mx-auto max-w-xl overflow-hidden rounded-[26px] bg-white/95 p-1.5 shadow-[0_12px_40px_-8px_rgba(76,29,149,.35)] ring-1 ring-violet-200/70 backdrop-blur-xl dark:bg-[#0c0a24]/95 dark:shadow-[0_12px_40px_-6px_rgba(0,0,0,.7)] dark:ring-white/10"
+      className="fixed inset-x-3 z-40 mx-auto max-w-xl overflow-hidden rounded-[26px] bg-white/95 p-1.5 shadow-[0_12px_40px_-8px_rgba(0,0,0,.35)] ring-1 ring-violet-200/70 backdrop-blur-xl dark:bg-[#0a0a0a]/95 dark:shadow-[0_12px_40px_-6px_rgba(0,0,0,.7)] dark:ring-white/10"
       style={{ bottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
     >
       <span className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-fuchsia-400/70 to-transparent" />
@@ -290,7 +290,7 @@ function BottomNav({ tab, onChange }) {
                 <span
                   className={`grid h-10 w-12 place-items-center rounded-2xl transition-all duration-300 ${
                     active
-                      ? "-translate-y-0.5 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 text-white shadow-lg shadow-fuchsia-500/40"
+                      ? "-translate-y-0.5 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 text-neutral-950 shadow-lg shadow-fuchsia-500/40"
                       : "text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:bg-white/5 dark:group-hover:text-slate-200"
                   }`}
                 >
@@ -513,7 +513,7 @@ export default function App() {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="fixed inset-x-0 top-2 z-50 mx-auto flex w-fit items-center gap-2 rounded-full bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-lg"
+          className="fixed inset-x-0 top-2 z-50 mx-auto flex w-fit items-center gap-2 rounded-full bg-sky-600 px-4 py-2 text-sm font-semibold text-neutral-950 shadow-lg"
         >
           {t("Nouvo vèsyon sit la disponib", "Nouvelle version disponible")} · <span className="underline underline-offset-2">{t("Rechaje", "Recharger")}</span>
         </button>
@@ -622,7 +622,7 @@ export default function App() {
                   type="button"
                   onClick={() => setCategory(c)}
                   className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    c === category ? "bg-sky-500 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800"
+                    c === category ? "bg-sky-500 text-neutral-950" : "bg-white text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800"
                   }`}
                 >
                   {categoryLabel(c)}
@@ -708,8 +708,8 @@ export default function App() {
       {panel === "install" && (
         <Sheet open onClose={() => setPanel(null)} title="Installer l'app">
           <div className="space-y-3 text-[15px] text-slate-700 dark:text-slate-200">
-            <p className="flex gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60"><Share className="h-5 w-5 shrink-0 text-sky-500" /> <span><b>iPhone:</b> {t("nan Safari, peze bouton pataje a anba ekran an, epi", "dans Safari, touchez le bouton de partage en bas de l'écran, puis")} <b>Sur l'écran d'accueil</b>.</span></p>
-            <p className="flex gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60"><MoreVertical className="h-5 w-5 shrink-0 text-sky-500" /> <span><b>Android:</b> {t("nan Chrome, peze ⋮ anlè adwat, epi", "dans Chrome, touchez ⋮ en haut à droite, puis")} <b>Installer l'application</b>.</span></p>
+            <p className="flex gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60"><Share className="h-5 w-5 shrink-0 text-sky-700 dark:text-sky-400" /> <span><b>iPhone:</b> {t("nan Safari, peze bouton pataje a anba ekran an, epi", "dans Safari, touchez le bouton de partage en bas de l'écran, puis")} <b>Sur l'écran d'accueil</b>.</span></p>
+            <p className="flex gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60"><MoreVertical className="h-5 w-5 shrink-0 text-sky-700 dark:text-sky-400" /> <span><b>Android:</b> {t("nan Chrome, peze ⋮ anlè adwat, epi", "dans Chrome, touchez ⋮ en haut à droite, puis")} <b>Installer l'application</b>.</span></p>
           </div>
         </Sheet>
       )}

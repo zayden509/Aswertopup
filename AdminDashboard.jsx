@@ -108,7 +108,7 @@ function Delta({ now, before, previous }) {
 
 function Stat({ icon: Icon, label, value, sub, tone }) {
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.06),0_8px_24px_-12px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 dark:bg-transparent dark:bg-gradient-to-b dark:from-white/[.07] dark:to-white/[.02] dark:shadow-none dark:ring-white/[.08]">
+    <div className="relative overflow-hidden rounded-3xl bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_8px_24px_-12px_rgba(0,0,0,0.12)] ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 dark:bg-transparent dark:bg-gradient-to-b dark:from-white/[.07] dark:to-white/[.02] dark:shadow-none dark:ring-white/[.08]">
       <div className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-40 blur-2xl ${tone}`} />
       <div className="flex items-center gap-2">
         <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${tone}`}><Icon className="h-[18px] w-[18px]" /></span>
@@ -123,12 +123,12 @@ function Stat({ icon: Icon, label, value, sub, tone }) {
 function Alert({ count, label, onClick }) {
   return (
     <button type="button" onClick={onClick} className="flex items-center gap-3 rounded-2xl bg-amber-50 p-3 text-left ring-1 ring-amber-200 transition hover:bg-amber-100 dark:bg-amber-500/10 dark:ring-amber-500/30">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500 text-white"><Clock className="h-5 w-5" /></span>
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500 text-neutral-950"><Clock className="h-5 w-5" /></span>
       <span className="min-w-0 flex-1">
         <span className="block text-lg font-extrabold leading-tight text-slate-900 dark:text-white">{count}</span>
         <span className="block text-xs font-semibold leading-tight text-amber-800 dark:text-amber-200">{label}</span>
       </span>
-      <ChevronRight className="h-5 w-5 shrink-0 text-amber-600" />
+      <ChevronRight className="h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" />
     </button>
   );
 }
@@ -214,7 +214,7 @@ export default function AdminDashboard({ orders, deposits, profiles, visits, onG
       <Chips options={PERIODS} value={periodId} onChange={setPeriodId} label="Peryòd" />
 
       {/* Chif prensipal la */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-700 via-fuchsia-700 to-rose-600 p-5 text-white shadow-[0_20px_50px_-20px_rgba(192,38,211,.6)]">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-500 p-5 text-neutral-950 shadow-[0_20px_50px_-20px_rgba(234,179,8,.6)]">
         <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 left-10 h-40 w-40 rounded-full bg-sky-400/30 blur-3xl" />
         <svg className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full opacity-30" viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 50 C40 40 60 52 90 38 S150 20 180 30 S240 8 300 14 L300 60 L0 60Z" fill="white" /></svg>
@@ -233,12 +233,12 @@ export default function AdminDashboard({ orders, deposits, profiles, visits, onG
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <Stat icon={ShoppingBag} tone="bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400" label="Kòmand" value={number.format(stats.count)} sub="san sa ki refize yo" />
-        <Stat icon={Users} tone="bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400" label="Vizitè" value={number.format(stats.visitors)} sub="1 pa telefòn pa jou" />
-        <Stat icon={UserPlus} tone="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400" label="Nouvo kliyan" value={number.format(stats.newCustomers)} sub={`${number.format(stats.customers)} kliyan an tout`} />
-        <Stat icon={ArrowDownLeft} tone="bg-teal-50 text-teal-600 dark:bg-teal-500/10 dark:text-teal-400" label="Depo konfime" value={formatPrice(stats.deposited)} />
-        <Stat icon={ReceiptText} tone="bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400" label="Panye mwayen" value={stats.count ? formatPrice(stats.average) : "—"} sub="pa kòmand" />
-        <Stat icon={Percent} tone="bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400" label="Konvèsyon" value={stats.conversion == null ? "—" : `${stats.conversion.toFixed(1)}%`} sub="kòmand / vizitè" />
+        <Stat icon={ShoppingBag} tone="bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400" label="Kòmand" value={number.format(stats.count)} sub="san sa ki refize yo" />
+        <Stat icon={Users} tone="bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400" label="Vizitè" value={number.format(stats.visitors)} sub="1 pa telefòn pa jou" />
+        <Stat icon={UserPlus} tone="bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400" label="Nouvo kliyan" value={number.format(stats.newCustomers)} sub={`${number.format(stats.customers)} kliyan an tout`} />
+        <Stat icon={ArrowDownLeft} tone="bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400" label="Depo konfime" value={formatPrice(stats.deposited)} />
+        <Stat icon={ReceiptText} tone="bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400" label="Panye mwayen" value={stats.count ? formatPrice(stats.average) : "—"} sub="pa kòmand" />
+        <Stat icon={Percent} tone="bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400" label="Konvèsyon" value={stats.conversion == null ? "—" : `${stats.conversion.toFixed(1)}%`} sub="kòmand / vizitè" />
       </div>
 
       <Card title={periodId === "today" ? "Lavant pa lè (HTG)" : "Lavant pa jou (HTG)"}>
@@ -254,7 +254,7 @@ export default function AdminDashboard({ orders, deposits, profiles, visits, onG
       <Card
         title="Chif pa jou"
         action={
-          <button type="button" onClick={() => setShowTable((v) => !v)} aria-expanded={showTable} className="flex items-center gap-1.5 text-sm font-semibold text-sky-600 dark:text-sky-400">
+          <button type="button" onClick={() => setShowTable((v) => !v)} aria-expanded={showTable} className="flex items-center gap-1.5 text-sm font-semibold text-sky-700 dark:text-sky-400">
             <Table2 className="h-4 w-4" /> {showTable ? "Kache" : "Montre"}
           </button>
         }
@@ -309,7 +309,7 @@ export default function AdminDashboard({ orders, deposits, profiles, visits, onG
 
       <Card title="Wallet kliyan yo">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400"><Wallet className="h-5 w-5" /></span>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400"><Wallet className="h-5 w-5" /></span>
           <div className="min-w-0">
             <p className="text-xl font-extrabold text-slate-900 dark:text-white">{formatPrice(stats.walletTotal)}</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">Kòb kliyan yo genyen nan Wallet yo kounye a (ou dwe ba yo sèvis pou li)</p>

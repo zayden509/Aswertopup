@@ -60,14 +60,14 @@ const isOpen = ORDER_FILTERS[1].test;
 const OLDER_PAGE = 100;
 
 const SUPPLIER_STATUS = {
-  sending: ["Ap voye bay FazerCards…", "text-violet-600 dark:text-violet-300"],
-  created: ["FazerCards resevwa l", "text-violet-600 dark:text-violet-300"],
-  processing: ["An kou kote FazerCards", "text-violet-600 dark:text-violet-300"],
-  completed: ["FazerCards livre l ✅", "text-emerald-600 dark:text-emerald-400"],
+  sending: ["Ap voye bay FazerCards…", "text-violet-700 dark:text-violet-300"],
+  created: ["FazerCards resevwa l", "text-violet-700 dark:text-violet-300"],
+  processing: ["An kou kote FazerCards", "text-violet-700 dark:text-violet-300"],
+  completed: ["FazerCards livre l ✅", "text-emerald-700 dark:text-emerald-400"],
   failed: ["FazerCards echwe: kliyan an ranbouse", "text-red-600 dark:text-red-400"],
   refund: ["FazerCards ranbouse: kliyan an ranbouse", "text-red-600 dark:text-red-400"],
   error: ["Pa t ka voye l bay FazerCards", "text-red-600 dark:text-red-400"],
-  awaiting: ["FazerCards ap fini livrezon an…", "text-violet-600 dark:text-violet-300"],
+  awaiting: ["FazerCards ap fini livrezon an…", "text-violet-700 dark:text-violet-300"],
 };
 
 // Rezon refi ki deja ekri (kliyan an wè yo, an franse, lang prensipal sit la): yon sèl klik
@@ -138,7 +138,7 @@ function SupplierLine({ order, auto, onToast }) {
       setBusy(null);
     }
   };
-  const [rawLabel, tone] = s ? SUPPLIER_STATUS[s.status] || [s.status, "text-slate-600"] : ["Otomatik, poko voye", "text-amber-600 dark:text-amber-400"];
+  const [rawLabel, tone] = s ? SUPPLIER_STATUS[s.status] || [s.status, "text-slate-600"] : ["Otomatik, poko voye", "text-amber-700 dark:text-amber-400"];
   const label = rawLabel.replace("FazerCards", providerName);
   const canRetry = !s || s.status === "error" || (s.status === "sending" && !s.order_id);
   const canSync = s?.order_id && !["completed", "failed", "refund"].includes(s.status);
@@ -381,7 +381,7 @@ function DepositCheck({ deposit, deposits, automation, seen, onBadNote }) {
         );
       })}
       {doubtful && (
-        <button type="button" onClick={onBadNote} className="text-xs font-semibold text-sky-600 hover:underline dark:text-sky-300">
+        <button type="button" onClick={onBadNote} className="text-xs font-semibold text-sky-700 hover:underline dark:text-sky-300">
           Mete nòt la: "ID tranzaksyon an pa bon"
         </button>
       )}
@@ -419,7 +419,7 @@ function DepositCard({ deposit, deposits, automation, seen, profile, onToast }) 
             <p className="font-semibold text-slate-900 dark:text-white">Depo {method?.name}</p>
             <StatusChip status={DEPOSIT_STATUS[deposit.status]} />
           </div>
-          <p className="mt-0.5 font-bold tabular-nums text-emerald-600 dark:text-emerald-400">+{formatPrice(Number(deposit.amount))}</p>
+          <p className="mt-0.5 font-bold tabular-nums text-emerald-700 dark:text-emerald-400">+{formatPrice(Number(deposit.amount))}</p>
         </div>
       </div>
       <dl className="grid grid-cols-[5.5rem_1fr] gap-x-3 gap-y-1.5 px-4 pb-3">
@@ -724,14 +724,14 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
                       aria-current={active ? "page" : undefined}
                       className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] font-semibold transition ${
                         active
-                          ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-600/30"
+                          ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-neutral-950 shadow-lg shadow-violet-600/30"
                           : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white"
                       }`}
                     >
                       <t.Icon className={`h-5 w-5 shrink-0 ${active ? "" : "text-slate-400"}`} />
                       <span className="min-w-0 flex-1 truncate">{t.label}</span>
                       {badges[t.id] > 0 && (
-                        <span className={`min-w-[22px] rounded-full px-1.5 text-center text-xs font-bold leading-[22px] ${active ? "bg-white text-violet-600" : "bg-red-500 text-white"}`}>{badges[t.id]}</span>
+                        <span className={`min-w-[22px] rounded-full px-1.5 text-center text-xs font-bold leading-[22px] ${active ? "bg-white text-violet-700 dark:text-violet-400" : "bg-red-500 text-white"}`}>{badges[t.id]}</span>
                       )}
                     </button>
                   </li>
@@ -748,7 +748,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
       <Avatar profile={me} size="h-10 w-10 text-sm" />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-bold text-slate-900 dark:text-white">{me?.full_name || me?.email}</span>
-        <span className={`inline-flex items-center gap-1 text-xs font-semibold ${owner ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+        <span className={`inline-flex items-center gap-1 text-xs font-semibold ${owner ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400"}`}>
           {owner ? <Crown className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />} {role}
         </span>
       </span>
@@ -761,7 +761,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
   );
 
   return (
-    <div className="relative -mx-4 min-h-screen bg-[#060814] text-slate-100 lg:flex">
+    <div className="relative -mx-4 min-h-screen bg-[#0a0a0a] text-slate-100 lg:flex">
       {/* Fon "pro" a: limyè vyolèt ak ble, ak yon ti kadriyaj */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
         <div className="absolute -left-32 -top-40 h-[28rem] w-[28rem] rounded-full bg-violet-600/20 blur-3xl" />
@@ -770,7 +770,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
         <div className="absolute inset-0 opacity-[.035] [background-image:linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] [background-size:32px_32px]" />
       </div>
       {/* Gwo ekran: meni an rete agoch */}
-      <aside className="sticky top-0 z-10 hidden h-screen w-64 shrink-0 flex-col gap-5 overflow-y-auto border-r border-white/[.06] bg-[#0a0d1d]/80 p-4 backdrop-blur-xl lg:flex">
+      <aside className="sticky top-0 z-10 hidden h-screen w-64 shrink-0 flex-col gap-5 overflow-y-auto border-r border-white/[.06] bg-[#0d0d0d]/80 p-4 backdrop-blur-xl lg:flex">
         <BrandLogo className="mx-2 mt-1 h-9 w-auto self-start" />
         {identity}
         <div className="flex-1">{nav}</div>
@@ -797,7 +797,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
 
       <div className="relative z-10 min-w-0 flex-1">
         {/* Ba anlè a: meni (telefòn), seksyon an, rechaje */}
-        <header className="sticky top-0 z-30 border-b border-white/[.06] bg-[#060814]/80 backdrop-blur-xl" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+        <header className="sticky top-0 z-30 border-b border-white/[.06] bg-[#0a0a0a]/80 backdrop-blur-xl" style={{ paddingTop: "env(safe-area-inset-top)" }}>
           <div className="mx-auto flex max-w-4xl items-center gap-2 px-3 py-2.5 lg:px-6">
             <button type="button" onClick={() => setMenuOpen(true)} aria-label="Louvri meni admin lan" className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800 lg:hidden">
               <Menu className="h-5 w-5" />
@@ -822,7 +822,7 @@ export default function AdminPage({ account, catalog = [], onBack, onToast }) {
                   key={t.id}
                   type="button"
                   onClick={() => pick(t.id)}
-                  className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition ${active ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-violet-600/30" : "bg-white/[.04] text-slate-300 ring-1 ring-white/10 hover:bg-white/[.08]"}`}
+                  className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition ${active ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-neutral-950 shadow-md shadow-violet-600/30" : "bg-white/[.04] text-slate-300 ring-1 ring-white/10 hover:bg-white/[.08]"}`}
                 >
                   <t.Icon className="h-4 w-4" /> {t.label}
                   {badges[t.id] > 0 && <span className="min-w-[18px] rounded-full bg-red-500 px-1 text-center text-[11px] font-bold leading-[18px] text-white">{badges[t.id]}</span>}

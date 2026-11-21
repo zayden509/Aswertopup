@@ -13,7 +13,7 @@ export function UserAvatar({ profile, photo, className = "h-11 w-11 text-sm" }) 
   const src = photo ?? profile?.photo;
   if (src) return <img src={src} alt="" referrerPolicy="no-referrer" decoding="async" className={`${className} shrink-0 rounded-full object-cover`} />;
   return (
-    <span className={`grid ${className} shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 font-extrabold text-white`}>
+    <span className={`grid ${className} shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 font-extrabold text-neutral-950`}>
       {initials(profile)}
     </span>
   );

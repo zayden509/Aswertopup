@@ -6,12 +6,12 @@ import { t } from "./i18n.js";
 import { PushCard } from "./Push.jsx";
 
 const KINDS = {
-  order: [ShoppingCart, "bg-violet-50 text-violet-500 dark:bg-violet-500/10"],
-  deposit: [ArrowDownLeft, "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10"],
-  transfer: [Send, "bg-sky-50 text-sky-500 dark:bg-sky-500/10"],
-  info: [Bell, "bg-sky-50 text-sky-500 dark:bg-sky-500/10"],
-  message: [MessageSquareText, "bg-indigo-50 text-indigo-500 dark:bg-indigo-500/10"],
-  announcement: [Megaphone, "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"],
+  order: [ShoppingCart, "bg-violet-50 text-violet-700 dark:text-violet-400 dark:bg-violet-500/10"],
+  deposit: [ArrowDownLeft, "bg-emerald-50 text-emerald-700 dark:text-emerald-400 dark:bg-emerald-500/10"],
+  transfer: [Send, "bg-sky-50 text-sky-700 dark:text-sky-400 dark:bg-sky-500/10"],
+  info: [Bell, "bg-sky-50 text-sky-700 dark:text-sky-400 dark:bg-sky-500/10"],
+  message: [MessageSquareText, "bg-indigo-50 text-indigo-700 dark:text-indigo-400 dark:bg-indigo-500/10"],
+  announcement: [Megaphone, "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"],
 };
 
 function NotificationRow({ n, fresh, onOpen }) {
@@ -27,7 +27,7 @@ function NotificationRow({ n, fresh, onOpen }) {
           <span className="font-semibold text-slate-900 dark:text-white">{n.title}</span>
           <span className="shrink-0 text-xs text-slate-400">{timeAgo(n.created_at)}</span>
         </span>
-        {n.kind === "announcement" && <span className="mt-0.5 block text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Awens Topup</span>}
+        {n.kind === "announcement" && <span className="mt-0.5 block text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Awens Topup</span>}
         {n.body && <span className="mt-0.5 block whitespace-pre-line text-sm text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400">{n.body}</span>}
       </span>
       {fresh && <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-sky-500" aria-label="Nouvo" />}
@@ -54,7 +54,7 @@ export function NotificationsSheet({ account, onClose, onLogin, onOpen }) {
       {account.enabled && !account.user && (
         <div className="mb-4 rounded-2xl bg-sky-50 p-4 dark:bg-sky-500/10">
           <p className="text-sm text-sky-900 dark:text-sky-100">{t("Konekte pou w resevwa notifikasyon sou kòmand ou yo, depo ou yo ak kòd PIN ou yo.", "Connectez-vous pour recevoir les notifications de vos commandes, dépôts et codes PIN.")}</p>
-          <button type="button" onClick={() => onLogin("login")} className="mt-3 flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-bold text-white">
+          <button type="button" onClick={() => onLogin("login")} className="mt-3 flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-bold text-neutral-950">
             <LogIn className="h-4 w-4" /> {t("Konekte", "Connexion")}
           </button>
         </div>

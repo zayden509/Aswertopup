@@ -10,7 +10,7 @@ export function Stars({ value, size = "h-4 w-4", onPick }) {
   return (
     <span className="inline-flex gap-0.5" aria-label={t(`${value} etwal sou 5`, `${value} étoiles sur 5`)}>
       {[1, 2, 3, 4, 5].map((n) => {
-        const icon = <Star className={`${size} ${n <= value ? "fill-amber-400 text-amber-400" : "text-slate-300 dark:text-slate-600"}`} />;
+        const icon = <Star className={`${size} ${n <= value ? "fill-amber-400 text-amber-700" : "text-slate-300 dark:text-slate-600"}`} />;
         return onPick ? (
           <button key={n} type="button" onClick={() => onPick(n)} aria-label={t(`${n} etwal`, `${n} étoile(s)`)} className="p-0.5">{icon}</button>
         ) : <span key={n}>{icon}</span>;
@@ -42,7 +42,7 @@ export function ReviewsSection() {
         <h2 className="text-2xl font-extrabold tracking-tight">{t("Sa kliyan yo di", "Avis clients")}</h2>
         {reviews.length > 0 && (
           <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 dark:text-slate-300">
-            <Star className="h-4 w-4 fill-amber-400 text-amber-400" /> {average.toFixed(1)} · {reviews.length} {t("avi", "avis")}
+            <Star className="h-4 w-4 fill-amber-400 text-amber-700 dark:text-amber-400" /> {average.toFixed(1)} · {reviews.length} {t("avi", "avis")}
           </span>
         )}
       </div>
@@ -108,7 +108,7 @@ export function ReviewBox({ order, profile, onToast }) {
 
   return (
     <div className="mt-4 space-y-3 rounded-2xl bg-amber-50/70 p-4 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:ring-amber-500/30" data-testid="review-box">
-      <p className="flex items-center gap-2 font-bold text-slate-900 dark:text-white"><MessageSquareQuote className="h-5 w-5 text-amber-500" /> {t("Kijan sa te pase?", "Comment ça s'est passé ?")}</p>
+      <p className="flex items-center gap-2 font-bold text-slate-900 dark:text-white"><MessageSquareQuote className="h-5 w-5 text-amber-700 dark:text-amber-400" /> {t("Kijan sa te pase?", "Comment ça s'est passé ?")}</p>
       <Stars value={rating} size="h-8 w-8" onPick={setRating} />
       <textarea
         value={text}
@@ -119,7 +119,7 @@ export function ReviewBox({ order, profile, onToast }) {
         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[15px] focus:border-sky-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950"
       />
       <ErrorNote>{error}</ErrorNote>
-      <button type="button" onClick={send} disabled={busy || !rating} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 py-3 font-bold text-white hover:bg-amber-600 disabled:opacity-50">
+      <button type="button" onClick={send} disabled={busy || !rating} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 py-3 font-bold text-neutral-950 hover:bg-amber-600 disabled:opacity-50">
         {busy && <Loader2 className="h-5 w-5 animate-spin" />} {t("Voye avi a", "Envoyer l'avis")}
       </button>
     </div>
@@ -142,9 +142,9 @@ export function AdminReviews({ onToast }) {
   const waiting = list.filter((r) => !r.approved).length;
 
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 sm:p-5" data-testid="admin-reviews">
+    <section className="rounded-2xl bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)] ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 sm:p-5" data-testid="admin-reviews">
       <h2 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
-        <Star className="h-5 w-5 fill-amber-400 text-amber-400" /> Avi kliyan yo {waiting > 0 && <span className="rounded-full bg-red-500 px-2 text-xs leading-5 text-white">{waiting}</span>}
+        <Star className="h-5 w-5 fill-amber-400 text-amber-700 dark:text-amber-400" /> Avi kliyan yo {waiting > 0 && <span className="rounded-full bg-red-500 px-2 text-xs leading-5 text-white">{waiting}</span>}
       </h2>
       <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Yon avi parèt sou paj akèy la sèlman lè w apwouve l.</p>
       {list.length === 0 ? (
@@ -165,7 +165,7 @@ export function AdminReviews({ onToast }) {
                 {r.approved ? (
                   <button type="button" onClick={() => act(() => backend.adminSetReviewApproved(r.id, false), "Avi a retire sou sit la.")} className="flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300"><EyeOff className="h-3.5 w-3.5" /> Retire sou sit la</button>
                 ) : (
-                  <button type="button" onClick={() => act(() => backend.adminSetReviewApproved(r.id, true), "Avi a parèt sou sit la.")} className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Apwouve</button>
+                  <button type="button" onClick={() => act(() => backend.adminSetReviewApproved(r.id, true), "Avi a parèt sou sit la.")} className="flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Apwouve</button>
                 )}
                 <button type="button" onClick={() => act(() => backend.adminDeleteReview(r.id), "Avi a efase.")} className="flex items-center gap-1 text-xs font-semibold text-red-600 dark:text-red-400"><Trash2 className="h-3.5 w-3.5" /> Efase</button>
               </div>

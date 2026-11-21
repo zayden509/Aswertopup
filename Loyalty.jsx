@@ -43,7 +43,7 @@ export function LoyaltySettingsCard({ owner, onToast }) {
 
   return (
     <Card
-      title={<span className="flex items-center gap-2"><Crown className="h-5 w-5 text-violet-500" /> Rabè fidelite</span>}
+      title={<span className="flex items-center gap-2"><Crown className="h-5 w-5 text-violet-700 dark:text-violet-400" /> Rabè fidelite</span>}
       subtitle={`Kliyan ki depanse plis jwenn yon rabè sou chak achte ak Wallet (0 a ${LOYALTY_MAX}%). Yon kòd pwomo ranplase rabè a. Mete 0 pou etenn yon rang.`}
     >
       <fieldset disabled={!owner} className="grid grid-cols-2 gap-3 sm:grid-cols-4">

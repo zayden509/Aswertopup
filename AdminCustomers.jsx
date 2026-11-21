@@ -49,7 +49,7 @@ export function MessageForm({ profile, onSent, onToast }) {
         <textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={1000} rows={3} placeholder="Ekri mesaj la isit la…" className={`${inputClass} resize-none`} />
       </Field>
       <ErrorNote>{error}</ErrorNote>
-      <button type="submit" disabled={busy || !title.trim()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3 font-bold text-white disabled:opacity-50">
+      <button type="submit" disabled={busy || !title.trim()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3 font-bold text-neutral-950 disabled:opacity-50">
         {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />} Voye mesaj la
       </button>
     </form>
@@ -166,7 +166,7 @@ function WinbackCard({ customers, onToast }) {
 
   return (
     <section className="rounded-3xl bg-gradient-to-br from-violet-50 to-sky-50 p-4 ring-1 ring-violet-200 dark:from-violet-500/10 dark:to-sky-500/10 dark:ring-violet-500/30">
-      <p className="flex items-center gap-2 font-bold text-slate-900 dark:text-white"><Gift className="h-5 w-5 text-violet-500" /> Fè yo tounen</p>
+      <p className="flex items-center gap-2 font-bold text-slate-900 dark:text-white"><Gift className="h-5 w-5 text-violet-700 dark:text-violet-400" /> Fè yo tounen</p>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
         Voye yon imèl ak yon kòd pwomo bay {number.format(targets.length)} kliyan sa yo. Kreye kòd la anvan nan Pwodwi → Kòd pwomo.
       </p>
@@ -175,7 +175,7 @@ function WinbackCard({ customers, onToast }) {
         <input value={message} onChange={(e) => setMessage(e.target.value)} maxLength={300} placeholder="Mesaj (opsyonèl, an franse)" className={inputClass} aria-label="Mesaj" />
       </div>
       <ErrorNote>{error}</ErrorNote>
-      <button type="button" onClick={send} disabled={busy || code.length < 3} className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-500 py-3 font-bold text-white shadow-md disabled:opacity-50">
+      <button type="button" onClick={send} disabled={busy || code.length < 3} className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-indigo-500 py-3 font-bold text-neutral-950 shadow-md disabled:opacity-50">
         {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />} Voye imèl yo
       </button>
     </section>
@@ -218,7 +218,7 @@ export default function AdminCustomers({ profiles, orders, deposits, onToast }) 
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
                     <span className="truncate font-semibold text-slate-900 dark:text-white">{p.full_name || p.email}</span>
-                    {p.is_admin && <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-500" aria-label="Admin" />}
+                    {p.is_admin && <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-700 dark:text-emerald-400" aria-label="Admin" />}
                   </span>
                   <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{p.full_name ? `${p.email} · ` : ""}<span className="font-mono">{p.wallet_code}</span></span>
                 </span>
@@ -232,7 +232,7 @@ export default function AdminCustomers({ profiles, orders, deposits, onToast }) 
         </ul>
       )}
       {list.length > shown && (
-        <button type="button" onClick={() => setShown((n) => n + PAGE)} className="w-full rounded-2xl bg-white py-3 font-semibold text-sky-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-400 dark:ring-slate-800">
+        <button type="button" onClick={() => setShown((n) => n + PAGE)} className="w-full rounded-2xl bg-white py-3 font-semibold text-sky-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-400 dark:ring-slate-800">
           Wè plis ({number.format(list.length - shown)})
         </button>
       )}

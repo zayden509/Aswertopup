@@ -44,7 +44,7 @@ export function FlashPromoCard({ catalog = [], onToast }) {
 
   return (
     <Card
-      title={<span className="flex items-center gap-2"><Timer className="h-5 w-5 text-rose-500" /> Pwomo flash (ak kontè)</span>}
+      title={<span className="flex items-center gap-2"><Timer className="h-5 w-5 text-rose-700 dark:text-rose-400" /> Pwomo flash (ak kontè)</span>}
       subtitle="Yon bann koulè ak yon kontè sou paj akèy la. Pou yon rabè, kreye yon kòd pwomo anba a epi mete l isit la."
       action={<Toggle on={form.active} onChange={(v) => setForm((f) => ({ ...f, active: v }))} label={form.active ? "Limen" : "Etenn"} />}
     >

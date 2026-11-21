@@ -142,10 +142,10 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
           {done ? (
             <div className="py-4 text-center">
               <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 ring-8 ring-emerald-50/50 dark:bg-emerald-500/10 dark:ring-emerald-500/5">
-                <CheckCircle2 className="h-9 w-9 text-emerald-500" />
+                <CheckCircle2 className="h-9 w-9 text-emerald-700 dark:text-emerald-400" />
               </span>
               <p className="mx-auto mt-5 max-w-sm text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">{done}</p>
-              <button type="button" onClick={() => switchMode("login")} className="mt-6 w-full rounded-2xl bg-sky-500 py-3.5 font-bold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 active:scale-[.98]">
+              <button type="button" onClick={() => switchMode("login")} className="mt-6 w-full rounded-2xl bg-sky-500 py-3.5 font-bold text-neutral-950 shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 active:scale-[.98]">
                 {t("Retounen pou konekte", "Retour à la connexion")}
               </button>
             </div>
@@ -221,7 +221,7 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
 
               {mode === "login" && (
                 <div className="-mt-1 flex justify-end">
-                  <button type="button" onClick={() => switchMode("reset")} className="flex items-center gap-1.5 text-sm font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400">
+                  <button type="button" onClick={() => switchMode("reset")} className="flex items-center gap-1.5 text-sm font-semibold text-sky-700 hover:text-sky-700 dark:text-sky-400">
                     <KeyRound className="h-4 w-4" /> {t("Ou bliye modpas ou?", "Mot de passe oublié ?")}
                   </button>
                 </div>
@@ -232,7 +232,7 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
               <button
                 type="submit"
                 disabled={busy}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/30 transition hover:brightness-110 active:scale-[.98] disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-500 py-4 text-lg font-bold text-neutral-950 shadow-lg shadow-sky-500/30 transition hover:brightness-110 active:scale-[.98] disabled:opacity-60"
               >
                 {busy && <Loader2 className="h-5 w-5 animate-spin" />}
                 {mode === "login" ? t("Konekte", "Connexion") : mode === "signup" ? t("Kreye kont mwen", "Créer mon compte") : t("Voye lyen an", "Envoyer le lien")}
@@ -241,7 +241,7 @@ export default function AuthSheet({ initialMode = "login", onClose }) {
               {mode !== "reset" && (
                 <p className="text-center text-sm text-slate-500 dark:text-slate-400">
                   {mode === "login" ? t("Ou poko gen kont?", "Pas encore de compte ?") : t("Ou deja gen kont?", "Déjà un compte ?")}{" "}
-                  <button type="button" onClick={() => switchMode(mode === "login" ? "signup" : "login")} className="font-bold text-sky-600 dark:text-sky-400">
+                  <button type="button" onClick={() => switchMode(mode === "login" ? "signup" : "login")} className="font-bold text-sky-700 dark:text-sky-400">
                     {mode === "login" ? t("Kreye youn", "Créez-en un") : t("Konekte", "Connectez-vous")}
                   </button>
                 </p>

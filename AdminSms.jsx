@@ -9,10 +9,10 @@ import { usePaymentMethods } from "./payments.js";
 
 // Sa sit la konprann nan yon SMS, ak sa l fè avè l
 function smsState(sms) {
-  if (sms.status === "used") return ["Depo konfime otomatikman", "text-emerald-600 dark:text-emerald-400", Check];
+  if (sms.status === "used") return ["Depo konfime otomatikman", "text-emerald-700 dark:text-emerald-400", Check];
   if (!sms.incoming || !sms.reference || !sms.amount || !sms.method) return ["Pa yon peman sit la konprann", "text-slate-400", CircleSlash];
   if (Date.now() - new Date(sms.received_at).getTime() > SMS_MAX_AGE_MS) return ["Plis pase 24 è: li p ap konfime yon depo otomatikman", "text-slate-400", Clock];
-  return ["Ap tann kliyan an mete kòd sa a", "text-amber-600 dark:text-amber-400", Clock];
+  return ["Ap tann kliyan an mete kòd sa a", "text-amber-700 dark:text-amber-400", Clock];
 }
 
 // Dènye SMS NatCash/MonCash telefòn boutik la resevwa (httpSMS)
@@ -41,7 +41,7 @@ export default function AdminSms({ owner, onToast, onTrusted }) {
 
   return (
     <Card
-      title={<span className="flex items-center gap-2"><MessageSquareText className="h-5 w-5 text-sky-500" /> SMS peman (httpSMS)</span>}
+      title={<span className="flex items-center gap-2"><MessageSquareText className="h-5 w-5 text-sky-700 dark:text-sky-400" /> SMS peman (httpSMS)</span>}
       subtitle="Yon depo konfime poukont li lè SMS li a rive."
     >
       {list === null ? null : list.length === 0 ? (
@@ -60,7 +60,7 @@ export default function AdminSms({ owner, onToast, onTrusted }) {
               <li key={sms.id} className="space-y-1.5 py-3">
                 <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
                   <span className="flex min-w-0 items-center gap-1.5 truncate font-semibold text-slate-700 dark:text-slate-200">
-                    {trusted && <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-500" aria-label="Ofisyèl" />} {sms.sender || "?"}
+                    {trusted && <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-700 dark:text-emerald-400" aria-label="Ofisyèl" />} {sms.sender || "?"}
                   </span>
                   <span className="shrink-0">{formatDateTime(sms.received_at)}</span>
                 </div>

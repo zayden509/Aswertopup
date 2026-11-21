@@ -24,8 +24,8 @@ function GroupTitle({ group }) {
     <div className="mb-4 flex items-center gap-3">
       <span className={`h-px flex-1 bg-gradient-to-r from-transparent ${deal ? "to-orange-300/60 dark:to-orange-500/40" : "to-sky-300/60 dark:to-sky-500/40"}`} />
       <h3 className={`flex items-center gap-2 rounded-full px-5 py-2 ring-1 ${deal ? "bg-orange-50 ring-orange-200 dark:bg-orange-500/10 dark:ring-orange-500/30" : "bg-sky-50 ring-sky-200 dark:bg-sky-500/10 dark:ring-sky-500/30"}`}>
-        {deal ? <Flame className="h-5 w-5 text-orange-500" /> : group.style === "offer" ? <Package className="h-5 w-5 text-sky-500" /> : <GemIcon className="h-6 w-6" />}
-        <span className={`text-lg font-extrabold ${deal ? "text-orange-500 dark:text-orange-300" : "text-sky-600 dark:text-sky-300"}`}>{group.title}</span>
+        {deal ? <Flame className="h-5 w-5 text-orange-700 dark:text-orange-400" /> : group.style === "offer" ? <Package className="h-5 w-5 text-sky-700 dark:text-sky-400" /> : <GemIcon className="h-6 w-6" />}
+        <span className={`text-lg font-extrabold ${deal ? "text-orange-700 dark:text-orange-300" : "text-sky-700 dark:text-sky-300"}`}>{group.title}</span>
         <span className="text-sm font-semibold text-slate-400">({group.items.length})</span>
       </h3>
       <span className={`h-px flex-1 bg-gradient-to-l from-transparent ${deal ? "to-orange-300/60 dark:to-orange-500/40" : "to-sky-300/60 dark:to-sky-500/40"}`} />
@@ -82,21 +82,21 @@ function PlanCard({ art, title, price, badge, active, onSelect, onBuy }) {
           : "bg-white ring-1 ring-slate-200 hover:ring-sky-300 dark:bg-slate-900 dark:ring-slate-700/80 dark:hover:ring-sky-500/50"
       }`}
     >
-      {badge && <span className={`absolute right-2.5 top-2.5 rounded-full bg-gradient-to-r ${badge[1]} px-2.5 py-0.5 text-[10px] font-extrabold tracking-wider text-white shadow`}>{badge[0]}</span>}
+      {badge && <span className={`absolute right-2.5 top-2.5 rounded-full bg-gradient-to-r ${badge[1]} px-2.5 py-0.5 text-[10px] font-extrabold tracking-wider text-neutral-950 shadow`}>{badge[0]}</span>}
       {art}
       <p className="mt-2 flex min-h-[2.75rem] items-center text-[15px] font-bold leading-snug text-slate-900 [overflow-wrap:anywhere] dark:text-white">{title}</p>
       <p className="mt-1 flex items-baseline gap-1.5">
-        <span className="text-[30px] font-extrabold leading-none tabular-nums text-amber-500">{new Intl.NumberFormat("fr-FR").format(price)}</span>
+        <span className="text-[30px] font-extrabold leading-none tabular-nums text-amber-700 dark:text-amber-400">{new Intl.NumberFormat("fr-FR").format(price)}</span>
         <span className="text-xs font-bold text-slate-400">HTG</span>
       </p>
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onBuy ? onBuy() : onSelect(); }}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 py-2.5 text-[15px] font-bold text-white shadow-md shadow-violet-500/30 transition hover:brightness-110 active:scale-95"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 py-2.5 text-[15px] font-bold text-neutral-950 shadow-md shadow-violet-500/30 transition hover:brightness-110 active:scale-95"
       >
         <ShoppingCart className="h-4 w-4" /> {t("Achte", "Acheter")}
       </button>
-      {active && <CheckCircle2 className="absolute left-2.5 top-2.5 h-5 w-5 text-sky-500" />}
+      {active && <CheckCircle2 className="absolute left-2.5 top-2.5 h-5 w-5 text-sky-700 dark:text-sky-400" />}
     </div>
   );
 }
@@ -120,7 +120,7 @@ function OfferOption({ item, ...props }) {
   return (
     <PlanCard
       {...props}
-      art={<span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-sky-400/20 to-violet-500/20 ring-1 ring-sky-400/30"><Package className="h-8 w-8 text-sky-500" strokeWidth={1.75} /></span>}
+      art={<span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-sky-400/20 to-violet-500/20 ring-1 ring-sky-400/30"><Package className="h-8 w-8 text-sky-700 dark:text-sky-400" strokeWidth={1.75} /></span>}
       title={item.label}
       price={item.price}
     />
@@ -133,8 +133,8 @@ function DealOption({ item, ...props }) {
     <PlanCard
       {...props}
       art={(
-        <span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-orange-400/25 to-rose-500/25 shadow-[0_0_24px_rgba(251,146,60,.35)] ring-1 ring-orange-400/40">
-          <item.Icon className="h-8 w-8 text-orange-400" strokeWidth={1.75} />
+        <span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-orange-400/25 to-rose-500/25 shadow-[0_0_24px_rgba(234,179,8,.35)] ring-1 ring-orange-400/40">
+          <item.Icon className="h-8 w-8 text-orange-700 dark:text-orange-400" strokeWidth={1.75} />
         </span>
       )}
       title={item.label}
@@ -375,7 +375,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
         type="button"
         onClick={directMethod ? placeDirectOrder : placeOrder}
         disabled={busy}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-neutral-950 shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 disabled:opacity-60"
       >
         {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />} {directMethod ? t("Voye kòmand lan", "Envoyer la commande") : "Confirmer l'achat"}
       </button>
@@ -387,7 +387,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
         target="_blank"
         rel="noopener noreferrer"
         onClick={confirmWhatsApp}
-        className="flex items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-600"
+        className="flex items-center justify-center gap-2 rounded-2xl bg-sky-500 py-4 text-lg font-bold text-neutral-950 shadow-lg shadow-sky-500/25 transition hover:bg-sky-600"
       >
         <ShoppingCart className="h-5 w-5" /> Confirmer l'achat
       </a>
@@ -399,7 +399,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
       {/* An tèt: ikòn jwèt la k ap klere, retounen, non an, avantaj yo */}
       <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-b from-violet-950 via-slate-950 to-slate-950 px-4 pb-5 pt-6 text-center text-white shadow-lg">
         <div className="pointer-events-none absolute left-1/2 top-4 h-48 w-48 -translate-x-1/2 rounded-full bg-violet-500/40 blur-3xl" />
-        <ProductArt product={product} className="relative mx-auto h-28 w-28 rounded-[28px] shadow-[0_0_40px_rgba(168,85,247,.55)] ring-2 ring-violet-400/40" />
+        <ProductArt product={product} className="relative mx-auto h-28 w-28 rounded-[28px] shadow-[0_0_40px_rgba(234,179,8,.55)] ring-2 ring-violet-400/40" />
         <div className="relative mt-4 flex items-center justify-between gap-2">
           <button type="button" onClick={onBack} className="flex items-center gap-1.5 rounded-xl bg-white/5 px-3.5 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/15 transition hover:bg-white/10">
             <ArrowLeft className="h-4 w-4" /> {t("Retounen", "Retour")}
@@ -411,20 +411,20 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
         <h1 className="relative mt-4 text-[28px] font-extrabold leading-tight [text-wrap:balance]">{product.name}</h1>
         <p className="relative mt-1.5 text-[15px] text-slate-300">{t("Chwazi yon plan epi rechaje kont ou!", "Choisissez un plan et rechargez votre compte\u00a0!")}</p>
         <div className="relative mt-4 flex flex-wrap justify-center gap-2 text-sm font-semibold">
-          <span className="flex items-center gap-1.5 rounded-xl bg-white/5 px-3 py-1.5 ring-1 ring-white/15"><ShieldCheck className="h-4 w-4 text-emerald-400" /> {t("Sekirize", "Sécurisé")}</span>
-          <span className="flex items-center gap-1.5 rounded-xl bg-white/5 px-3 py-1.5 ring-1 ring-white/15"><Zap className="h-4 w-4 text-amber-400" /> {t("Rapid", "Rapide")}</span>
-          {groups.reduce((n, g) => n + g.items.length, 0) > 0 && <span className="flex items-center gap-1.5 rounded-xl bg-white/5 px-3 py-1.5 ring-1 ring-white/15"><Tag className="h-4 w-4 text-violet-400" /> {groups.reduce((n, g) => n + g.items.length, 0)} plans</span>}
+          <span className="flex items-center gap-1.5 rounded-xl bg-white/5 px-3 py-1.5 ring-1 ring-white/15"><ShieldCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> {t("Sekirize", "Sécurisé")}</span>
+          <span className="flex items-center gap-1.5 rounded-xl bg-white/5 px-3 py-1.5 ring-1 ring-white/15"><Zap className="h-4 w-4 text-amber-700 dark:text-amber-400" /> {t("Rapid", "Rapide")}</span>
+          {groups.reduce((n, g) => n + g.items.length, 0) > 0 && <span className="flex items-center gap-1.5 rounded-xl bg-white/5 px-3 py-1.5 ring-1 ring-white/15"><Tag className="h-4 w-4 text-violet-700 dark:text-violet-400" /> {groups.reduce((n, g) => n + g.items.length, 0)} plans</span>}
         </div>
       </section>
 
       {/* Tutoriel la: yon gwo bouton vyolèt */}
       <div className="text-center">
-        <span className="inline-flex items-center gap-2 rounded-full bg-violet-500/10 px-4 py-1.5 text-sm font-semibold text-violet-600 ring-1 ring-violet-400/40 dark:text-violet-300">
+        <span className="inline-flex items-center gap-2 rounded-full bg-violet-500/10 px-4 py-1.5 text-sm font-semibold text-violet-700 ring-1 ring-violet-400/40 dark:text-violet-300">
           <span className="h-2.5 w-2.5 rounded-full bg-violet-500" /> {t("Tutoriel disponib", "Tutoriel disponible")}
         </span>
       </div>
-      <button type="button" onClick={openTutorial} className="flex w-full items-center gap-4 rounded-3xl bg-gradient-to-r from-violet-600 to-purple-600 p-4 text-left text-white shadow-lg shadow-violet-500/30 transition active:scale-[.99]">
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-white text-violet-600"><PlayCircle className="h-7 w-7" /></span>
+      <button type="button" onClick={openTutorial} className="flex w-full items-center gap-4 rounded-3xl bg-gradient-to-r from-violet-600 to-purple-600 p-4 text-left text-neutral-950 shadow-lg shadow-violet-500/30 transition active:scale-[.99]">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-white text-violet-700 dark:text-violet-400"><PlayCircle className="h-7 w-7" /></span>
         <span className="min-w-0">
           <span className="block font-extrabold">{t("Ou bezwen èd pou kòmand lan?", "Besoin d'aide pour la commande\u00a0?")}</span>
           <span className="block text-sm font-semibold text-violet-100">▶ {t("Gade videyo tutoriel la", "Voir le tutoriel vidéo")} →</span>
@@ -457,7 +457,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                   onClick={() => setShowIdHelp((v) => !v)}
                   aria-expanded={showIdHelp}
                   aria-label={t("Kijan pou m jwenn UID mwen?", "Comment trouver mon UID ?")}
-                  className="grid h-7 w-7 place-items-center rounded-full text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-500/10"
+                  className="grid h-7 w-7 place-items-center rounded-full text-violet-700 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-500/10"
                 >
                   <Info className="h-5 w-5" />
                 </button>
@@ -484,7 +484,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                 {verified?.status === "checking" ? (
                   <Loader2 className="h-5 w-5 shrink-0 animate-spin text-slate-400" />
                 ) : idValid && !idUnknown ? (
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-400" />
                 ) : null}
               </div>
               {verified?.status === "ok" && (
@@ -542,7 +542,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                     active={payWith === "wallet"}
                     onSelect={() => setPayChoice("wallet")}
                     art={(
-                      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-500 to-violet-500 text-white">
+                      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-500 to-violet-500 text-neutral-950">
                         <Wallet className="h-6 w-6" />
                       </span>
                     )}
@@ -558,7 +558,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                             : t(`Ou bezwen ${formatPrice(missing)} ankò. Rechaje Wallet ou ak MonCash oswa NatCash, epi w ap ka achte touswit.`, `Il vous manque ${formatPrice(missing)}. Rechargez votre Wallet avec MonCash ou NatCash pour acheter tout de suite.`)}
                         </p>
                       )}
-                      <button type="button" onClick={topUp} className="flex items-center gap-1 rounded-xl bg-white px-3 py-2 text-sm font-bold text-sky-600 ring-1 ring-sky-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-sky-500/30">
+                      <button type="button" onClick={topUp} className="flex items-center gap-1 rounded-xl bg-white px-3 py-2 text-sm font-bold text-sky-700 ring-1 ring-sky-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-sky-500/30">
                         <Plus className="h-4 w-4" /> Recharger mon Wallet
                       </button>
                     </div>
@@ -579,7 +579,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                 <div className="rounded-2xl bg-slate-50 p-4 text-center ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
                   <p className="text-slate-600 dark:text-slate-300">{t("Konekte pou w peye ak Solde Wallet ou.", "Connectez-vous pour payer avec le solde de votre Wallet.")}</p>
                   <div className="mt-3 grid grid-cols-2 gap-2">
-                    <button type="button" onClick={() => onLogin("login")} className="rounded-xl bg-sky-500 py-2.5 font-bold text-white">{t("Konekte", "Connexion")}</button>
+                    <button type="button" onClick={() => onLogin("login")} className="rounded-xl bg-sky-500 py-2.5 font-bold text-neutral-950">{t("Konekte", "Connexion")}</button>
                     <button type="button" onClick={() => onLogin("signup")} className="rounded-xl bg-white py-2.5 font-bold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700">{t("Kreye kont", "Créer un compte")}</button>
                   </div>
                 </div>
@@ -624,9 +624,9 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
             <h2 className="text-xl font-extrabold">{t("Poukisa chwazi Awens Topup?", "Pourquoi choisir Awens Topup\u00a0?")}</h2>
             <div className="mt-5 grid gap-5 sm:grid-cols-3">
               {[
-                [ShieldCheck, "bg-emerald-500/15 text-emerald-400", t("100% sekirize", "100% sécurisé"), t("Kòb ou pwoteje nan Wallet ou", "Vos transactions sont protégées")],
-                [Zap, "bg-amber-500/15 text-amber-400", t("Livrezon rapid", "Livraison express"), t("Rechaj an kèk minit", "Recharge en quelques minutes")],
-                [MessageCircle, "bg-sky-500/15 text-sky-400", t("Sipò 7/7", "Support 7j/7"), t("Sou WhatsApp, nenpòt lè", "Sur WhatsApp, à votre service")],
+                [ShieldCheck, "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400", t("100% sekirize", "100% sécurisé"), t("Kòb ou pwoteje nan Wallet ou", "Vos transactions sont protégées")],
+                [Zap, "bg-amber-500/15 text-amber-700 dark:text-amber-400", t("Livrezon rapid", "Livraison express"), t("Rechaj an kèk minit", "Recharge en quelques minutes")],
+                [MessageCircle, "bg-sky-500/15 text-sky-700 dark:text-sky-400", t("Sipò 7/7", "Support 7j/7"), t("Sou WhatsApp, nenpòt lè", "Sur WhatsApp, à votre service")],
               ].map(([Icon, tone, title, text]) => (
                 <div key={title}>
                   <span className={`mx-auto grid h-12 w-12 place-items-center rounded-2xl ${tone}`}><Icon className="h-6 w-6" /></span>
@@ -650,7 +650,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                 type="button"
                 disabled={!action.run}
                 onClick={action.run || undefined}
-                className="flex shrink-0 items-center gap-2 rounded-2xl bg-sky-500 px-5 py-3.5 font-bold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-800 dark:disabled:text-slate-400"
+                className="flex shrink-0 items-center gap-2 rounded-2xl bg-sky-500 px-5 py-3.5 font-bold text-neutral-950 shadow-lg shadow-sky-500/25 transition hover:bg-sky-600 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-800 dark:disabled:text-slate-400"
               >
                 {React.createElement(action.icon || ShoppingCart, { className: "h-5 w-5" })} {action.text}
               </button>
@@ -661,7 +661,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
             {item && placed ? (
               <div className="py-4 text-center">
                 <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15">
-                  <CheckCircle2 className="h-9 w-9 text-emerald-500" />
+                  <CheckCircle2 className="h-9 w-9 text-emerald-700 dark:text-emerald-400" />
                 </span>
                 <h4 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">{t(`Kòmand ${placed.code} pase!`, `Commande ${placed.code} passée !`)}</h4>
                 <p className="mx-auto mt-2 max-w-sm text-slate-500 dark:text-slate-400">
@@ -671,7 +671,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                 </p>
                 <div className="mt-6 grid grid-cols-2 gap-3">
                   <button type="button" onClick={closeConfirm} className="rounded-2xl bg-slate-100 py-3.5 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">{t("Kontinye achte", "Continuer mes achats")}</button>
-                  <button type="button" onClick={onViewOrders} className="rounded-2xl bg-sky-500 py-3.5 font-bold text-white hover:bg-sky-600">{t("Wè kòmand mwen", "Voir mes commandes")}</button>
+                  <button type="button" onClick={onViewOrders} className="rounded-2xl bg-sky-500 py-3.5 font-bold text-neutral-950 hover:bg-sky-600">{t("Wè kòmand mwen", "Voir mes commandes")}</button>
                 </div>
               </div>
             ) : item ? (
@@ -679,7 +679,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                 <div className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
                   {group.style === "deal" ? (
                     <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-orange-500/15 ring-1 ring-orange-400/30">
-                      <item.Icon className="h-7 w-7 text-orange-500" strokeWidth={1.75} />
+                      <item.Icon className="h-7 w-7 text-orange-700 dark:text-orange-400" strokeWidth={1.75} />
                     </span>
                   ) : group.style === "offer" ? (
                     <ProductArt product={product} className="relative h-14 w-14 shrink-0 rounded-2xl" />
@@ -688,7 +688,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                   )}
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-900 dark:text-white">{packageName(item)}</p>
-                    <p className="text-2xl font-extrabold tabular-nums text-sky-500">
+                    <p className="text-2xl font-extrabold tabular-nums text-sky-700 dark:text-sky-400">
                       {(promo || loyaltyOn) && <span className="mr-2 text-base font-semibold text-slate-400 line-through">{formatPrice(item.price)}</span>}
                       {formatPrice(finalPrice)}
                     </p>
@@ -777,7 +777,7 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
                   <ErrorNote>{error}</ErrorNote>
                 ) : (
                   <p className="mt-2 flex gap-3 rounded-2xl bg-sky-50 p-3.5 text-sm text-sky-900 dark:bg-sky-500/10 dark:text-sky-100">
-                    <MessageCircle className="h-5 w-5 shrink-0 text-sky-500" />
+                    <MessageCircle className="h-5 w-5 shrink-0 text-sky-700 dark:text-sky-400" />
                     <span>
                       {t(`Lè w peze "Confirmer l'achat", WhatsApp ap louvri ak kòmand ou deja ekri. Voye mesaj la, epi ekip la ap ba w enstriksyon pou peye ak ${payment.name}.`, `En touchant « Confirmer l'achat », WhatsApp s'ouvre avec votre commande déjà rédigée. Envoyez le message : l'équipe vous indiquera comment payer avec ${payment.name}.`)}
                     </span>

@@ -104,7 +104,7 @@ export function PushCard({ onToast, compact = false }) {
 
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-sky-50 to-indigo-50 p-4 ring-1 ring-sky-100 dark:from-sky-500/10 dark:to-indigo-500/10 dark:ring-sky-500/20">
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white text-sky-600 shadow-sm dark:bg-slate-900 dark:text-sky-400">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white text-sky-700 shadow-sm dark:bg-slate-900 dark:text-sky-400">
         {on ? <BellRing className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
       </span>
       <span className="min-w-0 flex-1">
@@ -120,7 +120,7 @@ export function PushCard({ onToast, compact = false }) {
           type="button"
           onClick={toggle}
           disabled={push.busy}
-          className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-bold transition active:scale-95 disabled:opacity-60 ${on ? "bg-white text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700" : "bg-sky-500 text-white shadow-md shadow-sky-500/25"}`}
+          className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-bold transition active:scale-95 disabled:opacity-60 ${on ? "bg-white text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700" : "bg-sky-500 text-neutral-950 shadow-md shadow-sky-500/25"}`}
         >
           {push.busy && <Loader2 className="h-4 w-4 animate-spin" />}
           {on ? t("Etenn", "Désactiver") : t("Limen", "Activer")}

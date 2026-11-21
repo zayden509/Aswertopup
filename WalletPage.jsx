@@ -53,9 +53,9 @@ export function buildTransactions({ orders, deposits, transfers, user }) {
 
 function TxIcon({ row }) {
   const styles = {
-    order: ["bg-violet-50 text-violet-500 dark:bg-violet-500/10", ShoppingCart],
-    deposit: ["bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10", ArrowDownLeft],
-    transfer: row.sent ? ["bg-sky-50 text-sky-500 dark:bg-sky-500/10", ArrowUpRight] : ["bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10", ArrowDownLeft],
+    order: ["bg-violet-50 text-violet-700 dark:text-violet-400 dark:bg-violet-500/10", ShoppingCart],
+    deposit: ["bg-emerald-50 text-emerald-700 dark:text-emerald-400 dark:bg-emerald-500/10", ArrowDownLeft],
+    transfer: row.sent ? ["bg-sky-50 text-sky-700 dark:text-sky-400 dark:bg-sky-500/10", ArrowUpRight] : ["bg-emerald-50 text-emerald-700 dark:text-emerald-400 dark:bg-emerald-500/10", ArrowDownLeft],
   };
   const [cls, Icon] = styles[row.kind];
   return <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${cls}`}><Icon className="h-5 w-5" /></span>;
@@ -84,7 +84,7 @@ function TxSheet({ row, profile, onClose, onToast }) {
   const receipt = txReceipt(row, profile);
   return (
     <Sheet open onClose={onClose} title={row.title}>
-      <p className={`text-3xl font-extrabold tabular-nums ${row.amount < 0 ? "text-orange-500" : "text-emerald-500"}`}>
+      <p className={`text-3xl font-extrabold tabular-nums ${row.amount < 0 ? "text-orange-700 dark:text-orange-400" : "text-emerald-700 dark:text-emerald-400"}`}>
         {row.amount < 0 ? "−" : "+"}{formatPrice(Math.abs(row.amount))}
       </p>
       <p className="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400">{row.status.label}</p>
@@ -119,7 +119,7 @@ export function TxRow({ row: r, onOpenOrder, profile, onToast }) {
         <span className="block text-sm text-slate-500 dark:text-slate-400">{formatDate(r.date)}</span>
       </span>
       <span className="shrink-0 text-right">
-        <span className={`block font-bold tabular-nums ${r.amount < 0 ? "text-orange-500" : "text-emerald-500"}`}>
+        <span className={`block font-bold tabular-nums ${r.amount < 0 ? "text-orange-700 dark:text-orange-400" : "text-emerald-700 dark:text-emerald-400"}`}>
           {r.amount < 0 ? "−" : "+"}{formatPrice(Math.abs(r.amount))}
         </span>
         <span className="block text-xs text-slate-500 dark:text-slate-400">{r.status.label}</span>
@@ -133,13 +133,13 @@ export function TxRow({ row: r, onOpenOrder, profile, onToast }) {
 export function LoginPrompt({ title, text, onLogin, icon: Icon = Wallet }) {
   return (
     <div className="rounded-3xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-      <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-sky-50 text-sky-500 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:ring-sky-500/20">
+      <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-sky-50 text-sky-700 dark:text-sky-400 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:ring-sky-500/20">
         <Icon className="h-8 w-8" strokeWidth={1.5} />
       </span>
       <h2 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">{title}</h2>
       <p className="mx-auto mt-1 max-w-sm text-slate-500 dark:text-slate-400">{text}</p>
       <div className="mt-5 grid grid-cols-2 gap-3">
-        <button type="button" onClick={() => onLogin("login")} className="flex items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3 font-bold text-white hover:bg-sky-600">
+        <button type="button" onClick={() => onLogin("login")} className="flex items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3 font-bold text-neutral-950 hover:bg-sky-600">
           <LogIn className="h-5 w-5" /> {t("Konekte", "Connexion")}
         </button>
         <button type="button" onClick={() => onLogin("signup")} className="rounded-2xl bg-slate-100 py-3 font-bold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
@@ -188,7 +188,7 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
   return (
     <div className="space-y-5">
       {/* Kat Wallet la: tankou yon kat bank "gaming" */}
-      <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#2a0f5c] via-[#160b38] to-[#06122b] p-5 text-white shadow-xl shadow-violet-900/30 ring-1 ring-white/10">
+      <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#0a0a0a] via-[#121212] to-[#1c1606] p-5 text-white shadow-xl shadow-violet-900/30 ring-1 ring-white/10">
         <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-fuchsia-500/35 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-sky-500/25 blur-3xl" />
         <div className="pointer-events-none absolute inset-0 opacity-[.07] [background-image:linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] [background-size:28px_28px]" />
@@ -252,7 +252,7 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
       <div className="grid grid-cols-4 gap-2">
         {stats.map((s) => (
           <div key={s.label} className="flex flex-col items-center rounded-2xl bg-white px-1 py-3 text-center shadow-sm ring-1 ring-slate-200 dark:bg-transparent dark:bg-gradient-to-b dark:from-white/[.07] dark:to-white/[.02] dark:ring-white/10">
-            <span className={`grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br ${s.tone} text-white shadow-md`}>
+            <span className={`grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br ${s.tone} text-neutral-950 shadow-md`}>
               <s.Icon className="h-4 w-4" />
             </span>
             <p className="mt-1.5 text-xl font-black tabular-nums text-slate-900 dark:text-white">{s.value}</p>
@@ -270,7 +270,7 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
               type="button"
               onClick={() => setFilter(f.id)}
               className={`shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                f.id === filter ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-md shadow-fuchsia-500/25" : "bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                f.id === filter ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-neutral-950 shadow-md shadow-fuchsia-500/25" : "bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
               }`}
             >
               {f.label}
@@ -280,7 +280,7 @@ export default function WalletPage({ account, onLogin, onDeposit, onTransfer, on
 
         {visible.length === 0 ? (
           <p className="mt-4 rounded-2xl bg-white p-6 text-center text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800">
-            {t("Pa gen tranzaksyon ankò. Kòmanse ak", "Aucune transaction pour l'instant. Commencez par")} <button type="button" onClick={onDeposit} className="font-semibold text-sky-600 dark:text-sky-400">Ajouter de l'argent</button>.
+            {t("Pa gen tranzaksyon ankò. Kòmanse ak", "Aucune transaction pour l'instant. Commencez par")} <button type="button" onClick={onDeposit} className="font-semibold text-sky-700 dark:text-sky-400">Ajouter de l'argent</button>.
           </p>
         ) : (
           <ul className="mt-4 space-y-3">

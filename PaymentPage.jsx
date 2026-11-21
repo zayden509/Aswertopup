@@ -40,13 +40,13 @@ function MethodSheet({ method, onClose, onToast }) {
       <ol className="space-y-4">
         {steps.map((text, i) => (
           <li key={i} className="flex gap-3">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-sky-500 text-sm font-bold text-white">{i + 1}</span>
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-sky-500 text-sm font-bold text-neutral-950">{i + 1}</span>
             <div className="min-w-0 flex-1 pt-1">
               <p className="text-slate-700 dark:text-slate-200">{text}</p>
               {i === 1 && method.number && (
                 <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
                   <span className="select-all text-lg font-bold tabular-nums tracking-wide text-slate-900 dark:text-white">{method.number}</span>
-                  <button type="button" onClick={copy} className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-sky-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700">
+                  <button type="button" onClick={copy} className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-sky-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700">
                     <Copy className="h-4 w-4" /> Kopye
                   </button>
                 </div>
@@ -66,7 +66,7 @@ export default function PaymentPage({ onToast }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-sky-50 text-sky-500 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:ring-sky-500/20">
+        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-sky-50 text-sky-700 dark:text-sky-400 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:ring-sky-500/20">
           <Wallet className="h-6 w-6" />
         </span>
         <div>
@@ -94,7 +94,7 @@ export default function PaymentPage({ onToast }) {
               )}
               <span className="mt-0.5 block text-sm text-slate-500 dark:text-slate-400">{m.note}</span>
             </span>
-            <ChevronRight className={`h-6 w-6 shrink-0 ${m.recommended ? "text-emerald-500" : "text-slate-400"}`} />
+            <ChevronRight className={`h-6 w-6 shrink-0 ${m.recommended ? "text-emerald-700 dark:text-emerald-400" : "text-slate-400"}`} />
           </button>
         ))}
 
@@ -103,14 +103,14 @@ export default function PaymentPage({ onToast }) {
           onClick={openTutorial}
           className="flex w-full items-center gap-4 rounded-2xl border-2 border-sky-100 bg-sky-50/70 p-4 text-left dark:border-sky-500/20 dark:bg-sky-500/10"
         >
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-sky-100 text-sky-500 dark:bg-sky-500/20">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-sky-100 text-sky-700 dark:text-sky-400 dark:bg-sky-500/20">
             <BookOpen className="h-6 w-6" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block font-bold text-sky-600 dark:text-sky-300">Tutoriel de paiement</span>
+            <span className="block font-bold text-sky-700 dark:text-sky-300">Tutoriel de paiement</span>
             <span className="block text-sm text-slate-500 dark:text-slate-400">{t("Kijan pou peye ak MonCash oswa NatCash", "Comment payer avec MonCash ou NatCash")}</span>
           </span>
-          <ChevronRight className="h-6 w-6 shrink-0 text-sky-500" />
+          <ChevronRight className="h-6 w-6 shrink-0 text-sky-700 dark:text-sky-400" />
         </button>
 
         <a

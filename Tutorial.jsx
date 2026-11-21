@@ -39,14 +39,14 @@ export function TutorialSheet({ onClose }) {
       <div className="space-y-5" data-testid="tutorial">
         <div className="flex items-center justify-center gap-1.5" aria-hidden="true">
           {STEPS.map((s, i) => (
-            <span key={s.title} className={`h-1.5 rounded-full transition-all ${i === step ? "w-6 bg-sky-500" : i < step ? "w-3 bg-sky-300 dark:bg-sky-700" : "w-3 bg-slate-200 dark:bg-slate-700"}`} />
+            <span key={s.title} className={`h-1.5 rounded-full transition-all ${i === step ? "w-6 bg-sky-500 text-neutral-950" : i < step ? "w-3 bg-sky-300 dark:bg-sky-700 text-neutral-950" : "w-3 bg-slate-200 dark:bg-slate-700"}`} />
           ))}
         </div>
         <div key={step} className="animate-fade-in space-y-3 text-center">
-          <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-sky-50 text-sky-500 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:ring-sky-500/20">
+          <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-sky-50 text-sky-700 dark:text-sky-400 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:ring-sky-500/20">
             <Icon className="h-8 w-8" />
           </span>
-          <p className="text-sm font-semibold text-sky-600 dark:text-sky-400">{t(`Etap ${step + 1} sou ${STEPS.length}`, `Étape ${step + 1} sur ${STEPS.length}`)}</p>
+          <p className="text-sm font-semibold text-sky-700 dark:text-sky-400">{t(`Etap ${step + 1} sou ${STEPS.length}`, `Étape ${step + 1} sur ${STEPS.length}`)}</p>
           <h4 className="text-xl font-bold text-slate-900 dark:text-white">{current.title}</h4>
           <p className="mx-auto max-w-sm text-slate-600 dark:text-slate-300">{current.text}</p>
           {current.guide && (
@@ -81,7 +81,7 @@ export function TutorialSheet({ onClose }) {
           <button
             type="button"
             onClick={() => (last ? onClose() : setStep((s) => s + 1))}
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3.5 font-bold text-white hover:bg-sky-600"
+            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3.5 font-bold text-neutral-950 hover:bg-sky-600"
           >
             {last ? t("Mwen konprann", "J'ai compris") : <>{t("Swivan", "Suivant")} <ArrowRight className="h-5 w-5" /></>}
           </button>

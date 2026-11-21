@@ -97,7 +97,7 @@ function PriceRow({ pkg, onToast, onDelete }) {
             </button>
           )
         )}
-        <button type="button" disabled={!dirty || busy} onClick={save} className={`${onDelete ? "" : "ml-auto"} rounded-xl bg-sky-500 px-4 py-2 text-sm font-bold text-white disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-700`}>
+        <button type="button" disabled={!dirty || busy} onClick={save} className={`${onDelete ? "" : "ml-auto"} rounded-xl bg-sky-500 px-4 py-2 text-sm font-bold text-neutral-950 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-700`}>
           {busy && !confirmDelete ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sove"}
         </button>
       </div>
@@ -132,7 +132,7 @@ function AddPackageForm({ product, groups, nextSort, onToast }) {
 
   return (
     <form onSubmit={add} className="space-y-3 rounded-2xl bg-sky-50/70 p-4 ring-1 ring-sky-100 dark:bg-sky-500/5 dark:ring-sky-500/20">
-      <h3 className="flex items-center gap-2 font-bold text-slate-900 dark:text-white"><PackagePlus className="h-5 w-5 text-sky-500" /> Ajoute yon pake</h3>
+      <h3 className="flex items-center gap-2 font-bold text-slate-900 dark:text-white"><PackagePlus className="h-5 w-5 text-sky-700 dark:text-sky-400" /> Ajoute yon pake</h3>
       <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
         <Field label="Non pake a">
           <input value={label} onChange={(e) => setLabel(e.target.value)} maxLength={60} placeholder="Egzanp: 520 + BONUS 52, 1 mwa" className={inputClass} />
@@ -149,7 +149,7 @@ function AddPackageForm({ product, groups, nextSort, onToast }) {
       </Field>
       <Toggle on={needsId} onChange={setNeedsId} label="Mande Player ID (UID) kliyan an" />
       <ErrorNote>{error}</ErrorNote>
-      <button type="submit" disabled={busy || !label.trim() || !price} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3 font-bold text-white disabled:opacity-50">
+      <button type="submit" disabled={busy || !label.trim() || !price} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3 font-bold text-neutral-950 disabled:opacity-50">
         {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />} Ajoute pake a
       </button>
     </form>
@@ -181,7 +181,7 @@ function NameEditor({ product, packageIds, onToast }) {
       <p className="mb-2 text-sm font-bold text-slate-700 dark:text-slate-200">Non pwodwi a</p>
       <div className="flex items-center gap-2">
         <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} aria-label="Non pwodwi a" className={`${inputClass} min-w-0 flex-1`} />
-        <button type="button" disabled={!dirty || busy || name.trim().length < 2} onClick={() => save(name)} className="rounded-xl bg-sky-500 px-4 py-3 text-sm font-bold text-white disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-700">
+        <button type="button" disabled={!dirty || busy || name.trim().length < 2} onClick={() => save(name)} className="rounded-xl bg-sky-500 px-4 py-3 text-sm font-bold text-neutral-950 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-700">
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sove"}
         </button>
       </div>
@@ -249,7 +249,7 @@ function ProductForm({ product, nextSort, packageIds, onClose, onSaved, onToast 
       onClose={onClose}
       title={raw ? "Modifye pwodwi a" : "Nouvo pwodwi"}
       footer={
-        <button type="submit" form="product-form" disabled={busy || name.trim().length < 2} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3.5 text-lg font-bold text-white disabled:opacity-50">
+        <button type="submit" form="product-form" disabled={busy || name.trim().length < 2} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-500 py-3.5 text-lg font-bold text-neutral-950 disabled:opacity-50">
           {busy && <Loader2 className="h-5 w-5 animate-spin" />} {raw ? "Sove" : "Kreye pwodwi a"}
         </button>
       }
@@ -291,7 +291,7 @@ function ProductForm({ product, nextSort, packageIds, onClose, onSaved, onToast 
                 key={c}
                 type="button"
                 onClick={() => setCategory(c)}
-                className={`rounded-xl px-4 py-2 text-sm font-semibold ${c === category ? "bg-sky-500 text-white" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}
+                className={`rounded-xl px-4 py-2 text-sm font-semibold ${c === category ? "bg-sky-500 text-neutral-950" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}
               >
                 {c}
               </button>
@@ -380,7 +380,7 @@ function ExchangeEditor({ product, live, onToast }) {
             </li>
           ))}
         </ul>
-        <button type="button" onClick={() => setTiers((list) => [...list, { max: "", fee: "" }])} className="mt-2 flex items-center gap-1.5 text-sm font-bold text-sky-600 dark:text-sky-400">
+        <button type="button" onClick={() => setTiers((list) => [...list, { max: "", fee: "" }])} className="mt-2 flex items-center gap-1.5 text-sm font-bold text-sky-700 dark:text-sky-400">
           <Plus className="h-4 w-4" /> Ajoute yon palye
         </button>
       </div>
@@ -394,7 +394,7 @@ function ExchangeEditor({ product, live, onToast }) {
         </div>
       )}
       <ErrorNote>{error}</ErrorNote>
-      <button type="button" onClick={save} disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3 font-bold text-white disabled:opacity-60">
+      <button type="button" onClick={save} disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3 font-bold text-neutral-950 disabled:opacity-60">
         {busy && <Loader2 className="h-5 w-5 animate-spin" />} Sove
       </button>
     </section>
@@ -613,7 +613,7 @@ export default function AdminCatalog({ account, onToast }) {
           <p className="text-sm text-amber-900 dark:text-amber-100">
             <b>{missing.length} pake</b> nan sit la poko nan baz done a, kidonk kliyan yo pa ka achte yo ankò.
           </p>
-          <button type="button" onClick={addMissing} disabled={adding} className="mt-3 flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60">
+          <button type="button" onClick={addMissing} disabled={adding} className="mt-3 flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-neutral-950 disabled:opacity-60">
             {adding ? <Loader2 className="h-4 w-4 animate-spin" /> : <PackagePlus className="h-4 w-4" />} Ajoute yo ak pri ki nan sit la
           </button>
         </div>
