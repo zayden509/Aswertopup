@@ -1,4 +1,7 @@
 import React from "react";
+import logoImg from "./img/logo-awens.webp";
+
+export { logoImg };
 
 // Logo Awens Topup (desen an, pa yon imaj): kare ak lèt A, "wens", "TOPUP" ak dyaman k ap vole.
 // Lèt yo deja tounen desen (Poppins Black ak Michroma), konsa logo a parèt menm jan sou tout telefòn.
@@ -29,34 +32,27 @@ const TONES = {
   light: { mark: "fill-neutral-950 stroke-neutral-950", word: "fill-neutral-950", sub: "fill-neutral-950", line: "stroke-neutral-950", cut: "stroke-white" },
 };
 
-// Logo konplè a (pou ba anlè a, meni an, koneksyon an…). `className` bay wotè a (egz: h-10 w-auto).
+// Logo konplè a: ti foto won an (flanm, AWENS TOP UP, dyaman) + "AWENS TopUp" ekri bò kote l.
+// `className` bay wotè a (egz: h-10 w-auto). tone: "auto" = tèks nwa sou tèm klè, blan sou tèm fonse ·
+// "dark" = tèks blan (sou fon fonse) · "light" = tèks nwa.
+const WORD = {
+  auto: "text-slate-900 dark:text-white",
+  dark: "text-white",
+  light: "text-slate-900",
+};
+
 export function BrandLogo({ className = "h-10 w-auto", tone = "auto", title = "Awens Topup" }) {
-  const c = TONES[tone];
   return (
-    <svg viewBox="2 10 580 150" className={className} role="img" aria-label={title}>
-      <rect x="12" y="20" width="130" height="130" rx="28" fill="none" strokeWidth="16" className={c.mark.split(" ").filter((k) => k.includes("stroke")).join(" ")} />
-      <path d={A_PATH} fillRule="evenodd" className={c.mark.split(" ").filter((k) => k.includes("fill")).join(" ")} />
-      <path d={WENS_PATH} className={c.word} />
-      <path d={TOPUP_PATH} className={c.sub} />
-      <path d="M470 20c40 2 70 22 84 52" fill="none" strokeWidth="7" strokeLinecap="round" className={c.line} />
-      <path d="M452 150c44 8 92-4 120-40" fill="none" strokeWidth="6" strokeLinecap="round" className={c.line} />
-      {GEMS.map((transform) => (
-        <g key={transform} transform={transform}>
-          <path d={GEM} className={c.mark.split(" ").filter((k) => k.includes("fill")).join(" ")} />
-          <path d={GEM_CUTS} fill="none" strokeWidth="1.6" strokeLinejoin="round" className={c.cut} />
-        </g>
-      ))}
-    </svg>
+    <span className={`inline-flex shrink-0 items-center gap-1.5 min-[380px]:gap-2 ${className}`} role="img" aria-label={title}>
+      <img src={logoImg} alt="" width="128" height="128" decoding="async" className="aspect-square h-full w-auto shrink-0 rounded-full object-cover shadow-md shadow-amber-500/20 ring-2 ring-amber-400/70" />
+      <span className={`whitespace-nowrap text-[.88rem] font-black leading-none tracking-tight min-[380px]:text-[1.15rem] min-[420px]:text-[1.3rem] ${WORD[tone] || WORD.auto}`} aria-hidden="true">
+        AWENS <span className="bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">TopUp</span>
+      </span>
+    </span>
   );
 }
 
-// Sèlman kare a ak lèt A (ikòn). `className` bay gwosè a (egz: h-10 w-10).
-export function LogoMark({ className = "h-10 w-10", tone = "auto" }) {
-  const c = TONES[tone];
-  return (
-    <svg viewBox="13 13 94 94" className={className} aria-hidden="true">
-      <rect x="18" y="18" width="84" height="84" rx="18" fill="none" strokeWidth="9" className={c.mark.split(" ").filter((k) => k.includes("stroke")).join(" ")} />
-      <path d={MARK_A_PATH} fillRule="evenodd" className={c.mark.split(" ").filter((k) => k.includes("fill")).join(" ")} />
-    </svg>
-  );
+// Sèlman ti logo won an (ikòn). `className` bay gwosè a (egz: h-10 w-10).
+export function LogoMark({ className = "h-10 w-10" }) {
+  return <img src={logoImg} alt="" aria-hidden="true" decoding="async" className={`rounded-full object-cover ${className}`} />;
 }

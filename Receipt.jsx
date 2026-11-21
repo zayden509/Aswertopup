@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ReceiptText, Loader2 } from "lucide-react";
 import { SITE_URL, WHATSAPP_NUMBER } from "./data.js";
 import { t } from "./i18n.js";
-import { A_PATH, WENS_PATH, TOPUP_PATH } from "./Brand.jsx";
+import { logoImg } from "./Brand.jsx";
 
 // Resi (foto PNG) yon achte, yon depo oswa yon transfè, desine sou telefòn nan:
 // kliyan an ka telechaje l oswa voye l sou WhatsApp. Kòd kat kado yo pa janm ladan l.
@@ -13,37 +13,40 @@ const STAMP = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeStyle: "
 const htg = (n) => `${new Intl.NumberFormat("fr-FR").format(Math.abs(n))} HTG`;
 const phone = WHATSAPP_NUMBER.replace(/^509(\d{2})(\d{2})(\d{4})$/, "+509 $1 $2 $3");
 
-// Logo Awens Topup (vèsyon ble a) desine sou resi a. `h` = wotè logo a an piksèl.
-function brandLogo(ctx, x, y, h) {
-  const k = h / 150;
-  ctx.save();
-  ctx.translate(x - 2 * k, y - 10 * k);
-  ctx.scale(k, k);
-  ctx.fillStyle = "#22d3ee";
-  ctx.strokeStyle = "#22d3ee";
-  ctx.lineWidth = 16;
-  ctx.beginPath();
-  ctx.roundRect(12, 20, 130, 130, 28);
-  ctx.stroke();
-  ctx.fill(new Path2D(A_PATH), "evenodd");
-  ctx.fillStyle = "#ffffff";
-  ctx.fill(new Path2D(WENS_PATH));
-  ctx.fillStyle = "#7dd3fc";
-  ctx.fill(new Path2D(TOPUP_PATH));
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineCap = "round";
-  ctx.lineWidth = 7;
-  ctx.stroke(new Path2D("M470 20c40 2 70 22 84 52M452 150c44 8 92-4 120-40"));
-  ctx.fillStyle = "#22d3ee";
-  for (const [tx, ty, r, sc] of [[496, 40.65, 18, 1.55], [548, 84.3, -14, 1.1], [486, 108, 10, 0.85]]) {
+// Logo Awens Topup sou resi a: ti foto won an + "AWENS TopUp". `h` = wotè logo a an piksèl.
+let logoPromise = null;
+function loadLogo() {
+  logoPromise ||= new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = logoImg;
+  });
+  return logoPromise;
+}
+
+function brandLogo(ctx, x, y, h, img) {
+  if (img) {
     ctx.save();
-    ctx.translate(tx, ty);
-    ctx.rotate((r * Math.PI) / 180);
-    ctx.scale(sc, sc);
-    ctx.fill(new Path2D("M9 2h22l8 10-19 20L1 12z"));
+    ctx.beginPath();
+    ctx.arc(x + h / 2, y + h / 2, h / 2, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(img, x, y, h, h);
     ctx.restore();
+    ctx.strokeStyle = "#fbbf24";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(x + h / 2, y + h / 2, h / 2, 0, Math.PI * 2);
+    ctx.stroke();
   }
-  ctx.restore();
+  ctx.textBaseline = "middle";
+  ctx.font = `900 40px ${FONT}`;
+  ctx.fillStyle = "#ffffff";
+  const tx = x + (img ? h + 18 : 0);
+  ctx.fillText("AWENS", tx, y + h / 2);
+  ctx.fillStyle = "#fbbf24";
+  ctx.fillText("TopUp", tx + ctx.measureText("AWENS ").width, y + h / 2);
+  ctx.textBaseline = "alphabetic";
 }
 
 // Koupe yon tèks long an plizyè liy pou l antre nan lajè a
@@ -62,7 +65,8 @@ function wrap(ctx, text, width) {
 }
 
 // { title, amount (+/-), status, rows: [[etikèt, valè]], customer, date }
-export function drawReceipt({ title, amount, status, rows, customer, date }) {
+export async function drawReceipt({ title, amount, status, rows, customer, date }) {
+  const logo = await loadLogo();
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   const lineHeight = 46;
@@ -83,7 +87,7 @@ export function drawReceipt({ title, amount, status, rows, customer, date }) {
   head.addColorStop(1, "#0c4a6e");
   ctx.fillStyle = head;
   ctx.fillRect(0, 0, W, 170);
-  brandLogo(ctx, 48, 36, 84);
+  brandLogo(ctx, 48, 43, 84, logo);
   ctx.fillStyle = "#cbd5e1";
   ctx.font = `600 22px ${FONT}`;
   ctx.textAlign = "right";

@@ -85,7 +85,7 @@ function render({ theme, preheader, title, greeting, lines, rows, highlight, but
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,.08)">
 <tr><td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 55%,${t.color} 100%);background-color:#0f172a;padding:28px 32px 26px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-<td><img src="${SITE}/logo-email.png" width="174" height="45" alt="Awens Topup" style="display:block;border:0;width:174px;height:45px;color:#ffffff;font-size:20px;font-weight:800"></td>
+<td><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="padding-right:10px"><img src="${SITE}/logo-email.png" width="45" height="45" alt="" style="display:block;border:0;width:45px;height:45px;border-radius:50%"></td><td style="font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:900;color:#ffffff;white-space:nowrap">AWENS <span style="color:#fbbf24">TopUp</span></td></tr></table></td>
 <td align="right"><span style="display:inline-block;background:rgba(255,255,255,.16);color:#ffffff;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px">${t.icon} ${esc(t.badge)}</span></td>
 </tr></table>
 <div style="margin-top:22px;color:#ffffff;font-size:24px;line-height:1.3;font-weight:800">${esc(title)}</div>

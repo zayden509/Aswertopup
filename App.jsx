@@ -527,7 +527,7 @@ export default function App() {
                 <Menu className="h-6 w-6" />
               </IconButton>
               <button type="button" onClick={() => goToTab("home")} className="flex min-w-0 items-center gap-2" aria-label={t("Awens Topup, lakay", "Awens Topup, accueil")}>
-                <BrandLogo className="h-9 w-auto max-w-[44vw] min-[420px]:h-11" />
+                <BrandLogo className="h-8 w-auto min-[380px]:h-9 min-[420px]:h-11" />
               </button>
             </div>
             <div className="flex shrink-0 items-center">
