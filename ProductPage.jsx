@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   ArrowLeft, Info, CheckCircle2, Flame, ShoppingCart, User, CreditCard, Package, Hash, MessageCircle,
-  ShieldCheck, Wallet, Plus, Loader2, AlertTriangle, LogIn, Phone, Zap, Tag, Crown,
+  ShieldCheck, Wallet, Plus, Loader2, AlertTriangle, LogIn, Phone, Zap, Tag, Crown, PlayCircle,
 } from "lucide-react";
 import { PAYMENT_METHODS, DIRECT_PAYMENT, categoryLabel } from "./data.js";
 import { backend, errorText } from "./backend.js";
@@ -10,6 +10,7 @@ import { loadPlayerId, savePlayerId, newOrderId, orderMessage } from "./orders.j
 import { PayTo, Input } from "./WalletSheets.jsx";
 import { checkPlayerId } from "./playerCheck.js";
 import { useMyLoyalty } from "./Loyalty.jsx";
+import { openTutorial } from "./Tutorial.jsx";
 import { discounted } from "./pricing.js";
 import { t } from "./i18n.js";
 import { DEPOSIT_MIN } from "./depositCheck.js";
@@ -17,24 +18,17 @@ import { DEPOSIT_MIN } from "./depositCheck.js";
 const ID_PATTERN = /^\d{6,15}$/;
 
 function GroupTitle({ group }) {
-  if (group.style === "deal") {
-    return (
-      <div className="mb-3 flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-50 to-transparent px-4 py-3 ring-1 ring-orange-100 dark:from-orange-500/10 dark:ring-orange-500/20">
-        <Flame className="h-5 w-5 text-orange-500" />
-        <h3 className="text-lg font-bold text-orange-500">{group.title}</h3>
-      </div>
-    );
-  }
-  // Tit seksyon an nan mitan: ikòn, non, kantite pake
+  // Tit seksyon an nan mitan: ikòn, non, kantite pake (oranj pou abònman yo)
+  const deal = group.style === "deal";
   return (
     <div className="mb-4 flex items-center gap-3">
-      <span className="h-px flex-1 bg-gradient-to-r from-transparent to-sky-300/60 dark:to-sky-500/40" />
-      <h3 className="flex items-center gap-2 rounded-full bg-sky-50 px-5 py-2 ring-1 ring-sky-200 dark:bg-sky-500/10 dark:ring-sky-500/30">
-        {group.style === "offer" ? <Package className="h-5 w-5 text-sky-500" /> : <GemIcon className="h-6 w-6" />}
-        <span className="text-lg font-extrabold text-sky-600 dark:text-sky-300">{group.title}</span>
+      <span className={`h-px flex-1 bg-gradient-to-r from-transparent ${deal ? "to-orange-300/60 dark:to-orange-500/40" : "to-sky-300/60 dark:to-sky-500/40"}`} />
+      <h3 className={`flex items-center gap-2 rounded-full px-5 py-2 ring-1 ${deal ? "bg-orange-50 ring-orange-200 dark:bg-orange-500/10 dark:ring-orange-500/30" : "bg-sky-50 ring-sky-200 dark:bg-sky-500/10 dark:ring-sky-500/30"}`}>
+        {deal ? <Flame className="h-5 w-5 text-orange-500" /> : group.style === "offer" ? <Package className="h-5 w-5 text-sky-500" /> : <GemIcon className="h-6 w-6" />}
+        <span className={`text-lg font-extrabold ${deal ? "text-orange-500 dark:text-orange-300" : "text-sky-600 dark:text-sky-300"}`}>{group.title}</span>
         <span className="text-sm font-semibold text-slate-400">({group.items.length})</span>
       </h3>
-      <span className="h-px flex-1 bg-gradient-to-l from-transparent to-sky-300/60 dark:to-sky-500/40" />
+      <span className={`h-px flex-1 bg-gradient-to-l from-transparent ${deal ? "to-orange-300/60 dark:to-orange-500/40" : "to-sky-300/60 dark:to-sky-500/40"}`} />
     </div>
   );
 }
@@ -73,9 +67,8 @@ function ChestArt({ level = 1, className = "" }) {
   );
 }
 
-// Kat yon pake dyaman: kòf la, kantite a, pri a, ak bouton "Acheter"
-function GemOption({ item, active, onSelect, onBuy, index = 0, total = 1 }) {
-  const badge = total >= 4 && index === 0 ? ["★ POPULAIRE", "from-amber-500 to-orange-500"] : total >= 4 && index === total - 1 ? ["💎 PREMIUM", "from-violet-500 to-fuchsia-500"] : null;
+// Kat yon plan (dyaman, abònman, pake): desen anlè, non, pri a an jòn, ak bouton "Acheter"
+function PlanCard({ art, title, price, badge, active, onSelect, onBuy }) {
   return (
     <div
       role="radio"
@@ -90,13 +83,10 @@ function GemOption({ item, active, onSelect, onBuy, index = 0, total = 1 }) {
       }`}
     >
       {badge && <span className={`absolute right-2.5 top-2.5 rounded-full bg-gradient-to-r ${badge[1]} px-2.5 py-0.5 text-[10px] font-extrabold tracking-wider text-white shadow`}>{badge[0]}</span>}
-      <ChestArt level={index + 1} className="h-16 w-20" />
-      <p className="mt-2 text-[15px] font-bold leading-snug text-slate-900 dark:text-white">
-        {item.label} {t("Dyaman", "Diamants")}
-        {item.bonus ? <> + {item.bonus}<GemIcon className="mx-0.5 inline h-4 w-4 align-[-2px]" /><br />Bonus</> : null}
-      </p>
-      <p className="mt-2 flex items-baseline gap-1.5">
-        <span className="text-[30px] font-extrabold leading-none tabular-nums text-amber-500">{new Intl.NumberFormat("fr-FR").format(item.price)}</span>
+      {art}
+      <p className="mt-2 flex min-h-[2.75rem] items-center text-[15px] font-bold leading-snug text-slate-900 [overflow-wrap:anywhere] dark:text-white">{title}</p>
+      <p className="mt-1 flex items-baseline gap-1.5">
+        <span className="text-[30px] font-extrabold leading-none tabular-nums text-amber-500">{new Intl.NumberFormat("fr-FR").format(price)}</span>
         <span className="text-xs font-bold text-slate-400">HTG</span>
       </p>
       <button
@@ -111,49 +101,49 @@ function GemOption({ item, active, onSelect, onBuy, index = 0, total = 1 }) {
   );
 }
 
-// Pake admin nan ajoute nan Panneau admin: non an ak pri a
-function OfferOption({ item, active, onSelect }) {
+// Pake dyaman: yon kòf (plis dyaman pou pi gwo pake yo), badj POPULAIRE / PREMIUM
+function GemOption({ item, index = 0, total = 1, ...props }) {
+  const badge = total >= 4 && index === 0 ? ["★ POPULAIRE", "from-amber-500 to-orange-500"] : total >= 4 && index === total - 1 ? ["💎 PREMIUM", "from-violet-500 to-fuchsia-500"] : null;
   return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={active}
-      onClick={onSelect}
-      className={`relative flex min-h-[104px] flex-col justify-between gap-3 rounded-2xl border-2 p-4 text-left transition active:scale-[.98] ${
-        active ? "border-sky-500 bg-sky-50 dark:bg-sky-500/10" : "border-slate-200 bg-white hover:border-sky-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-sky-500/40"
-      }`}
-    >
-      <span className="pr-6 font-bold leading-tight text-slate-900 [overflow-wrap:anywhere] dark:text-white">{item.label}</span>
-      <span className="rounded-lg bg-sky-50 py-1.5 text-center text-sm font-bold tracking-wide text-sky-600 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/20">
-        {formatPrice(item.price)}
-      </span>
-      {active && <CheckCircle2 className="absolute right-2.5 top-2.5 h-5 w-5 text-sky-500" />}
-    </button>
+    <PlanCard
+      {...props}
+      badge={badge}
+      art={<ChestArt level={index + 1} className="h-16 w-20" />}
+      price={item.price}
+      title={<span>{item.label} {t("Dyaman", "Diamants")}{item.bonus ? <> + {item.bonus}<GemIcon className="mx-0.5 inline h-4 w-4 align-[-2px]" /><br />Bonus</> : null}</span>}
+    />
+  );
+}
+
+// Pake admin nan ajoute nan Panneau admin: non an ak pri a
+function OfferOption({ item, ...props }) {
+  return (
+    <PlanCard
+      {...props}
+      art={<span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-sky-400/20 to-violet-500/20 ring-1 ring-sky-400/30"><Package className="h-8 w-8 text-sky-500" strokeWidth={1.75} /></span>}
+      title={item.label}
+      price={item.price}
+    />
+  );
+}
+
+// Abònman ak pas (Semaine, Mois, Booyah…): ikòn nan yon sèk ki klere
+function DealOption({ item, ...props }) {
+  return (
+    <PlanCard
+      {...props}
+      art={(
+        <span className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-orange-400/25 to-rose-500/25 shadow-[0_0_24px_rgba(251,146,60,.35)] ring-1 ring-orange-400/40">
+          <item.Icon className="h-8 w-8 text-orange-400" strokeWidth={1.75} />
+        </span>
+      )}
+      title={item.label}
+      price={item.price}
+    />
   );
 }
 
 const OPTIONS = { gem: GemOption, deal: DealOption, offer: OfferOption };
-
-function DealOption({ item, active, onSelect }) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={active}
-      onClick={onSelect}
-      className={`relative flex flex-col items-center gap-2 overflow-hidden rounded-2xl border-2 bg-gradient-to-b from-slate-900 to-[#1f1209] p-4 text-center text-white transition active:scale-[.98] ${
-        active ? "border-orange-400 shadow-lg shadow-orange-500/20" : "border-orange-950 hover:border-orange-500/60"
-      }`}
-    >
-      <span className="mt-1 grid h-14 w-14 place-items-center rounded-2xl bg-orange-500/15 ring-1 ring-orange-400/30">
-        <item.Icon className="h-7 w-7 text-orange-300" strokeWidth={1.75} />
-      </span>
-      <span className="flex min-h-[2.5rem] items-center text-sm font-bold leading-tight">{item.label}</span>
-      <span className="text-base font-bold tabular-nums text-orange-300">{formatPrice(item.price)}</span>
-      {active && <CheckCircle2 className="absolute right-2.5 top-2.5 h-5 w-5 text-orange-400" />}
-    </button>
-  );
-}
 
 // Yon chwa peman (Wallet, MonCash, NatCash) nan etap "Paiement" an
 function PayOption({ active, onSelect, art, title, badge, text, children }) {
@@ -389,33 +379,40 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
 
   return (
     <div className="space-y-4">
-      <button
-        type="button"
-        onClick={onBack}
-        className="flex items-center gap-2 rounded-xl py-1 font-semibold text-slate-600 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
-      >
-        <ArrowLeft className="h-5 w-5" /> {t("Retounen", "Retour")}
-      </button>
-
-      <section className="relative overflow-hidden rounded-3xl bg-slate-900 p-5 text-white shadow-lg">
-        <ProductArt product={product} className="absolute inset-0 scale-125 opacity-60 blur-2xl" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/95 via-slate-950/70 to-slate-950/20" />
-        <div className="relative flex items-center gap-4">
-          <ProductArt product={product} className="relative h-24 w-24 shrink-0 rounded-2xl shadow-xl ring-2 ring-white/20" />
-          <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-300">{categoryLabel(product.category)}</p>
-            <h1 className="mt-1 text-2xl font-extrabold leading-tight [text-wrap:balance]">{product.name}</h1>
-            <div className="mt-2.5 flex flex-wrap gap-1.5 text-xs font-semibold">
-              <span className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 ring-1 ring-white/15">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" /> MonCash · NatCash
-              </span>
-              <span className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 ring-1 ring-white/15">
-                <WhatsAppIcon className="h-3.5 w-3.5 text-emerald-300" /> {t("Sipò WhatsApp", "Support WhatsApp")}
-              </span>
-            </div>
-          </div>
+      {/* An tèt: ikòn jwèt la k ap klere, retounen, non an, avantaj yo */}
+      <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-b from-violet-950 via-slate-950 to-slate-950 px-4 pb-5 pt-6 text-center text-white shadow-lg">
+        <div className="pointer-events-none absolute left-1/2 top-4 h-48 w-48 -translate-x-1/2 rounded-full bg-violet-500/40 blur-3xl" />
+        <ProductArt product={product} className="relative mx-auto h-28 w-28 rounded-[28px] shadow-[0_0_40px_rgba(168,85,247,.55)] ring-2 ring-violet-400/40" />
+        <div className="relative mt-4 flex items-center justify-between gap-2">
+          <button type="button" onClick={onBack} className="flex items-center gap-1.5 rounded-xl bg-white/5 px-3.5 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/15 transition hover:bg-white/10">
+            <ArrowLeft className="h-4 w-4" /> {t("Retounen", "Retour")}
+          </button>
+          <span className="flex items-center gap-1.5 rounded-full bg-violet-500/10 px-3.5 py-2 text-sm font-semibold text-violet-200 ring-1 ring-violet-400/40">
+            <span className="h-2 w-2 rounded-full bg-violet-400" /> {product.category === "Jwèt" ? "Top-Up Officiel" : categoryLabel(product.category)}
+          </span>
+        </div>
+        <h1 className="relative mt-4 text-[28px] font-extrabold leading-tight [text-wrap:balance]">{product.name}</h1>
+        <p className="relative mt-1.5 text-[15px] text-slate-300">{t("Chwazi yon plan epi rechaje kont ou!", "Choisissez un plan et rechargez votre compte\u00a0!")}</p>
+        <div className="relative mt-4 flex flex-wrap justify-center gap-2 text-sm font-semibold">
+          <span className="flex items-center gap-1.5 rounded-xl bg-white/5 px-3 py-1.5 ring-1 ring-white/15"><ShieldCheck className="h-4 w-4 text-emerald-400" /> {t("Sekirize", "Sécurisé")}</span>
+          <span className="flex items-center gap-1.5 rounded-xl bg-white/5 px-3 py-1.5 ring-1 ring-white/15"><Zap className="h-4 w-4 text-amber-400" /> {t("Rapid", "Rapide")}</span>
+          {groups.reduce((n, g) => n + g.items.length, 0) > 0 && <span className="flex items-center gap-1.5 rounded-xl bg-white/5 px-3 py-1.5 ring-1 ring-white/15"><Tag className="h-4 w-4 text-violet-400" /> {groups.reduce((n, g) => n + g.items.length, 0)} plans</span>}
         </div>
       </section>
+
+      {/* Tutoriel la: yon gwo bouton vyolèt */}
+      <div className="text-center">
+        <span className="inline-flex items-center gap-2 rounded-full bg-violet-500/10 px-4 py-1.5 text-sm font-semibold text-violet-600 ring-1 ring-violet-400/40 dark:text-violet-300">
+          <span className="h-2.5 w-2.5 rounded-full bg-violet-500" /> {t("Tutoriel disponib", "Tutoriel disponible")}
+        </span>
+      </div>
+      <button type="button" onClick={openTutorial} className="flex w-full items-center gap-4 rounded-3xl bg-gradient-to-r from-violet-600 to-purple-600 p-4 text-left text-white shadow-lg shadow-violet-500/30 transition active:scale-[.99]">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-white text-violet-600"><PlayCircle className="h-7 w-7" /></span>
+        <span className="min-w-0">
+          <span className="block font-extrabold">{t("Ou bezwen èd pou kòmand lan?", "Besoin d'aide pour la commande\u00a0?")}</span>
+          <span className="block text-sm font-semibold text-violet-100">▶ {t("Gade videyo tutoriel la", "Voir le tutoriel vidéo")} →</span>
+        </span>
+      </button>
 
       {groups.length === 0 ? (
         <section className="rounded-3xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
@@ -604,6 +601,24 @@ export default function ProductPage({ product, account, onBack, onOrder, onLogin
               </div>
             )}
           </StepCard>
+
+          {/* Poukisa chwazi Awens Topup */}
+          <section className="rounded-[28px] bg-gradient-to-br from-violet-950 via-slate-950 to-slate-950 p-6 text-center text-white ring-1 ring-violet-500/20">
+            <h2 className="text-xl font-extrabold">{t("Poukisa chwazi Awens Topup?", "Pourquoi choisir Awens Topup\u00a0?")}</h2>
+            <div className="mt-5 grid gap-5 sm:grid-cols-3">
+              {[
+                [ShieldCheck, "bg-emerald-500/15 text-emerald-400", t("100% sekirize", "100% sécurisé"), t("Kòb ou pwoteje nan Wallet ou", "Vos transactions sont protégées")],
+                [Zap, "bg-amber-500/15 text-amber-400", t("Livrezon rapid", "Livraison express"), t("Rechaj an kèk minit", "Recharge en quelques minutes")],
+                [MessageCircle, "bg-sky-500/15 text-sky-400", t("Sipò 7/7", "Support 7j/7"), t("Sou WhatsApp, nenpòt lè", "Sur WhatsApp, à votre service")],
+              ].map(([Icon, tone, title, text]) => (
+                <div key={title}>
+                  <span className={`mx-auto grid h-12 w-12 place-items-center rounded-2xl ${tone}`}><Icon className="h-6 w-6" /></span>
+                  <p className="mt-2 font-bold">{title}</p>
+                  <p className="text-sm text-slate-400">{text}</p>
+                </div>
+              ))}
+            </div>
+          </section>
 
           <div
             className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/[.97] dark:border-slate-800 dark:bg-slate-900/[.97]"
