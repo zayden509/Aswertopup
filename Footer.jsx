@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ShieldCheck, Zap, MessageCircle, ChevronRight, FileText, Lock, UserX, Instagram, Facebook } from "lucide-react";
+import { ShieldCheck, Zap, MessageCircle, ChevronRight, FileText, Lock, UserX, Instagram, Facebook, LifeBuoy, HelpCircle, PlayCircle, Wallet, Award, Scale, Headphones } from "lucide-react";
 import { PAYMENT_METHODS, SOCIAL_LINKS } from "./data.js";
 import { BrandLogo } from "./Brand.jsx";
 import { openFaq } from "./Faq.jsx";
@@ -21,9 +21,9 @@ const SOCIALS = [
 ];
 
 const FEATURES = [
-  { Icon: ShieldCheck, title: t("Peman an sekirite", "Paiement sécurisé"), text: "MonCash · NatCash" },
-  { Icon: Zap, title: t("Livrezon rapid", "Livraison rapide"), text: t("Dirèk sou kont ou", "Directement sur votre compte") },
-  { Icon: MessageCircle, title: t("Sipò WhatsApp", "Support WhatsApp"), text: t("Yon moun reponn ou", "Une vraie personne vous répond") },
+  { tone: "from-sky-400 to-indigo-500", Icon: ShieldCheck, title: t("Peman an sekirite", "Paiement sécurisé"), text: "MonCash · NatCash" },
+  { tone: "from-amber-400 to-orange-500", Icon: Zap, title: t("Livrezon rapid", "Livraison rapide"), text: t("Dirèk sou kont ou", "Directement sur votre compte") },
+  { tone: "from-emerald-400 to-teal-500", Icon: MessageCircle, title: t("Sipò WhatsApp", "Support WhatsApp"), text: t("Yon moun reponn ou", "Une vraie personne vous répond") },
 ];
 
 // Tèks legal yo (kout e klè). Mèt sit la dwe li yo epi adapte yo si sa nesesè.
@@ -94,13 +94,29 @@ function LegalSheet({ id, email, onClose }) {
   );
 }
 
-function LinkRow({ children, onClick }) {
+function LinkRow({ children, onClick, Icon, tone }) {
   return (
     <li>
-      <button type="button" onClick={onClick} className="flex w-full items-center justify-between gap-2 py-2 text-left text-[15px] text-slate-600 hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
-        {children} <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-600" />
+      <button type="button" onClick={onClick} className="group flex w-full items-center gap-2.5 rounded-xl px-1.5 py-2 text-left text-[14px] font-semibold text-slate-600 transition hover:bg-violet-50 hover:text-violet-600 active:scale-[.98] dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white">
+        <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${tone} text-white shadow-md`}>
+          <Icon className="h-4 w-4" />
+        </span>
+        <span className="min-w-0 flex-1 leading-tight">{children}</span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-violet-400 dark:text-slate-600" />
       </button>
     </li>
+  );
+}
+
+function LinkCard({ Icon, title, children }) {
+  return (
+    <div className="relative overflow-hidden rounded-3xl bg-white p-3 shadow-sm ring-1 ring-slate-200 dark:bg-transparent dark:bg-gradient-to-b dark:from-white/[.06] dark:to-white/[.02] dark:ring-white/10">
+      <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-fuchsia-500/10 blur-2xl" />
+      <h3 className="relative mb-1.5 flex items-center gap-2 px-1.5 text-[11px] font-extrabold uppercase tracking-[.18em] text-violet-600 dark:text-violet-300">
+        <Icon className="h-4 w-4" /> {title}
+      </h3>
+      <ul className="relative">{children}</ul>
+    </div>
   );
 }
 
@@ -112,69 +128,69 @@ export default function Footer({ email, onGo, onTutorial, onRank }) {
     <footer className="mt-12 space-y-5 [contain-intrinsic-size:auto_900px] [content-visibility:auto]">
       <div className="grid grid-cols-3 gap-2.5">
         {FEATURES.map((f) => (
-          <div key={f.title} className="rounded-2xl bg-white px-2 py-4 text-center shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-            <span className="mx-auto grid h-11 w-11 place-items-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400">
+          <div key={f.title} className="relative overflow-hidden rounded-2xl bg-white px-2 py-4 text-center shadow-sm ring-1 ring-slate-200 dark:bg-transparent dark:bg-gradient-to-b dark:from-white/[.07] dark:to-white/[.02] dark:ring-white/10">
+            <span className={`mx-auto grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br ${f.tone} text-white shadow-lg`}>
               <f.Icon className="h-5 w-5" />
             </span>
-            <p className="mt-2 text-[13px] font-bold leading-tight text-slate-900 dark:text-white">{f.title}</p>
+            <p className="mt-2 text-[13px] font-extrabold leading-tight text-slate-900 dark:text-white">{f.title}</p>
             <p className="mt-0.5 text-[11px] leading-tight text-slate-500 dark:text-slate-400">{f.text}</p>
           </div>
         ))}
       </div>
 
-      <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-slate-900 via-[#0b1d3f] to-[#0b2547] p-5 text-white shadow-xl shadow-slate-900/10">
+      <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#1a0b3d] via-[#120a2e] to-[#06122b] p-5 text-white shadow-xl shadow-violet-900/25 ring-1 ring-white/10">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-60 w-60 rounded-full bg-fuchsia-500/30 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-16 h-60 w-60 rounded-full bg-sky-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 opacity-[.07] [background-image:linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] [background-size:28px_28px]" />
         <Logo tone="dark" className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 opacity-10" />
-        <div className="relative flex items-center gap-3">
-          <div>
-            <BrandLogo tone="dark" className="h-12 w-auto" />
-            <p className="mt-1.5 text-sm text-sky-200/80">{t("Gaming & Recharges · Ayiti 🇭🇹", "Gaming & Recharges · Haïti 🇭🇹")}</p>
-          </div>
+        <div className="relative">
+          <BrandLogo tone="dark" className="h-12 w-auto" />
+          <p className="mt-1.5 text-sm font-semibold text-violet-200/90">{t("Gaming & Recharges · Ayiti 🇭🇹", "Gaming & Recharges · Haïti 🇭🇹")}</p>
         </div>
         <p className="relative mt-4 text-[15px] leading-relaxed text-slate-300">
           {t("Rechaje jwèt ou yo, peye abònman ak gift card an goud. Rapid, an sekirite, e senp, depi telefòn ou.", "Rechargez vos jeux, payez abonnements et cartes cadeaux en gourdes. Rapide, sécurisé et simple, depuis votre téléphone.")}
         </p>
         <div className="relative mt-4 flex flex-wrap gap-2">
-          <a href={waLink(supportMessage("Bonjou Awens Topup! Mwen gen yon kesyon.", email && { email }))} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-900/30">
+          <a href={waLink(supportMessage("Bonjou Awens Topup! Mwen gen yon kesyon.", email && { email }))} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-[#25D366] px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/30 transition active:scale-95">
             <WhatsAppIcon className="h-5 w-5" /> {formatWhatsApp() || "WhatsApp"}
           </a>
           {socials.map((s) => (
-            <a key={s.id} href={SOCIAL_LINKS[s.id]} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-bold text-slate-900">
+            <a key={s.id} href={SOCIAL_LINKS[s.id]} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-2.5 text-sm font-bold text-white ring-1 ring-white/20 transition hover:bg-white/15 active:scale-95">
               <s.Icon className="h-5 w-5" /> {s.label}
             </a>
           ))}
         </div>
-        <div className="relative mt-5 flex items-center gap-2 border-t border-white/10 pt-4">
-          <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">{t("Nou aksepte", "Nous acceptons")}</span>
-          {PAYMENT_METHODS.map((m) => (
-            <img key={m.id} src={m.logo} alt={m.name} loading="lazy" decoding="async" className="h-8 w-8 rounded-lg object-cover ring-1 ring-white/20" />
-          ))}
+        <div className="relative mt-5 flex items-center gap-2.5 rounded-2xl bg-white/5 px-3 py-2.5 ring-1 ring-white/10">
+          <span className="text-[11px] font-extrabold uppercase tracking-[.16em] text-violet-200/80">{t("Nou aksepte", "Nous acceptons")}</span>
+          <span className="ml-auto flex gap-2">
+            {PAYMENT_METHODS.map((m) => (
+              <img key={m.id} src={m.logo} alt={m.name} loading="lazy" decoding="async" className="h-9 w-9 rounded-xl object-cover shadow-md ring-2 ring-white/20" />
+            ))}
+          </span>
         </div>
       </section>
 
-      <div className="grid grid-cols-2 gap-6 px-1">
-        <div>
-          <h3 className="mb-1 text-xs font-bold uppercase tracking-[.18em] text-slate-400">{t("Sipò", "Support")}</h3>
-          <ul>
-            <LinkRow onClick={() => window.open(waLink(supportMessage(t("Bonjou Awens Topup, mwen bezwen èd.", "Bonjour Awens Topup, j'ai besoin d'aide."), email && { email })), "_blank", "noopener,noreferrer")}>{t("Sant èd", "Centre d'aide")}</LinkRow>
-            <LinkRow onClick={openFaq}>FAQ</LinkRow>
-            <LinkRow onClick={onTutorial}>Tutoriel</LinkRow>
-            <LinkRow onClick={() => onGo("wallet")}>{t("Kijan pou peye", "Comment payer")}</LinkRow>
-            <LinkRow onClick={onRank}>{t("Pwogram fidelite", "Programme de fidélité")}</LinkRow>
-          </ul>
-        </div>
-        <div>
-          <h3 className="mb-1 text-xs font-bold uppercase tracking-[.18em] text-slate-400">{t("Legal", "Mentions légales")}</h3>
-          <ul>
-            <LinkRow onClick={() => setLegal("terms")}>{t("Kondisyon", "Conditions")}</LinkRow>
-            <LinkRow onClick={() => setLegal("privacy")}>{t("Konfidansyalite", "Confidentialité")}</LinkRow>
-            <LinkRow onClick={() => setLegal("delete")}>{t("Efase kont", "Supprimer le compte")}</LinkRow>
-          </ul>
-        </div>
+      <div className="grid gap-3 min-[520px]:grid-cols-2">
+        <LinkCard Icon={Headphones} title={t("Sipò", "Support")}>
+          <LinkRow Icon={LifeBuoy} tone="from-emerald-400 to-teal-500" onClick={() => window.open(waLink(supportMessage(t("Bonjou Awens Topup, mwen bezwen èd.", "Bonjour Awens Topup, j'ai besoin d'aide."), email && { email })), "_blank", "noopener,noreferrer")}>{t("Sant èd", "Centre d'aide")}</LinkRow>
+          <LinkRow Icon={HelpCircle} tone="from-sky-400 to-indigo-500" onClick={openFaq}>FAQ</LinkRow>
+          <LinkRow Icon={PlayCircle} tone="from-rose-500 to-pink-500" onClick={onTutorial}>Tutoriel</LinkRow>
+          <LinkRow Icon={Wallet} tone="from-violet-500 to-fuchsia-500" onClick={() => onGo("wallet")}>{t("Kijan pou peye", "Comment payer")}</LinkRow>
+          <LinkRow Icon={Award} tone="from-amber-400 to-orange-500" onClick={onRank}>{t("Pwogram fidelite", "Programme de fidélité")}</LinkRow>
+        </LinkCard>
+        <LinkCard Icon={Scale} title={t("Legal", "Mentions légales")}>
+          <LinkRow Icon={FileText} tone="from-slate-500 to-slate-700" onClick={() => setLegal("terms")}>{t("Kondisyon", "Conditions")}</LinkRow>
+          <LinkRow Icon={Lock} tone="from-indigo-500 to-violet-600" onClick={() => setLegal("privacy")}>{t("Konfidansyalite", "Confidentialité")}</LinkRow>
+          <LinkRow Icon={UserX} tone="from-red-500 to-rose-600" onClick={() => setLegal("delete")}>{t("Efase kont", "Supprimer le compte")}</LinkRow>
+        </LinkCard>
       </div>
 
-      <p className="border-t border-slate-200 pt-5 text-center text-xs text-slate-400 dark:border-slate-800">
-        © {new Date().getFullYear()} Awens Topup · {t("Tout dwa rezève", "Tous droits réservés")}
-      </p>
+      <div className="pb-2 text-center">
+        <span className="mx-auto mb-4 block h-px w-2/3 bg-gradient-to-r from-transparent via-violet-400/60 to-transparent" />
+        <p className="text-xs font-semibold text-slate-400">
+          © {new Date().getFullYear()} <span className="bg-gradient-to-r from-violet-500 to-fuchsia-500 bg-clip-text font-extrabold text-transparent">Awens Topup</span> · {t("Tout dwa rezève", "Tous droits réservés")}
+        </p>
+      </div>
 
       {legal && <LegalSheet id={legal} email={email} onClose={() => setLegal(null)} />}
     </footer>
