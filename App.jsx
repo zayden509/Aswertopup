@@ -80,7 +80,7 @@ function useTheme() {
   }, [dark]);
   const toggle = () => {
     setDark((d) => {
-      try { localStorage.setItem("aswer-theme", d ? "light" : "dark"); } catch {}
+      try { localStorage.setItem("awens-theme", d ? "light" : "dark"); } catch {}
       return !d;
     });
   };

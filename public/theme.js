@@ -1,7 +1,8 @@
 // Aplike tèm nan anvan React chaje pou paj la pa flache (fichye apa pou règ sekirite CSP la)
 try {
-  var t = localStorage.getItem("aswer-theme");
-  if (t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches)) document.documentElement.classList.add("dark");
+  // Mòd nwa a se tèm prensipal la: tout moun kòmanse an nwa, sof si yo chwazi mòd klè nan meni an
+  var t = localStorage.getItem("awens-theme");
+  document.documentElement.classList.toggle("dark", t !== "light");
 } catch (e) {}
 
 // Polis Inter la: li chaje san bloke paj la, epi li aplike lè l rive
