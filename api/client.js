@@ -1,10 +1,27 @@
 // Ti demann kliyan yo (yon sèl fonksyon Vercel pou rete anba limit 12 fonksyon plan gratis la):
 //   GET  /api/client            → kle piblik notifikasyon push yo (VAPID)
+//   GET  /api/client?catalog=1  → katalòg la (ak kach CDN)
 //   POST /api/client { code }   → non piblik moun ki gen AWENS-ID sa a (fenèt "Envoyer")
 import { SetupError, bot, callerId, fail, json, resetBotOnDenied } from "./_lib/autotopup.js";
 import { pushKeys } from "./_lib/push.js";
 
-export async function GET() {
+// GET /api/client?catalog=1 → tout katalòg la (pri, pwodwi, foto, to…). Vercel kenbe repons lan
+// an kach 60 segonn: Firebase li l yon fwa pa minit olye yon fwa pou chak vizitè.
+async function catalogResponse() {
+  try {
+    const data = await (await bot()).catalogSnapshot();
+    return Response.json({ ok: true, ...data }, {
+      headers: { "Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=600" },
+    });
+  } catch (error) {
+    console.error("catalog", error);
+    resetBotOnDenied(error);
+    return fail("error", error instanceof SetupError ? 503 : 500);
+  }
+}
+
+export async function GET(request) {
+  if (new URL(request.url).searchParams.has("catalog")) return catalogResponse();
   try {
     const { publicKey } = await pushKeys(await bot());
     return json({ ok: true, publicKey }, 200);

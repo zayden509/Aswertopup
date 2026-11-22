@@ -272,6 +272,28 @@ export function createBackend(config, options = {}) {
       return () => stops.forEach((stop) => stop());
     },
 
+    // Tout katalòg la an yon sèl kou (sèvè a sèvi avè l pou /api/client?catalog, ak yon kach CDN):
+    // kliyan yo pa li baz done a chak fwa yo louvri sit la, konsa nou pa depase kota gratis Firebase la
+    async catalogSnapshot() {
+      const [packages, products, catalog, exchange, payments, images, names] = await Promise.all([
+        getDocs(collection(db, "packages")), getDocs(collection(db, "products")), getDoc(doc(db, "settings", "catalog")),
+        getDocs(collection(db, "exchange")), getDoc(doc(db, "settings", "payments")),
+        getDocs(collection(db, "productImages")), getDocs(collection(db, "productNames")),
+      ]);
+      return {
+        prices: Object.fromEntries(packages.docs.map((d) => [d.id, toPlain(d)])),
+        catalog: {
+          products: products.docs.map(toPlain).sort((a, b) => a.sort - b.sort),
+          hidden: catalog.data()?.hidden || [],
+          exchange: Object.fromEntries(exchange.docs.map((d) => [d.id, d.data()])),
+          payments: payments.data() || null,
+          images: Object.fromEntries(images.docs.map((d) => [d.id, d.data().image])),
+          names: Object.fromEntries(names.docs.map((d) => [d.id, d.data().name])),
+          ready: true,
+        },
+      };
+    },
+
     // Mesaj admin nan voye bay tout moun (premye lis la pa konte kòm "nouvo")
     subscribeAnnouncements(callback) {
       let first = true;

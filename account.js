@@ -62,16 +62,48 @@ export function useAccount(onNotification) {
   notifyRef.current = onNotification;
   const userId = user?.id;
 
-  // Pri yo, pwodwi yo ak mesaj pou tout moun yo piblik: menm moun ki pa konekte wè yo
-  useEffect(() => backend?.subscribePrices((list) => {
+  // Pri yo ak pwodwi yo piblik: menm moun ki pa konekte wè yo.
+  // Kliyan yo resevwa yo nan /api/client?catalog (kach Vercel, chak 3 minit + lè yo retounen sou paj la),
+  // pou Firebase pa li tout katalòg la pou chak vizitè. Admin yo koute baz done a an dirèk.
+  const isAdmin = Boolean(profile?.is_admin);
+  const applyPrices = (list) => {
     setPrices(list);
     saveShop({ prices: list });
-  }), []);
-  useEffect(() => backend?.subscribeCatalog((next) => {
+  };
+  const applyCatalog = (next) => {
     setCatalog(next);
     setPaymentSettings(next.payments);
-    saveShop({ catalog: { products: next.products, hidden: next.hidden, images: next.images }, payments: next.payments });
-  }), []);
+    saveShop({ catalog: { products: next.products, hidden: next.hidden, images: next.images, names: next.names }, payments: next.payments });
+  };
+  useEffect(() => {
+    if (!backend || isAdmin) return undefined;
+    let stopped = false;
+    let last = 0;
+    const load = async () => {
+      if (stopped || document.visibilityState === "hidden" || Date.now() - last < 60000) return;
+      last = Date.now();
+      try {
+        const res = await fetch("/api/client?catalog=1");
+        const data = res.ok ? await res.json() : null;
+        if (!stopped && data?.ok) {
+          applyPrices(data.prices);
+          applyCatalog(data.catalog);
+          return;
+        }
+      } catch {}
+      last = 0;
+    };
+    load();
+    const timer = setInterval(load, 3 * 60000);
+    document.addEventListener("visibilitychange", load);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", load);
+    };
+  }, [isAdmin]);
+  useEffect(() => (isAdmin ? backend?.subscribePrices(applyPrices) : undefined), [isAdmin]);
+  useEffect(() => (isAdmin ? backend?.subscribeCatalog(applyCatalog) : undefined), [isAdmin]);
   useEffect(() => backend?.subscribeAnnouncements((list, added) => {
     setAnnouncements(list);
     added.forEach((a) => notifyRef.current?.(asNotification(a, "")));

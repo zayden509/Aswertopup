@@ -19,6 +19,7 @@ export function errorText(error) {
   if (code.includes("unauthorized-domain")) return t("Google poko otorize sit sa a. Konekte ak imèl pou kounye a.", "Google n'a pas encore autorisé ce site. Connectez-vous par e-mail pour l'instant.");
   if (code.includes("account-exists-with-different-credential")) return t("Gen yon kont ak imèl sa a deja. Konekte ak imèl ou ak modpas ou.", "Un compte existe déjà avec cet e-mail. Connectez-vous avec votre e-mail et votre mot de passe.");
   if (code.includes("network-request-failed") || code === "unavailable") return t("Pa gen koneksyon entènèt. Eseye ankò.", "Pas de connexion Internet. Réessayez.");
+  if (code === "resource-exhausted" || /quota exceeded/i.test(error?.message || "")) return t("Sit la gen twòp moun kounye a. Tann kèk minit epi eseye ankò, oswa ekri nou sou WhatsApp.", "Le site est très sollicité en ce moment. Patientez quelques minutes et réessayez, ou écrivez-nous sur WhatsApp.");
   if (code === "permission-denied") return t("Operasyon an refize. Rechaje paj la epi eseye ankò.", "Opération refusée. Rechargez la page et réessayez.");
   return error?.message || t("Yon bagay pa mache. Eseye ankò.", "Une erreur est survenue. Réessayez.");
 }
